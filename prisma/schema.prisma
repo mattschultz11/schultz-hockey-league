@@ -1,0 +1,270 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id         String      @id @default(uuid())
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  email      String      @unique
+  phone      String?
+  firstName  String?
+  lastName   String?
+  birthday   DateTime?
+  handedness Handedness?
+  gloveHand  GloveHand?
+  archivedAt DateTime?
+  role       Role        @default(PLAYER)
+  seasons    Player[]
+}
+
+enum Role {
+  PLAYER
+  MANAGER
+  ADMIN
+}
+
+enum Handedness {
+  LEFT
+  RIGHT
+}
+
+enum GloveHand {
+  LEFT
+  RIGHT
+}
+
+model League {
+  id          String   @id @default(uuid())
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  name        String
+  description String?
+  skillLevel  String?
+  seasons     Season[]
+}
+
+model Season {
+  id         String      @id @default(uuid())
+  slug       String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  league     League      @relation(fields: [leagueId], references: [id])
+  leagueId   String
+  name       String
+  startDate  DateTime
+  endDate    DateTime
+  sundays    Boolean     @default(false)
+  mondays    Boolean     @default(false)
+  tuesdays   Boolean     @default(false)
+  wednesdays Boolean     @default(false)
+  thursdays  Boolean     @default(false)
+  fridays    Boolean     @default(false)
+  saturdays  Boolean     @default(false)
+  players    Player[]
+  teams      Team[]
+  games      Game[]
+  draft      DraftPick[]
+
+  @@unique([leagueId, slug])
+}
+
+model Team {
+  id             String      @id @default(uuid())
+  slug           String
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  season         Season      @relation(fields: [seasonId], references: [id])
+  seasonId       String
+  name           String
+  abbreviation   String?
+  logoUrl        String?
+  primaryColor   String?
+  secondaryColor String?
+  manager        Player?     @relation(fields: [managerId], references: [id])
+  managerId      String?     @unique
+  players        Player[]    @relation("TeamPlayers")
+  homeGames      Game[]      @relation("HomeTeam")
+  awayGames      Game[]      @relation("AwayTeam")
+  goals          Goal[]
+  penalties      Penalty[]
+  draftPicks     DraftPick[]
+
+  @@unique([seasonId, slug])
+}
+
+model Player {
+  id                 String     @id @default(uuid())
+  createdAt          DateTime   @default(now())
+  updatedAt          DateTime   @updatedAt
+  user               User       @relation(fields: [userId], references: [id])
+  userId             String
+  season             Season     @relation(fields: [seasonId], references: [id])
+  seasonId           String
+  managedTeam        Team?
+  team               Team?      @relation("TeamPlayers", fields: [teamId], references: [id])
+  teamId             String?
+  position           Position?
+  number             Int?
+  playerRating       Int?
+  goalieRating       Int?
+  lockerRating       Int?
+  registrationNumber String?
+  goals              Goal[]     @relation("Scorer")
+  primaryAssists     Goal[]     @relation("PrimaryAssist")
+  secondaryAssists   Goal[]     @relation("SecondaryAssist")
+  penalties          Penalty[]
+  draftPick          DraftPick?
+}
+
+enum Position {
+  G
+  D
+  D_F
+  F
+  F_D
+}
+
+model Game {
+  id         String    @id @default(uuid())
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  season     Season    @relation(fields: [seasonId], references: [id])
+  seasonId   String
+  round      Int
+  date       DateTime
+  time       DateTime
+  location   String
+  homeTeam   Team?     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  homeTeamId String?
+  homeTeamResult Result?
+  homeTeamPoints Int?
+  awayTeam   Team?     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  awayTeamId String?
+  awayTeamResult Result?
+  awayTeamPoints Int?
+  goals      Goal[]
+  penalties  Penalty[]
+}
+
+enum Result {
+  WIN
+  LOSS
+  TIE
+}
+
+model Goal {
+  id                String   @id @default(uuid())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  game              Game     @relation(fields: [gameId], references: [id])
+  gameId            String
+  period            Int
+  time              Int
+  strength          Strength
+  team              Team     @relation(fields: [teamId], references: [id])
+  teamId            String
+  scorer            Player   @relation("Scorer", fields: [scorerId], references: [id])
+  scorerId          String
+  primaryAssist     Player?  @relation("PrimaryAssist", fields: [primaryAssistId], references: [id])
+  primaryAssistId   String?
+  secondaryAssist   Player?  @relation("SecondaryAssist", fields: [secondaryAssistId], references: [id])
+  secondaryAssistId String?
+}
+
+enum Strength {
+  EVEN
+  POWERPLAY
+  SHORTHANDED
+}
+
+model Penalty {
+  id        String          @id @default(uuid())
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+  game      Game            @relation(fields: [gameId], references: [id])
+  gameId    String
+  period    Int
+  time      Int
+  team      Team            @relation(fields: [teamId], references: [id])
+  teamId    String
+  player    Player          @relation(fields: [playerId], references: [id])
+  playerId  String
+  category  PenaltyCategory @default(MINOR)
+  type      PenaltyType
+  minutes   Int
+}
+
+enum PenaltyCategory {
+  MINOR
+  MAJOR
+  MATCH
+  MISCONDUCT
+  GAME_MISCONDUCT
+}
+
+enum PenaltyType {
+  ABUSE_OF_OFFICIALS
+  BOARDING
+  BUTT_ENDING
+  CHARGING
+  CHECKING_FROM_BEHIND
+  CLIPPING
+  CROSS_CHECKING
+  DELAY_OF_GAME
+  ELBOWING
+  EMBELLISHMENT
+  EQUIPMENT
+  FIGHTING
+  GOALTENDER_INTERFERENCE
+  HANDLING_THE_PUCK
+  HEAD_BUTTING
+  HIGH_STICKING
+  HOLDING
+  HOOKING
+  ILLEGAL_CHECK_TO_THE_HEAD
+  ILLEGAL_SUBSTITUTION
+  INTERFERENCE
+  KICKING
+  KNEEING
+  LEAVING_THE_BENCH
+  ROUGHING
+  SLASHING
+  SLEW_FOOTING
+  SPEARING
+  THROWING_EQUIPMENT
+  TOO_MANY_MEN
+  TRIPPING
+  UNSPORTSMANLIKE_CONDUCT
+}
+
+model DraftPick {
+  id           String   @id @default(uuid())
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  season       Season   @relation(fields: [seasonId], references: [id])
+  seasonId     String
+  overall      Int
+  round        Int
+  pick         Int
+  team         Team?    @relation(fields: [teamId], references: [id])
+  teamId       String?
+  player       Player?  @relation(fields: [playerId], references: [id])
+  playerId     String?  @unique
+  /// Snapshot of the player's rating at the time of the draft
+  playerRating Int?
+  /// Snapshot of the goalie's rating at the time of the draft
+  goalieRating Int?
+}
