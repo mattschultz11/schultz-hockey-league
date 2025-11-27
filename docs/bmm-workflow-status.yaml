@@ -1,0 +1,110 @@
+# Workflow Status Template
+
+# This tracks progress through BMM methodology Analysis, Planning, and Solutioning phases.
+# Implementation phase is tracked separately in sprint-status.yaml
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - skipped: Optional/conditional workflow that was skipped
+
+generated: "2025-11-27"
+# Purpose: Name signals a Schultz-run hockey league to convey credibility and community identity.
+# Brand angle: Ownership/legacy (Schultz) + sport (hockey) + structure (league).
+# user_description: Create a website for managing hockey leagues.
+# Goal: Build a greenfield web app for managing hockey leagues with clear roles (admin/manager/official/player/fan); schedule + roster management; score/stat entry with validation; notifications; scheduling engine with constraints; role-based permissions; stats pipeline; backups/observability.
+# Drafting: configurable draft formats (snake, linear), keepers, draft order generation with tiebreak rules, pre-draft rankings, live draft room with pick clock and auto-pick, trade review/approval, post-draft roster validation before schedule generation.
+# Service Blueprint: Frontstage—admin seasons/divisions/teams, schedule builder with conflict alerts, draft room (pick clock/auto-pick/keepers), trade review/approval, manager roster+availability+lineups, officials score/penalty entry, player/fan schedules/standings/stats/notifications. Backstage—data models (season/division/team/game/player/roster), scheduling engine (venue/blackout/ref constraints), draft engine (order/tiebreaks, keeper rules, pre-draft rankings, pick validation), permissions/roles, stat pipeline (ingest→validate→publish), notification triggers (schedule/draft/trade/score), audit trail. Support—backups before drafts/schedule changes, retry/error handling for posts/notifications, observability on scheduling/draft jobs, CSV import/export for legacy data, rate limiting + auth.
+project: "schultz-hockey-league"
+project_type: "{{project_type}}"
+selected_track: "method"
+field_type: "greenfield"
+workflow_path: ".bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
+workflow_status:
+  - phase: 0
+    name: "Discovery (Optional)"
+    workflows:
+      - id: "product-brief"
+        status: "optional"
+        agent: "analyst"
+        command: "product-brief"
+      - id: "brainstorm-project"
+        status: "skipped"
+        reason: "not requested"
+        agent: "analyst"
+        command: "brainstorm-project"
+      - id: "research"
+        status: "skipped"
+        reason: "not requested"
+        agent: "analyst"
+        command: "research"
+
+  - phase: 1
+    name: "Planning"
+    workflows:
+      - id: "prd"
+        status: "required"
+        agent: "pm"
+        command: "prd"
+        output: "Product Requirements Document with FRs and NFRs"
+      - id: "validate-prd"
+        status: "optional"
+        agent: "pm"
+        command: "validate-prd"
+        note: "Quality check for PRD completeness"
+      - id: "create-design"
+        status: "conditional"
+        condition: "if_has_ui"
+        agent: "ux-designer"
+        command: "create-design"
+        note: "Determined after PRD - user/agent decides if needed"
+
+  - phase: 2
+    name: "Solutioning"
+    workflows:
+      - id: "create-architecture"
+        status: "required"
+        agent: "architect"
+        command: "create-architecture"
+        output: "System architecture document"
+        note: "Complete system design for greenfield projects"
+      - id: "create-epics-and-stories"
+        status: "required"
+        agent: "pm"
+        command: "create-epics-and-stories"
+        note: "Break down PRD into epics and stories with full context (PRD + UX + Architecture)"
+      - id: "test-design"
+        status: "recommended"
+        agent: "tea"
+        command: "test-design"
+        output: "System-level testability review"
+        note: "Testability assessment before gate check - auto-detects system-level mode"
+      - id: "validate-architecture"
+        status: "optional"
+        agent: "architect"
+        command: "validate-architecture"
+        note: "Quality check for architecture completeness"
+      - id: "implementation-readiness"
+        status: "required"
+        agent: "architect"
+        command: "implementation-readiness"
+        note: "Validates PRD + UX + Architecture + Epics + Testability cohesion before implementation"
+
+  - phase: 3
+    name: "Implementation"
+    workflows:
+      - id: "sprint-planning"
+        status: "required"
+        agent: "sm"
+        command: "sprint-planning"
+        note: "Creates sprint plan - subsequent work tracked there"
+brainstorm_requested: "false"
+research_requested: "false"
+product_brief_requested: "true"
