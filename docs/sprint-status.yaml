@@ -1,0 +1,79 @@
+# generated: 2025-11-27
+# project: schultz-hockey-league
+# project_key: schultz-hockey-league
+# tracking_system: file-system
+# story_location: docs/sprint-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic exists in epic file but not contexted
+#   - contexted: Epic tech context created (prerequisite for story drafting)
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - drafted: Story file created in stories folder
+#   - ready-for-dev: Draft approved and story context created
+#   - in-progress: Developer actively working on implementation
+#   - review: Under SM review (via code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - completed: Retrospective has been done
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epics should be 'contexted' before stories can be 'drafted'
+# - Stories typically proceed sequentially but can run in parallel if capacity allows
+# - Review before done; retrospectives optional per epic
+
+generated: 2025-11-27
+project: schultz-hockey-league
+project_key: schultz-hockey-league
+tracking_system: file-system
+story_location: docs/sprint-artifacts
+
+development_status:
+  epic-1: backlog
+  1-1-project-setup-and-environments: backlog
+  1-2-auth-baseline-with-roles: backlog
+  1-3-rbac-enforcement-helpers: backlog
+  1-4-audit-and-logging-baseline: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-configure-season-draft-settings: backlog
+  2-2-player-catalog-for-draft-prep: backlog
+  2-3-live-draft-board-view: backlog
+  2-4-record-picks-with-manager-override: backlog
+  2-5-publish-rosters-after-draft: backlog
+  2-6-post-draft-roster-edits: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-create-season-schedule: backlog
+  3-2-publish-and-republish-schedules: backlog
+  3-3-league-schedule-view: backlog
+  3-4-team-schedule-view: backlog
+  3-5-multi-season-context: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-propose-trade: backlog
+  4-2-approve-reject-trade: backlog
+  4-3-trade-history-view: backlog
+  4-4-post-draft-roster-adjustment-manual: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-submit-game-results-manager: backlog
+  5-2-admin-review-and-approve-stats: backlog
+  5-3-publish-scores-and-standings: backlog
+  5-4-upload-stats-via-csv-json: backlog
+  epic-5-retrospective: optional
+
+  epic-6: backlog
+  6-1-export-rosters-and-schedules: backlog
+  6-2-league-team-overview-dashboards: backlog
+  epic-6-retrospective: optional
