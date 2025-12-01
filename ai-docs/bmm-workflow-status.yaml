@@ -88,7 +88,7 @@ workflow_status:
         output: "System-level testability review"
         note: "Testability assessment before gate check - auto-detects system-level mode"
       - id: "validate-architecture"
-        status: "optional"
+        status: "ai-docs/validation-report-20251201T162957Z.md"
         agent: "architect"
         command: "validate-architecture"
         note: "Quality check for architecture completeness"
