@@ -17,9 +17,9 @@
 
 ## Context Loaded
 
-- PRD: docs/prd.md (FR1–FR21)
-- Architecture: docs/bmm-architecture-2025-11-27.md
-- Epics/Stories: docs/epics.md (6 epics, 22 stories)
+- PRD: ai-docs/prd.md (FR1–FR21)
+- Architecture: ai-docs/bmm-architecture-2025-11-27.md
+- Epics/Stories: ai-docs/epics.md (6 epics, 22 stories)
 - Knowledge base: risk-governance, probability-impact, test-levels-framework, test-quality, nfr-criteria
 
 ---
@@ -181,9 +181,9 @@ Criteria: Nice-to-have, exploratory.
 
 ### Related Documents
 
-- PRD: docs/prd.md
-- Epics: docs/epics.md
-- Architecture: docs/bmm-architecture-2025-11-27.md
+- PRD: ai-docs/prd.md
+- Epics: ai-docs/epics.md
+- Architecture: ai-docs/bmm-architecture-2025-11-27.md
 
 ---
 

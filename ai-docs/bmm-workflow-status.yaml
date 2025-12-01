@@ -12,7 +12,7 @@
 #   - conditional: Required only if certain conditions met (e.g., if_has_ui)
 #
 # Completion Status:
-#   - {file-path}: File created/found (e.g., "docs/product-brief.md")
+#   - {file-path}: File created/found (e.g., "ai-docs/product-brief.md")
 #   - skipped: Optional/conditional workflow that was skipped
 
 generated: "2025-11-27"
@@ -23,7 +23,8 @@ generated: "2025-11-27"
 # Drafting: configurable draft formats (snake, linear), keepers, draft order generation with tiebreak rules, pre-draft rankings, live draft room with pick clock and auto-pick, trade review/approval, post-draft roster validation before schedule generation.
 # Service Blueprint: Frontstage—admin seasons/divisions/teams, schedule builder with conflict alerts, draft room (pick clock/auto-pick/keepers), trade review/approval, manager roster+availability+lineups, officials score/penalty entry, player/fan schedules/standings/stats/notifications. Backstage—data models (season/division/team/game/player/roster), scheduling engine (venue/blackout/ref constraints), draft engine (order/tiebreaks, keeper rules, pre-draft rankings, pick validation), permissions/roles, stat pipeline (ingest→validate→publish), notification triggers (schedule/draft/trade/score), audit trail. Support—backups before drafts/schedule changes, retry/error handling for posts/notifications, observability on scheduling/draft jobs, CSV import/export for legacy data, rate limiting + auth.
 project: "schultz-hockey-league"
-project_type: "{{project_type}}"
+project_type: "web-app"
+project_level: "2"
 selected_track: "method"
 field_type: "greenfield"
 workflow_path: ".bmad/bmm/workflows/workflow-status/paths/method-greenfield.yaml"
@@ -32,7 +33,7 @@ workflow_status:
     name: "Discovery (Optional)"
     workflows:
       - id: "product-brief"
-        status: "docs/product-brief-schultz-hockey-league-2025-11-27.md"
+        status: "ai-docs/product-brief-schultz-hockey-league-2025-11-27.md"
         agent: "analyst"
         command: "product-brief"
       - id: "brainstorm-project"
@@ -50,17 +51,17 @@ workflow_status:
     name: "Planning"
     workflows:
       - id: "prd"
-        status: "docs/prd.md"
+        status: "ai-docs/prd.md"
         agent: "pm"
         command: "prd"
         output: "Product Requirements Document with FRs and NFRs"
       - id: "validate-prd"
-        status: "optional"
+        status: "ai-docs/validation-report-20251130T180952Z.md"
         agent: "pm"
         command: "validate-prd"
         note: "Quality check for PRD completeness"
       - id: "create-design"
-        status: "conditional"
+        status: "ai-docs/ux-design-specification.md"
         condition: "if_has_ui"
         agent: "ux-designer"
         command: "create-design"
@@ -70,18 +71,18 @@ workflow_status:
     name: "Solutioning"
     workflows:
       - id: "create-architecture"
-        status: "docs/bmm-architecture-2025-11-27.md"
+        status: "ai-docs/bmm-architecture-2025-11-27.md"
         agent: "architect"
         command: "create-architecture"
         output: "System architecture document"
         note: "Complete system design for greenfield projects"
       - id: "create-epics-and-stories"
-        status: "docs/bmm-epics-and-stories-2025-11-27.md"
+        status: "ai-docs/bmm-epics-and-stories-2025-11-27.md"
         agent: "pm"
         command: "create-epics-and-stories"
         note: "Break down PRD into epics and stories with full context (PRD + UX + Architecture)"
       - id: "test-design"
-        status: "docs/bmm-test-design-system-2025-11-27.md"
+        status: "ai-docs/bmm-test-design-system-2025-11-27.md"
         agent: "tea"
         command: "test-design"
         output: "System-level testability review"
@@ -92,7 +93,7 @@ workflow_status:
         command: "validate-architecture"
         note: "Quality check for architecture completeness"
       - id: "implementation-readiness"
-        status: "docs/implementation-readiness-report-2025-11-27.md"
+        status: "ai-docs/implementation-readiness-report-2025-11-27.md"
         agent: "architect"
         command: "implementation-readiness"
         note: "Validates PRD + UX + Architecture + Epics + Testability cohesion before implementation"
@@ -101,7 +102,7 @@ workflow_status:
     name: "Implementation"
     workflows:
       - id: "sprint-planning"
-        status: "docs/sprint-status.yaml"
+        status: "ai-docs/sprint-status.yaml"
         agent: "sm"
         command: "sprint-planning"
         note: "Creates sprint plan - subsequent work tracked there"

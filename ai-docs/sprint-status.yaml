@@ -2,7 +2,7 @@
 # project: schultz-hockey-league
 # project_key: schultz-hockey-league
 # tracking_system: file-system
-# story_location: docs/sprint-artifacts
+# story_location: ai-docs/sprint-artifacts
 
 # STATUS DEFINITIONS:
 # ==================
@@ -32,7 +32,7 @@ generated: 2025-11-27
 project: schultz-hockey-league
 project_key: schultz-hockey-league
 tracking_system: file-system
-story_location: docs/sprint-artifacts
+story_location: ai-docs/sprint-artifacts
 
 development_status:
   epic-1: backlog

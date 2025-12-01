@@ -15,9 +15,9 @@
 
 ## Project Context
 
-- Workflow status file found at docs/bmm-workflow-status.yaml; standalone_mode = false.
+- Workflow status file found at ai-docs/bmm-workflow-status.yaml; standalone_mode = false.
 - Track: method (greenfield). Next expected workflow per path: implementation-readiness (current).
-- Completed artifacts: PRD (docs/prd.md), Architecture (docs/bmm-architecture-2025-11-27.md), Epics (docs/epics.md), Test Design (docs/bmm-test-design-system-2025-11-27.md). UX design: not provided.
+- Completed artifacts: PRD (ai-docs/prd.md), Architecture (ai-docs/bmm-architecture-2025-11-27.md), Epics (ai-docs/epics.md), Test Design (ai-docs/bmm-test-design-system-2025-11-27.md). UX design: not provided.
 - Project type in status is unset (placeholder `{{project_type}}`), field_type: greenfield, project_level: 2, target scale: 20-40 stories.
 
 ---
@@ -26,10 +26,10 @@
 
 ### Documents Reviewed
 
-- PRD: docs/prd.md
-- Architecture: docs/bmm-architecture-2025-11-27.md
-- Epics & Stories: docs/epics.md
-- Test Design (System-Level): docs/bmm-test-design-system-2025-11-27.md
+- PRD: ai-docs/prd.md
+- Architecture: ai-docs/bmm-architecture-2025-11-27.md
+- Epics & Stories: ai-docs/epics.md
+- Test Design (System-Level): ai-docs/bmm-test-design-system-2025-11-27.md
 - UX Design: not provided
 - Tech Spec: not provided
 - Brownfield docs: not applicable
@@ -158,7 +158,7 @@ _Minor items for consideration_
 
 ### Workflow Status Update
 
-- Status updated: implementation-readiness → docs/implementation-readiness-report-2025-11-27.md
+- Status updated: implementation-readiness → ai-docs/implementation-readiness-report-2025-11-27.md
 - Next workflow: sprint-planning (sm agent)
 
 ---

@@ -21,7 +21,7 @@ export default function Nav() {
   const pathname = usePathname();
 
   return (
-    <Navbar maxWidth="xl">
+    <Navbar maxWidth="xl" isBordered>
       <NavbarContent>
         <Link href="/">
           <NavbarBrand>
@@ -36,7 +36,7 @@ export default function Nav() {
           return (
             <NavbarItem key={item.label} isActive={isActive}>
               <Link
-                color={isActive ? "danger" : "foreground"}
+                color={isActive ? "primary" : "foreground"}
                 href={item.href}
                 aria-current={isActive ? "page" : undefined}
               >

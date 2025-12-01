@@ -2,15 +2,10 @@
 
 @plugin "./hero.ts";
 @source "../../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}";
-
-:root {
-  color-scheme: dark;
-}
+@custom-variant dark (&:is(.dark *));
 
 body {
   min-height: 100vh;
-  background-color: #030712;
-  color: #f3f4f6;
   font-family:
     var(--font-geist-sans),
     system-ui,

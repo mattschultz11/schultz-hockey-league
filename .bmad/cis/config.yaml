@@ -3,11 +3,10 @@
 # Version: 6.0.0-alpha.12
 # Date: 2025-11-27T14:40:57.185Z
 
-
 # Core Configuration Values
 bmad_folder: .bmad
 user_name: Schultz
 communication_language: English
 document_output_language: English
-output_folder: '{project-root}/docs'
+output_folder: "{project-root}/ai-docs"
 install_user_docs: true

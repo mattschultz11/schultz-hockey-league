@@ -1,0 +1,13 @@
+{
+  "background": "#090a15",
+  "container": "#2D3748",
+  "border": "#39465A",
+  "text": "#F7FAFC",
+  "primary": "#16A394",
+  "primaryStrong": "#128778",
+  "secondary": "#7F9CF5",
+  "secondaryStrong": "#6885E6",
+  "warning": "#CC8B2F",
+  "error": "#C44747",
+  "info": "#2F6CC8"
+}

@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Schultz Hockey League – Design Directions</title>
+    <style>
+      :root {
+        --bg: #090a15;
+        --panel: #2d3748;
+        --panel-2: #233042;
+        --text: #f7fafc;
+        --muted: rgba(247, 250, 252, 0.82);
+        --mint: #16a394;
+        --mint-dark: #128778;
+        --secondary: #7f9cf5;
+        --amber: #cc8b2f;
+        --red: #c44747;
+        --stroke: #39465a;
+        --shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          "Inter",
+          system-ui,
+          -apple-system,
+          sans-serif;
+        background:
+          radial-gradient(120% 120% at 15% 10%, rgba(22, 163, 148, 0.1), transparent 35%),
+          radial-gradient(100% 100% at 85% 0%, rgba(127, 156, 245, 0.12), transparent 40%),
+          linear-gradient(140deg, #090a15 0%, #090a15 60%, #233042 100%);
+        color: var(--text);
+        padding: 24px;
+        line-height: 1.5;
+      }
+      h1 {
+        margin: 0 0 12px;
+        font-size: 1.75rem;
+      }
+      p {
+        margin: 0 0 12px;
+        color: var(--muted);
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 18px;
+        margin-top: 16px;
+      }
+      .card {
+        background: var(--panel);
+        border: 1px solid var(--stroke);
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: var(--shadow);
+      }
+      .label {
+        display: inline-block;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        border: 1px solid var(--stroke);
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 6px;
+        height: 180px;
+        background: var(--panel-2);
+        border-radius: 12px;
+        padding: 8px;
+        border: 1px solid var(--stroke);
+        margin-bottom: 12px;
+      }
+      .block {
+        background: rgba(22, 163, 148, 0.12);
+        border: 1px solid rgba(22, 163, 148, 0.45);
+        border-radius: 10px;
+      }
+      .block.alt {
+        background: rgba(204, 139, 47, 0.12);
+        border: 1px solid rgba(204, 139, 47, 0.45);
+      }
+      .block.accent {
+        background: rgba(47, 108, 200, 0.12);
+        border: 1px solid rgba(47, 108, 200, 0.45);
+      }
+      ul {
+        padding-left: 18px;
+        margin: 0;
+      }
+      li {
+        margin-bottom: 6px;
+        color: var(--muted);
+      }
+      .footer-note {
+        margin-top: 18px;
+        font-size: 0.9rem;
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Schultz Hockey League – Design Directions</h1>
+    <p>
+      Blended layout concepts: Command Center density, Draft Day Live clarity, and
+      Schedule/Standings navigation. Mobile-first with dark slate theme, teal primary and periwinkle
+      secondary accents, and high-contrast states.
+    </p>
+
+    <div class="grid">
+      <div class="card">
+        <div class="label">Direction 1 · Draft Day Live</div>
+        <div class="layout">
+          <div class="block" style="grid-column: span 9; grid-row: span 6"></div>
+          <div class="alt block" style="grid-column: span 3; grid-row: span 6"></div>
+          <div class="accent block" style="grid-column: span 12; grid-row: span 2"></div>
+        </div>
+        <ul>
+          <li>Two-pane desktop: board + context; current pick banner pinned.</li>
+          <li>Mobile: stacked cards; quick actions stay reachable.</li>
+          <li>High-contrast states for current pick, keepers, conflicts.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="label">Direction 2 · Command Center</div>
+        <div class="layout">
+          <div class="block" style="grid-column: span 2; grid-row: span 8"></div>
+          <div class="alt block" style="grid-column: span 10; grid-row: span 3"></div>
+          <div class="block" style="grid-column: span 5; grid-row: span 5"></div>
+          <div class="accent block" style="grid-column: span 5; grid-row: span 5"></div>
+        </div>
+        <ul>
+          <li>Desktop rail + sticky header; quick KPI cards.</li>
+          <li>Dense tables for standings/schedules with filters.</li>
+          <li>Action shortcuts for admins (publish, approve) in header.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="label">Direction 3 · Schedules & Standings Hub</div>
+        <div class="layout">
+          <div class="accent block" style="grid-column: span 12; grid-row: span 2"></div>
+          <div class="block" style="grid-column: span 6; grid-row: span 6"></div>
+          <div class="block" style="grid-column: span 6; grid-row: span 6"></div>
+          <div class="alt block" style="grid-column: span 12; grid-row: span 2"></div>
+        </div>
+        <ul>
+          <li>Tabbed views: schedule / standings / stats.</li>
+          <li>Filter chips; responsive tables → summary tiles on mobile.</li>
+          <li>Sticky league/season/team context; deep-linkable filters.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      Recommended blend: use Direction 1 for draft flow prominence, Direction 2 for desktop
+      density/rail, and Direction 3 for tabbed schedule/standings navigation. Apply mint accents for
+      active/safe states and amber/red for pending/errors. Keep keyboard focus rings strong and
+      consistent.
+    </div>
+  </body>
+</html>

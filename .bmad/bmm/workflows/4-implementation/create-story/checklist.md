@@ -62,7 +62,7 @@
 - [ ] Check exists: tech-spec-epic-{{epic_num}}*.md in {tech_spec_search_dir}
 - [ ] Check exists: {output_folder}/epics.md
 - [ ] Check exists: {output_folder}/PRD.md
-- [ ] Check exists in {output_folder}/ or {project-root}/docs/:
+- [ ] Check exists in {output_folder}/ or {project-root}/ai-docs/:
   - architecture.md, testing-strategy.md, coding-standards.md
   - unified-project-structure.md, tech-stack.md
   - backend-architecture.md, frontend-architecture.md, data-models.md

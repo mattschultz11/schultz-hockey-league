@@ -24,10 +24,10 @@ variables:
   prd_file: "{output_folder}/PRD.md" # Fallback for requirements
   architecture_file: "{output_folder}/architecture.md" # Optional architecture context
   tech_spec_file: "" # Will be auto-discovered from docs as tech-spec-epic-{{epic_num}}-*.md
-  tech_spec_search_dir: "{project-root}/docs"
+  tech_spec_search_dir: "{project-root}/ai-docs"
   tech_spec_glob_template: "tech-spec-epic-{{epic_num}}*.md"
   arch_docs_search_dirs: |
-    - "{project-root}/docs"
+    - "{project-root}/ai-docs"
     - "{output_folder}"
   arch_docs_file_names: |
     - *architecture*.md

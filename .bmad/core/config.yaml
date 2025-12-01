@@ -7,5 +7,5 @@ bmad_folder: .bmad
 user_name: Schultz
 communication_language: English
 document_output_language: English
-output_folder: '{project-root}/docs'
+output_folder: "{project-root}/ai-docs"
 install_user_docs: true

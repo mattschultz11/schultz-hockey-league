@@ -6,7 +6,7 @@ Architecture centers on a hybrid API (GraphQL for reads, REST for uploads/webhoo
 
 ## Project Context Understanding
 
-- Source documents: PRD at docs/prd.md; no epics/UX/design shards loaded.
+- Source documents: PRD at ai-docs/prd.md; no epics/UX/design shards loaded.
 - Scope overview: multi-league + multi-season web app with in-person draft board, schedule publishing, basic stats upload/display, roster/trade management, and role-based permissions (admins, team managers, viewers).
 - Functional requirements: 21 total, grouped under Draft Board & Roster; Schedules; Stats & Results; Roles & Access; General (exports, multi-league/season support).
 - Non-functional focus: near-real-time draft board responsiveness; fast schedule/stats reads; role-based auth with audit of overrides; HTTPS/secure sessions; responsive desktop-first UX with acceptable mobile; accessibility for readability/keyboard nav; no external integrations beyond exports.

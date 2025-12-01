@@ -1,0 +1,103 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "bmad-wireframe",
+  "theme": "dark",
+  "elements": [
+    { "id": "screen-landing", "type": "rectangle", "x": 100, "y": 60, "width": 800, "height": 520, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 1, "name": "Landing / Command Center" },
+    { "id": "landing-header", "type": "rectangle", "x": 100, "y": 60, "width": 800, "height": 70, "strokeColor": "#39465A", "backgroundColor": "#233042", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 2, "name": "Header" },
+    { "id": "landing-tiles", "type": "rectangle", "x": 120, "y": 150, "width": 360, "height": 120, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "hachure", "strokeWidth": 2, "roughness": 0, "seed": 3, "name": "Summary Tiles" },
+    { "id": "landing-actions", "type": "rectangle", "x": 520, "y": 150, "width": 360, "height": 120, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "hachure", "strokeWidth": 2, "roughness": 0, "seed": 4, "name": "Quick Actions" },
+    { "id": "landing-nav", "type": "rectangle", "x": 120, "y": 300, "width": 760, "height": 60, "strokeColor": "#39465A", "backgroundColor": "#233042", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 5, "name": "Nav Tabs" },
+    { "id": "landing-cta", "type": "rectangle", "x": 120, "y": 380, "width": 760, "height": 40, "strokeColor": "#16A394", "backgroundColor": "#16A394", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 6, "name": "Primary CTA" },
+    { "id": "landing-copy", "type": "text", "x": 140, "y": 430, "width": 360, "height": 40, "angle": 0, "strokeColor": "#F7FAFC", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 1, "roughness": 0, "seed": 7, "text": "Surface league snapshot + navigation to Draft, Schedule, Standings.", "fontSize": 16, "fontFamily": 1, "textAlign": "left", "verticalAlign": "top", "baseline": 32 },
+
+    { "id": "screen-draft", "type": "rectangle", "x": 100, "y": 620, "width": 800, "height": 520, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 8, "name": "Draft Board" },
+    { "id": "draft-left", "type": "rectangle", "x": 100, "y": 620, "width": 520, "height": 520, "strokeColor": "#39465A", "backgroundColor": "#233042", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 9, "name": "Board / Picks" },
+    { "id": "draft-right", "type": "rectangle", "x": 640, "y": 620, "width": 260, "height": 520, "strokeColor": "#39465A", "backgroundColor": "#233042", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 10, "name": "Available / Filters" },
+    { "id": "draft-banner", "type": "rectangle", "x": 100, "y": 620, "width": 800, "height": 60, "strokeColor": "#16A394", "backgroundColor": "#16A394", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 11, "name": "Current Pick Banner" },
+    { "id": "draft-cta", "type": "rectangle", "x": 100, "y": 1100, "width": 800, "height": 40, "strokeColor": "#16A394", "backgroundColor": "#16A394", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 12, "name": "Action Bar" },
+    { "id": "draft-copy", "type": "text", "x": 120, "y": 1148, "width": 540, "height": 40, "angle": 0, "strokeColor": "#F7FAFC", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 1, "roughness": 0, "seed": 13, "text": "Two-pane desktop; CTA bar; states for current pick, keeper flags, conflicts.", "fontSize": 16, "fontFamily": 1, "textAlign": "left", "verticalAlign": "top", "baseline": 32 },
+
+    { "id": "screen-schedule", "type": "rectangle", "x": 980, "y": 60, "width": 800, "height": 520, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 14, "name": "Schedule & Filters" },
+    { "id": "schedule-filters", "type": "rectangle", "x": 1000, "y": 80, "width": 760, "height": 70, "strokeColor": "#39465A", "backgroundColor": "#233042", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 15, "name": "Filters" },
+    { "id": "schedule-table", "type": "rectangle", "x": 1000, "y": 170, "width": 760, "height": 380, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "hachure", "strokeWidth": 2, "roughness": 0, "seed": 16, "name": "Table / Cards" },
+    { "id": "schedule-copy", "type": "text", "x": 1020, "y": 560, "width": 520, "height": 40, "angle": 0, "strokeColor": "#F7FAFC", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 1, "roughness": 0, "seed": 17, "text": "Filters for date/location/status; desktop table, mobile cards; empty/no-results states.", "fontSize": 16, "fontFamily": 1, "textAlign": "left", "verticalAlign": "top", "baseline": 32 },
+
+    { "id": "screen-standings", "type": "rectangle", "x": 980, "y": 620, "width": 800, "height": 520, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 18, "name": "Standings / Stats" },
+    { "id": "standings-table", "type": "rectangle", "x": 1000, "y": 640, "width": 760, "height": 340, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "hachure", "strokeWidth": 2, "roughness": 0, "seed": 19, "name": "Leaderboards" },
+    { "id": "standings-summary", "type": "rectangle", "x": 1000, "y": 1000, "width": 360, "height": 120, "strokeColor": "#39465A", "backgroundColor": "#233042", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 20, "name": "Mobile Summary Tiles" },
+    { "id": "standings-copy", "type": "text", "x": 1020, "y": 1130, "width": 520, "height": 40, "angle": 0, "strokeColor": "#F7FAFC", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 1, "roughness": 0, "seed": 21, "text": "Sortable headers, pinned columns on desktop; mobile tiles with expand; trend indicators.", "fontSize": 16, "fontFamily": 1, "textAlign": "left", "verticalAlign": "top", "baseline": 32 },
+
+    { "id": "screen-stats", "type": "rectangle", "x": 1860, "y": 60, "width": 800, "height": 520, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 22, "name": "Stats Submission" },
+    { "id": "stats-form", "type": "rectangle", "x": 1880, "y": 80, "width": 760, "height": 480, "strokeColor": "#39465A", "backgroundColor": "#233042", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 23, "name": "Form" },
+    { "id": "stats-copy", "type": "text", "x": 1900, "y": 570, "width": 520, "height": 40, "angle": 0, "strokeColor": "#F7FAFC", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 1, "roughness": 0, "seed": 24, "text": "Default/dirty/submitted/pending; inline validation; success/error messages.", "fontSize": 16, "fontFamily": 1, "textAlign": "left", "verticalAlign": "top", "baseline": 32 },
+
+    { "id": "screen-approval", "type": "rectangle", "x": 1860, "y": 620, "width": 800, "height": 520, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 25, "name": "Admin Approval Queue" },
+    { "id": "approval-list", "type": "rectangle", "x": 1880, "y": 640, "width": 760, "height": 320, "strokeColor": "#39465A", "backgroundColor": "#233042", "fillStyle": "hachure", "strokeWidth": 2, "roughness": 0, "seed": 26, "name": "Queue List" },
+    { "id": "approval-actions", "type": "rectangle", "x": 1880, "y": 980, "width": 760, "height": 80, "strokeColor": "#16A394", "backgroundColor": "#16A394", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 27, "name": "Approve/Reject Bar" },
+    { "id": "approval-copy", "type": "text", "x": 1900, "y": 1070, "width": 520, "height": 40, "angle": 0, "strokeColor": "#F7FAFC", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 1, "roughness": 0, "seed": 28, "text": "States: pending/approved/rejected; reason capture on reject; optimistic update with undo.", "fontSize": 16, "fontFamily": 1, "textAlign": "left", "verticalAlign": "top", "baseline": 32 },
+
+    { "id": "mobile-draft", "type": "rectangle", "x": 100, "y": 1180, "width": 260, "height": 420, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 29, "name": "Mobile Draft Variant" },
+    { "id": "mobile-schedule", "type": "rectangle", "x": 380, "y": 1180, "width": 260, "height": 420, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 30, "name": "Mobile Schedule Cards" },
+    { "id": "mobile-standings", "type": "rectangle", "x": 660, "y": 1180, "width": 260, "height": 420, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 31, "name": "Mobile Standings Tiles" },
+    { "id": "tablet-draft", "type": "rectangle", "x": 960, "y": 1180, "width": 420, "height": 420, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 32, "name": "Tablet Draft Two-Column" },
+    { "id": "tablet-schedule", "type": "rectangle", "x": 1420, "y": 1180, "width": 420, "height": 420, "angle": 0, "strokeColor": "#39465A", "backgroundColor": "#2D3748", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 33, "name": "Tablet Schedule Grid" },
+
+    { "id": "states-focus", "type": "text", "x": 120, "y": 1620, "width": 520, "height": 40, "angle": 0, "strokeColor": "#F7FAFC", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 1, "roughness": 0, "seed": 34, "text": "Interaction notes: focus rings (#7F9CF5), hover lift, active darken, disabled desat, loading skeletons.", "fontSize": 16, "fontFamily": 1, "textAlign": "left", "verticalAlign": "top", "baseline": 32 },
+    { "id": "states-semantic", "type": "text", "x": 120, "y": 1660, "width": 520, "height": 40, "angle": 0, "strokeColor": "#F7FAFC", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 1, "roughness": 0, "seed": 35, "text": "Semantic cues: success #16A394, warning #CC8B2F, error #C44747, info #2F6CC8.", "fontSize": 16, "fontFamily": 1, "textAlign": "left", "verticalAlign": "top", "baseline": 32 },
+
+    { "id": "landing-tile-1", "type": "rectangle", "x": 140, "y": 170, "width": 150, "height": 40, "strokeColor": "#16A394", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 42, "name": "Metric" },
+    { "id": "landing-tile-2", "type": "rectangle", "x": 310, "y": 170, "width": 150, "height": 40, "strokeColor": "#7F9CF5", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 43, "name": "Metric" },
+    { "id": "landing-btn", "type": "rectangle", "x": 550, "y": 180, "width": 120, "height": 36, "strokeColor": "#16A394", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 44, "name": "Button" },
+
+    { "id": "draft-row-1", "type": "rectangle", "x": 120, "y": 720, "width": 480, "height": 40, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 45, "name": "Pick Row" },
+    { "id": "draft-row-2", "type": "rectangle", "x": 120, "y": 770, "width": 480, "height": 40, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 46, "name": "Pick Row" },
+    { "id": "draft-filter", "type": "rectangle", "x": 660, "y": 660, "width": 220, "height": 36, "strokeColor": "#7F9CF5", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 47, "name": "Search/Filter" },
+
+    { "id": "schedule-row-1", "type": "rectangle", "x": 1020, "y": 190, "width": 720, "height": 40, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 48, "name": "Game Row" },
+    { "id": "schedule-row-2", "type": "rectangle", "x": 1020, "y": 240, "width": 720, "height": 40, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 49, "name": "Game Row" },
+    { "id": "schedule-pill", "type": "rectangle", "x": 1020, "y": 100, "width": 100, "height": 28, "strokeColor": "#7F9CF5", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 50, "name": "Filter Chip" },
+
+    { "id": "standings-header", "type": "rectangle", "x": 1020, "y": 660, "width": 720, "height": 36, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 51, "name": "Sortable Header" },
+    { "id": "standings-row-1", "type": "rectangle", "x": 1020, "y": 706, "width": 720, "height": 32, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 52, "name": "Team Row" },
+    { "id": "standings-row-2", "type": "rectangle", "x": 1020, "y": 742, "width": 720, "height": 32, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 53, "name": "Team Row" },
+
+    { "id": "stats-field-1", "type": "rectangle", "x": 1900, "y": 120, "width": 320, "height": 32, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 54, "name": "Input" },
+    { "id": "stats-field-2", "type": "rectangle", "x": 1900, "y": 164, "width": 320, "height": 32, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 55, "name": "Input" },
+    { "id": "stats-error", "type": "rectangle", "x": 1900, "y": 208, "width": 320, "height": 28, "strokeColor": "#C44747", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 56, "name": "Error Message" },
+    { "id": "stats-success", "type": "rectangle", "x": 1900, "y": 246, "width": 320, "height": 28, "strokeColor": "#16A394", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 57, "name": "Success Message" },
+
+    { "id": "approval-row-1", "type": "rectangle", "x": 1900, "y": 660, "width": 720, "height": 32, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 58, "name": "Submission Row" },
+    { "id": "approval-row-2", "type": "rectangle", "x": 1900, "y": 696, "width": 720, "height": 32, "strokeColor": "#39465A", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 59, "name": "Submission Row" },
+    { "id": "approval-btn-approve", "type": "rectangle", "x": 1900, "y": 990, "width": 160, "height": 40, "strokeColor": "#16A394", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 60, "name": "Approve" },
+    { "id": "approval-btn-reject", "type": "rectangle", "x": 2070, "y": 990, "width": 160, "height": 40, "strokeColor": "#C44747", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 61, "name": "Reject (with reason)" },
+    { "id": "approval-btn-undo", "type": "rectangle", "x": 2240, "y": 990, "width": 140, "height": 40, "strokeColor": "#7F9CF5", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 62, "name": "Undo" },
+
+    { "id": "flow-landing-draft", "type": "arrow", "x": 520, "y": 580, "width": 0, "height": 40, "points": [[0, 0], [0, 40]], "strokeColor": "#7F9CF5", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 36 },
+    { "id": "flow-landing-schedule", "type": "arrow", "x": 900, "y": 320, "width": 60, "height": 0, "points": [[0, 0], [60, 0]], "strokeColor": "#7F9CF5", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 37 },
+    { "id": "flow-landing-standings", "type": "arrow", "x": 900, "y": 940, "width": 60, "height": 0, "points": [[0, 0], [60, 0]], "strokeColor": "#7F9CF5", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 38 },
+    { "id": "flow-landing-stats", "type": "arrow", "x": 900, "y": 320, "width": 900, "height": -220, "points": [[0, 0], [900, -220]], "strokeColor": "#7F9CF5", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 39 },
+    { "id": "flow-standings-stats", "type": "arrow", "x": 1780, "y": 920, "width": 80, "height": -500, "points": [[0, 0], [80, -500]], "strokeColor": "#7F9CF5", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 40 },
+    { "id": "flow-stats-approval", "type": "arrow", "x": 2260, "y": 600, "width": 0, "height": 40, "points": [[0, 0], [0, 40]], "strokeColor": "#7F9CF5", "backgroundColor": "transparent", "fillStyle": "solid", "strokeWidth": 2, "roughness": 0, "seed": 41 }
+  ],
+  "appState": {
+    "gridSize": 20,
+    "viewBackgroundColor": "#090a15",
+    "currentItemStrokeColor": "#16A394",
+    "currentItemBackgroundColor": "#2D3748",
+    "currentItemFillStyle": "solid",
+    "currentItemStrokeWidth": 2,
+    "currentItemRoughness": 0,
+    "currentItemRoundness": 4,
+    "currentItemFontSize": 16,
+    "currentItemFontFamily": 1,
+    "currentItemOpacity": 100,
+    "scrollX": 0,
+    "scrollY": 0,
+    "zoom": 0.7,
+    "theme": "dark"
+  },
+  "files": {},
+  "sourceId": "3e86af3294561f76973d5f8f66ce75f2"
+}
