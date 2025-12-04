@@ -19,7 +19,7 @@ A Next.js 16 App Router workspace that already has the requested tooling and lib
    npm install
    ```
 
-2. Duplicate `.env.example` to `.env` and provide your PostgreSQL connection string:
+2. Duplicate `.env.example` to `.env` and provide required values (DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL, auth provider keys):
 
    ```bash
    cp .env.example .env
@@ -46,6 +46,14 @@ A Next.js 16 App Router workspace that already has the requested tooling and lib
    ```
 
 The dashboard lives at [http://localhost:3000](http://localhost:3000). Live widgets hit `/api/graphql`, so no extra services are required for the mock data set.
+
+6. Verify health endpoint and connectivity:
+
+   ```bash
+   curl -i http://localhost:3000/api/health
+   ```
+
+   You should see a 200 response with `status: "ok"` and `db: "ok"`; failures will return 503 with an error message and `x-request-id` for tracing.
 
 ## Quality-of-life Scripts
 

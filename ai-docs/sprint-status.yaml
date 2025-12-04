@@ -36,8 +36,8 @@ story_location: ai-docs/sprint-artifacts
 
 development_status:
   epic-1: backlog
-  1-1-project-setup-and-environments: backlog
-  1-2-auth-baseline-with-roles: backlog
+  1-1-project-setup-and-environments: done
+  1-2-auth-baseline-with-roles: drafted
   1-3-rbac-enforcement-helpers: backlog
   1-4-audit-and-logging-baseline: backlog
   epic-1-retrospective: optional

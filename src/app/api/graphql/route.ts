@@ -4,6 +4,10 @@ import { createYoga } from "graphql-yoga";
 import { schema } from "@/graphql/schema";
 import prisma from "@/lib/prisma";
 
+interface NextContext {
+  params: Promise<Record<string, string>>;
+}
+
 function resolveCurrentUser(request: Request) {
   return pipe(
     request.headers.get("x-user-id"),
@@ -13,7 +17,7 @@ function resolveCurrentUser(request: Request) {
   );
 }
 
-const yoga = createYoga({
+const yoga = createYoga<NextContext>({
   schema,
   graphqlEndpoint: "/api/graphql",
   context: async ({ request }) => ({

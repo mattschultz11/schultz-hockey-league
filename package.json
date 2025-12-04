@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "build": "npm run prisma:generate && next build",
+    "start": "npm run prisma:deploy && next start",
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --max-warnings=0 --fix",
     "lint-staged": "lint-staged",
@@ -16,10 +16,11 @@
     "codegen": "node --loader ts-node/esm codegen.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prisma": "dotenvx run -- prisma",
+    "prisma": "dotenvx run --convention=nextjs -- prisma",
     "prisma:generate": "npm run prisma -- generate",
     "prisma:migrate": "npm run prisma -- migrate dev",
     "prisma:reset": "npm run prisma -- migrate reset",
+    "prisma:deploy": "npm run prisma -- migrate deploy",
     "prisma:studio": "npm run prisma -- studio",
     "prepare": "husky"
   },

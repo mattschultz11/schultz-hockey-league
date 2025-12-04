@@ -32,5 +32,5 @@
     "**/*.mts",
     "src/graphql/type-defs.mjs"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules", "test"]
 }

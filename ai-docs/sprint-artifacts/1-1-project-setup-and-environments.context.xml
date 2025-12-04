@@ -1,0 +1,115 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1</storyId>
+    <title>Project setup and environments</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-01</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>ai-docs/sprint-artifacts/1-1-project-setup-and-environments.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>admin</asA>
+    <iWant>the project bootstrapped locally with documented environments and a working health check</iWant>
+    <soThat>we can run and deploy the app confidently</soThat>
+    <tasks>- [ ] Initialize environments (AC: #1, #2)
+  - [ ] Refresh `.env.example` with required keys for NextAuth, database, and app secrets; add brief comments per key.
+  - [ ] Add a startup guard that exits with a clear error when required env vars are missing or invalid.
+- [ ] Health check + DB wiring (AC: #1, #3)
+  - [ ] Implement `/api/health` that returns 200 with build info and verifies Prisma connection to the configured database.
+  - [ ] Add a lightweight timing log for the health path to ensure the 500ms target is tracked.
+- [ ] Dev bootstrap validation (AC: #1)
+  - [ ] Run `npm run dev` after `npm install` and confirm health endpoint reachable; capture any setup notes.
+- [ ] Deployment baseline (AC: #4, #5)
+  - [ ] Configure Vercel project with environment variables and Neon connection string; verify deployed `/api/health` returns 200 under 500ms.
+  - [ ] Ensure no secrets live in the repo; rely on Vercel/Neon secrets storage.
+- [ ] Build/test pipeline (AC: #5)
+  - [ ] Run `npm run lint` and `npm test`; if CI exists, ensure it passes, otherwise document expected commands.
+- [ ] Documentation (AC: #2, #5)
+  - [ ] Add or update a short README section for setup/run/deploy steps and where story artifacts live (`ai-docs/sprint-artifacts`).</tasks>
+  </story>
+
+  <acceptanceCriteria>1. Local bootstrap succeeds: after `npm install` and `npm run dev`, the app starts without blocking errors and a `/api/health` endpoint responds 200 within 500ms against the dev database. (Source: ai-docs/epics.md#Epic-1-Foundation--Access)
+2. `.env.example` lists all required secrets/config (auth provider, database URL, NextAuth session settings, telemetry toggles) with no secrets committed; missing required envs fail fast with clear errors. (Source: ai-docs/prd.md#Functional-Requirements)
+3. Prisma connectivity validated: migrations run against the configured database; health check verifies DB connectivity and reports status. (Source: ai-docs/architecture.md#Executive-Summary)
+4. Deployment baseline: Vercel project + Neon Postgres configured with required env vars; deployed health endpoint responds 200 within 500ms. (Source: ai-docs/epics.md#Epic-1-Foundation--Access)
+5. Build pipeline or Vercel checks complete successfully (lint/tests/build) with no manual fixes; setup steps are documented for future stories. (Source: ai-docs/architecture.md#Project-Initialization)</acceptanceCriteria>
+
+  <artifacts>
+    <docs>- path: ai-docs/prd.md
+  title: Schultz Hockey League - Product Requirements Document
+  section: Non-Functional Requirements
+  snippet: Performance targets include a fast health endpoint; environments documented for deployment and local dev; roles are admin/manager/viewer with secure sessions.
+- path: ai-docs/epics.md
+  title: Epic 1: Foundation & Access
+  section: Story 1.1 Technical Notes
+  snippet: Follow architecture doc structure; add health route; verify Prisma connection; ensure deployment baseline with env documentation.
+- path: ai-docs/architecture.md
+  title: Architecture
+  section: API contract
+  snippet: Hybrid Next.js app with REST handlers for uploads/webhooks/health; GET `/api/health` returns service status; Vercel + Postgres/Prisma baseline.
+- path: ai-docs/bmm-architecture-2025-11-27.md
+  title: Architecture (Decision Record)
+  section: Deployment Architecture
+  snippet: Vercel hosting with Neon Postgres snapshots; health endpoint under app/api/health/route.ts; secure cookies and audited writes.
+- path: ai-docs/test-design-system.md
+  title: Test Design System
+  section: Health/observability
+  snippet: Observability items track `/api/health`, trace headers, backup/restore validation; health checks part of ops readiness.
+- path: ai-docs/implementation-readiness-report-2025-11-27.md
+  title: Implementation Readiness Report
+  section: Observability
+  snippet: Early action items include health endpoint, trace IDs/logging, and migration readiness to support testing and deployability.</docs>
+    <code>- path: src/app/api/graphql/route.ts
+  kind: api-route
+  symbol: GraphQL Yoga handler
+  lines: n/a
+  reason: Reference for Next.js API route structure; health route should mirror handler conventions.
+- path: prisma/schema.prisma
+  kind: schema
+  symbol: datasource db
+  lines: 1-80
+  reason: Prisma datasource and model set; health check should validate this connection.
+- path: package.json
+  kind: config
+  symbol: scripts
+  lines: n/a
+  reason: Provides dev/build/test scripts (`npm run dev`, `lint`, `test`, `typecheck`) used in ACs and validation.
+- path: src/service/utils.ts
+  kind: utility
+  symbol: logging helpers (inspect existing patterns)
+  lines: n/a
+  reason: Potential place to align requestId/timing logs for health endpoint.
+- path: src/app/layout.tsx
+  kind: app-shell
+  symbol: root layout
+  lines: n/a
+  reason: Confirms Next.js app-router structure; informs route placement for `/api/health`.</code>
+    <dependencies>- node (package.json):
+  - next 16.0.1
+  - react 19.2.0 / react-dom 19.2.0
+  - graphql-yoga 5.16.2, @apollo/client 4.0.9
+  - prisma 7.0.1, @prisma/client 7.0.1, pg 8.16.3
+  - @dotenvx/dotenvx for env loading
+  - tailwindcss 4.1.17, @heroui/react 2.8.5, framer-motion 12.23.24
+  - jest 30.2.0, @testing-library/react 16.3.0, ts-jest 29.4.5
+  - eslint 9.x, prettier 3.6.2</dependencies>
+  </artifacts>
+
+  <constraints>- REST health endpoint required; keep under app/api/health/route.ts and reuse shared Prisma client to avoid connection duplication.
+- Enforce secure/httpOnly cookies and keep secrets out of repo; use Vercel/Neon env storage.
+- Deny-by-default posture for API handlers; log requestId and auth context on health for traceability.
+- Maintain feature-first structure; keep observability (timing log) lightweight and within 500ms target.</constraints>
+  <interfaces>- REST: GET /api/health → 200 with service status and DB connectivity probe (per architecture)
+- GraphQL: /api/graphql handler exists (Yoga) and demonstrates route wiring; reuse conventions for env loading.</interfaces>
+  <tests>
+    <standards>Jest + Testing Library; SWC/JSDOM setup; lint and typecheck required; observability checks (health/trace) noted in test design system.</standards>
+    <locations>Tests colocated under src/**\/*.test.ts(x); Jest config via jest.config.ts; use `npm test` / `npm run lint` / `npm run typecheck`.</locations>
+    <ideas>- AC1: integration test that boots app and hits `/api/health` (mock Prisma) expecting 200 and timing field.
+- AC2: unit test for env guard to fail fast when required vars missing.
+- AC3: health handler test mocking Prisma connectivity success/failure.
+- AC4: deploy smoke (documented) to confirm health 200 under 500ms against Neon (manual/CI note).
+- AC5: script checks (`lint`, `test`, `typecheck`) run clean; add README verification note.</ideas>
+  </tests>
+</story-context>
