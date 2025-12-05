@@ -5,7 +5,7 @@ import type { DraftPick, Player, Prisma, Team } from "@/lib/prisma";
 
 import { maybeGetPlayerById } from "./playerService";
 import { maybeGetTeamById } from "./teamService";
-import { ServiceContext } from "./types";
+import type { ServiceContext } from "./types";
 import { assertNonNullableFields, cleanInput, invariant } from "./utils";
 
 export function getDraftPicksBySeason(seasonId: string, ctx: ServiceContext) {

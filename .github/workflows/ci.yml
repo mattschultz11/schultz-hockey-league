@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  statuses: write
+
+jobs:
+  build-test:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/schultz_hockey_league?schema=public
+      NEXTAUTH_SECRET: test-secret
+      NEXTAUTH_URL: http://localhost:3000
+      ENABLE_REQUEST_LOGGING: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - run: npm run env:write
+
+      - run: npm ci
+
+      - run: npm run prisma:generate
+
+      - name: Lint
+        run: npm run lint && npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm run test:ci
+        env:
+          DATABASE_URL: file:./tmp/prisma-test.db
+
+      - run: npm run build
+
+      - name: "Notify Vercel"
+        uses: "vercel/repository-dispatch/actions/status@v1"
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.fork == false
+        with:
+          name: Vercel - schultz-hockey-league

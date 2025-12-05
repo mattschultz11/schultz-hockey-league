@@ -1,5 +1,5 @@
-import { PrismaClient, User } from "@/lib/prisma";
-import { ServiceContext } from "@/service/types";
+import type { PrismaClient, User } from "@/lib/prisma";
+import type { ServiceContext } from "@/service/types";
 
 import prisma from "./lib/prisma";
 

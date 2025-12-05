@@ -16,7 +16,7 @@ import {
 } from "@ngneat/falso";
 import { Predicate } from "effect";
 
-import {
+import type {
   DraftPick,
   Game,
   Goal,

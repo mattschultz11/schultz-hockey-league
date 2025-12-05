@@ -1,6 +1,6 @@
 import { Option, pipe, Predicate } from "effect";
 
-import { ServiceContext } from "./types";
+import type { ServiceContext } from "./types";
 
 export function cleanInput<T extends Record<string, unknown>>(data: T) {
   return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)) as T;

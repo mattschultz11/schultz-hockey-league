@@ -1,10 +1,10 @@
 import { Option } from "effect";
 
-import { Team } from "@/lib/prisma";
+import type { Team } from "@/lib/prisma";
 
 import type { PlayerCreateInput, PlayerUpdateInput } from "../graphql/generated";
 import { maybeGetTeamById } from "./teamService";
-import { ServiceContext } from "./types";
+import type { ServiceContext } from "./types";
 import { cleanInput, invariant, maybeGet } from "./utils";
 
 export function getPlayersBySeason(seasonId: string, ctx: ServiceContext) {

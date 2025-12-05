@@ -6,7 +6,7 @@ import type { Game, Player, Prisma, Team } from "@/lib/prisma";
 import { getGameById } from "./gameService";
 import { getPlayerById, maybeGetPlayerById } from "./playerService";
 import { getTeamById } from "./teamService";
-import { ServiceContext } from "./types";
+import type { ServiceContext } from "./types";
 import { assertNonNullableFields, cleanInput, invariant } from "./utils";
 
 export function getGoalsBySeason(seasonId: string, ctx: ServiceContext) {

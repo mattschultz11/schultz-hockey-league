@@ -52,6 +52,8 @@ const setupDatabase = (testDbUrl) => {
 const setup = () => {
   const testDbUrl = process.env.DATABASE_URL ?? DEFAULT_DB_URL;
   process.env.DATABASE_URL = testDbUrl;
+  process.env.NEXTAUTH_SECRET ??= "test-secret";
+  process.env.NEXTAUTH_URL ??= "http://localhost:3000";
   fs.mkdirSync("tmp", { recursive: true });
   setupDatabase(testDbUrl);
   copyPrismaSchema();

@@ -6,8 +6,6 @@ type EnvConfig = {
   databaseUrl: string;
   nextAuthSecret: string;
   nextAuthUrl: string;
-  authProviderClientId: string;
-  authProviderClientSecret: string;
   enableRequestLogging: boolean;
 };
 
@@ -21,14 +19,6 @@ export function readEnv(fromEnv: NodeJS.ProcessEnv = process.env): EnvConfig {
     databaseUrl: checkNotNullable(fromEnv.DATABASE_URL, "DATABASE_URL is not set"),
     nextAuthSecret: checkNotNullable(fromEnv.NEXTAUTH_SECRET, "NEXTAUTH_SECRET is not set"),
     nextAuthUrl: checkNotNullable(fromEnv.NEXTAUTH_URL, "NEXTAUTH_URL is not set"),
-    authProviderClientId: checkNotNullable(
-      fromEnv.AUTH_PROVIDER_CLIENT_ID,
-      "AUTH_PROVIDER_CLIENT_ID is not set",
-    ),
-    authProviderClientSecret: checkNotNullable(
-      fromEnv.AUTH_PROVIDER_CLIENT_SECRET,
-      "AUTH_PROVIDER_CLIENT_SECRET is not set",
-    ),
     enableRequestLogging: parseBool(fromEnv.ENABLE_REQUEST_LOGGING, false),
   };
 }

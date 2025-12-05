@@ -4,7 +4,7 @@ import type { GameCreateInput, GameUpdateInput } from "@/graphql/generated";
 import type { Prisma, Team } from "@/lib/prisma";
 
 import { maybeGetTeamById } from "./teamService";
-import { ServiceContext } from "./types";
+import type { ServiceContext } from "./types";
 import { assertNonNullableFields, cleanInput, invariant, maybeGet } from "./utils";
 
 export function getGamesBySeason(seasonId: string, ctx: ServiceContext) {

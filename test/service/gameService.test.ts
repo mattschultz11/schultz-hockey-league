@@ -1,7 +1,8 @@
 import { createGame, updateGame } from "@/service/gameService";
-import { ServiceContext } from "@/service/types";
+import type { ServiceContext } from "@/service/types";
 
-import { insertSeason, insertTeam, makeGame, SeasonModel } from "../modelFactory";
+import type { SeasonModel } from "../modelFactory";
+import { insertSeason, insertTeam, makeGame } from "../modelFactory";
 import { createCtx } from "../utils";
 
 describe("gameService", () => {

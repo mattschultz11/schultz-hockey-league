@@ -1,14 +1,8 @@
 import { createPlayer, updatePlayer } from "@/service/playerService";
-import { ServiceContext } from "@/service/types";
+import type { ServiceContext } from "@/service/types";
 
-import {
-  insertSeason,
-  insertTeam,
-  insertUser,
-  makePlayer,
-  SeasonModel,
-  UserModel,
-} from "../modelFactory";
+import type { SeasonModel, UserModel } from "../modelFactory";
+import { insertSeason, insertTeam, insertUser, makePlayer } from "../modelFactory";
 import { createCtx } from "../utils";
 
 describe("playerService", () => {

@@ -1,7 +1,7 @@
 import type { UserCreateInput, UserUpdateInput } from "@/graphql/generated";
 import type { Prisma } from "@/lib/prisma";
 
-import { ServiceContext } from "./types";
+import type { ServiceContext } from "./types";
 import { assertNonNullableFields, cleanInput, maybeGet } from "./utils";
 
 export function getUsers(ctx: ServiceContext) {

@@ -3,7 +3,7 @@ import { Option, pipe } from "effect";
 import type { SeasonCreateInput, SeasonUpdateInput } from "@/graphql/generated";
 import type { Prisma, Season } from "@/lib/prisma";
 
-import { ServiceContext } from "./types";
+import type { ServiceContext } from "./types";
 import { assertNonNullableFields, cleanInput, generateSlug, invariant, maybeGet } from "./utils";
 
 export function getSeasonsByLeague(leagueId: string, ctx: ServiceContext) {

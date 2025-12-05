@@ -5,8 +5,6 @@ describe("readEnv", () => {
     DATABASE_URL: "postgresql://user:pass@localhost:5432/db",
     NEXTAUTH_SECRET: "secret",
     NEXTAUTH_URL: "http://localhost:3000",
-    AUTH_PROVIDER_CLIENT_ID: "client-id",
-    AUTH_PROVIDER_CLIENT_SECRET: "client-secret",
     NODE_ENV: "test",
   } as const;
 
@@ -20,8 +18,6 @@ describe("readEnv", () => {
       databaseUrl: baseEnv.DATABASE_URL,
       nextAuthSecret: baseEnv.NEXTAUTH_SECRET,
       nextAuthUrl: baseEnv.NEXTAUTH_URL,
-      authProviderClientId: baseEnv.AUTH_PROVIDER_CLIENT_ID,
-      authProviderClientSecret: baseEnv.AUTH_PROVIDER_CLIENT_SECRET,
       enableRequestLogging: true,
     });
   });

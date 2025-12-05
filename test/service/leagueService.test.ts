@@ -1,5 +1,5 @@
 import { createLeague, updateLeague } from "@/service/leagueService";
-import { ServiceContext } from "@/service/types";
+import type { ServiceContext } from "@/service/types";
 
 import { makeLeague } from "../modelFactory";
 import { createCtx } from "../utils";

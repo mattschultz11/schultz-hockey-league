@@ -3,7 +3,7 @@ import { Option, pipe } from "effect";
 import type { LeagueCreateInput, LeagueUpdateInput } from "@/graphql/generated";
 import type { League, Prisma } from "@/lib/prisma";
 
-import { ServiceContext } from "./types";
+import type { ServiceContext } from "./types";
 import { assertNonNullableFields, cleanInput, generateSlug, invariant, maybeGet } from "./utils";
 
 export function getLeagues(ctx: ServiceContext) {

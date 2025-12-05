@@ -5,8 +5,6 @@ const REQUIRED_ENV_DEFAULTS = {
   DATABASE_URL: DEFAULT_TEST_DB_URL,
   NEXTAUTH_SECRET: "test-nextauth-secret",
   NEXTAUTH_URL: "http://localhost:3000",
-  AUTH_PROVIDER_CLIENT_ID: "test-client-id",
-  AUTH_PROVIDER_CLIENT_SECRET: "test-client-secret",
   ENABLE_REQUEST_LOGGING: "false",
 };
 

@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from "graphql";
+import type { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from "graphql";
 
-import {
+import type {
   DraftPick as PrismaDraftPick,
   Game as PrismaGame,
   Goal as PrismaGoal,
@@ -12,7 +12,7 @@ import {
   Team as PrismaTeam,
   User as PrismaUser,
 } from "@/lib/prisma";
-import { ServiceContext } from "@/service/types";
+import type { ServiceContext } from "@/service/types";
 
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;

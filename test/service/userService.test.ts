@@ -1,4 +1,4 @@
-import { ServiceContext } from "@/service/types";
+import type { ServiceContext } from "@/service/types";
 import { createUser, updateUser } from "@/service/userService";
 
 import { makeUser } from "../modelFactory";

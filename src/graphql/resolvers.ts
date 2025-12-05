@@ -1,5 +1,7 @@
-import { GraphQLError, GraphQLScalarType, Kind, ValueNode } from "graphql";
+import type { ValueNode } from "graphql";
+import { GraphQLError, GraphQLScalarType, Kind } from "graphql";
 
+import { logAuthCheck } from "@/auth/authorization";
 import { Role } from "@/lib/prisma";
 import * as draftPickService from "@/service/draftPickService";
 import * as gameService from "@/service/gameService";
@@ -9,7 +11,7 @@ import * as penaltyService from "@/service/penaltyService";
 import * as playerService from "@/service/playerService";
 import * as seasonService from "@/service/seasonService";
 import * as teamService from "@/service/teamService";
-import { ServiceContext } from "@/service/types";
+import type { ServiceContext } from "@/service/types";
 import * as userService from "@/service/userService";
 
 import type { ResolverFn, Resolvers } from "./generated";
@@ -53,9 +55,17 @@ function serialize(value: unknown) {
 }
 
 function ensureAdmin(ctx: GraphQLContext) {
-  if (ctx.currentUser?.role !== Role.ADMIN) {
+  if (!ctx.sessionRole) {
+    logAuthCheck(ctx.requestId, "unauthorized", { required: Role.ADMIN });
+    throw new GraphQLError("Unauthorized", { extensions: { code: "UNAUTHORIZED" } });
+  }
+
+  if (ctx.sessionRole !== Role.ADMIN) {
+    logAuthCheck(ctx.requestId, "deny", { required: Role.ADMIN, role: ctx.sessionRole });
     throw new GraphQLError("Forbidden", { extensions: { code: "FORBIDDEN" } });
   }
+
+  logAuthCheck(ctx.requestId, "allow", { required: Role.ADMIN, role: ctx.sessionRole });
 }
 
 function withAdmin<TParent, TArgs, TResult>(

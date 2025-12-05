@@ -5,6 +5,7 @@ import simpleImportSort from "eslint-plugin-simple-import-sort";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 import importPlugin from "eslint-plugin-import";
+import tsEslintPlugin from "@typescript-eslint/eslint-plugin";
 import tsParser from "@typescript-eslint/parser";
 
 const eslintConfig = defineConfig([
@@ -26,6 +27,18 @@ const eslintConfig = defineConfig([
       "import/first": "error",
       "import/newline-after-import": "error",
       "import/no-duplicates": "error",
+    },
+  },
+  {
+    files: ["**/*.{ts,tsx}"],
+    plugins: {
+      "@typescript-eslint": tsEslintPlugin,
+    },
+    rules: {
+      "@typescript-eslint/consistent-type-imports": [
+        "error",
+        { prefer: "type-imports", fixStyle: "separate-type-imports" },
+      ],
     },
   },
   {
@@ -51,6 +64,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    "tmp/**",
   ]),
 ]);
 
