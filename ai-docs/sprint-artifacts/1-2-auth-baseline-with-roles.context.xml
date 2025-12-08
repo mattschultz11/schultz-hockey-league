@@ -1,0 +1,187 @@
+<story-context id=".bmad/bmm/workflows/4-implementation/story-context/template" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>2</storyId>
+    <title>Auth baseline with roles</title>
+    <status>drafted</status>
+    <generatedAt>2025-12-09</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>ai-docs/sprint-artifacts/1-2-auth-baseline-with-roles.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>As an admin</asA>
+    <iWant>I want login with session cookies and roles (admin/manager/viewer)</iWant>
+    <soThat>so that access is enforced per role across the app.</soThat>
+    <tasks>
+      <task>
+        <title>Configure NextAuth provider and session settings</title>
+        <acceptanceCriteria>AC: #1, #4</acceptanceCriteria>
+        <subtasks>
+          <subtask>Add provider config, session cookie flags (secure, httpOnly, sameSite), and callback to attach role claim.</subtask>
+          <subtask>Add startup guard to fail if required auth env vars missing.</subtask>
+        </subtasks>
+      </task>
+      <task>
+        <title>Define role model and persistence</title>
+        <acceptanceCriteria>AC: #1, #4</acceptanceCriteria>
+        <subtasks>
+          <subtask>Add role field/mapping in Prisma schema and seed minimal users/roles for dev.</subtask>
+          <subtask>Document role mapping table for admin/manager/viewer.</subtask>
+        </subtasks>
+      </task>
+      <task>
+        <title>Enforce RBAC in API/GraphQL handlers</title>
+        <acceptanceCriteria>AC: #2, #3, #4, #5</acceptanceCriteria>
+        <subtasks>
+          <subtask>Add middleware/policy helper to enforce roles on protected routes; default deny.</subtask>
+          <subtask>Guard admin-only endpoints and ensure viewer routes stay read-only.</subtask>
+        </subtasks>
+      </task>
+      <task>
+        <title>Auditing and logging for auth actions</title>
+        <acceptanceCriteria>AC: #5</acceptanceCriteria>
+        <subtasks>
+          <subtask>Record auth-related access violations and successful role checks with requestId/context.</subtask>
+        </subtasks>
+      </task>
+      <task>
+        <title>Testing</title>
+        <acceptanceCriteria>AC: #1-#5</acceptanceCriteria>
+        <subtasks>
+          <subtask>Add integration tests for sign-in session creation and role claims.</subtask>
+          <subtask>Add tests for 403 on admin endpoints for manager/viewer and allow for admin.</subtask>
+          <subtask>Add tests ensuring viewer paths are read-only and no write affordances.</subtask>
+        </subtasks>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="AC1">Given a configured NextAuth provider, when a known user signs in, then a session cookie is set and user has a role.</criterion>
+    <criterion id="AC2">When a manager accesses admin-only endpoints, then access is denied with 403.</criterion>
+    <criterion id="AC3">When a viewer accesses read-only pages, then access succeeds without write affordances.</criterion>
+    <criterion id="AC4">Session cookies are httpOnly/secure and role is enforced in API guards.</criterion>
+    <criterion id="AC5">Metrics: 100% protected routes enforce role; 0 unauthorized writes observed in audit.</criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>ai-docs/architecture.md</path>
+        <title>Architecture</title>
+        <section>Executive Summary</section>
+        <snippet>Architecture centers on a hybrid API (GraphQL for reads, REST for uploads/webhooks/health) on Next.js 16 + React 19 with PostgreSQL/Prisma and role-scoped access. RBAC via NextAuth sessions and audited writes enforces admin/manager/viewer boundaries.</snippet>
+      </doc>
+      <doc>
+        <path>ai-docs/prd.md</path>
+        <title>Product Requirements</title>
+        <section>Project Classification</section>
+        <snippet>Roles: admins have full write, team managers have limited write for their team, and viewers are read-only. MVP excludes payments/notifications and focuses on draft board, schedules, stats upload/display, and roster/trade management.</snippet>
+      </doc>
+      <doc>
+        <path>ai-docs/epics.md</path>
+        <title>Epics Breakdown</title>
+        <section>Story 1.2: Auth baseline with roles</section>
+        <snippet>Story 1.2 requires session cookies with roles (admin/manager/viewer) and enforcement in API guards. Acceptance criteria cover role assignment on sign-in, 403 for manager on admin endpoints, viewer read-only access, secure httpOnly cookies, and 100% protected routes enforcing roles.</snippet>
+      </doc>
+    </docs>
+    <code>
+      <codeArtifact>
+        <path>src/service/auth/authOptions.ts</path>
+        <kind>config</kind>
+        <symbol>authOptions</symbol>
+        <lines>1-79</lines>
+        <reason>NextAuth configuration uses JWT sessions, Google provider, secure httpOnly cookies, and attaches user id/name/role to JWT/session for RBAC.</reason>
+      </codeArtifact>
+      <codeArtifact>
+        <path>src/app/api/auth/[...nextauth]/route.ts</path>
+        <kind>route</kind>
+        <symbol>NextAuth handler</symbol>
+        <lines>1-5</lines>
+        <reason>Auth route wiring for NextAuth server handler; entry point for session issuance.</reason>
+      </codeArtifact>
+      <codeArtifact>
+        <path>src/service/auth/authService.ts</path>
+        <kind>service</kind>
+        <symbol>assertRole</symbol>
+        <lines>1-76</lines>
+        <reason>Auth utilities for getting server session, fetching user, and enforcing role with structured authz logging and 401/403 errors.</reason>
+      </codeArtifact>
+      <codeArtifact>
+        <path>src/graphql/resolvers.ts</path>
+        <kind>graphql</kind>
+        <symbol>withAdmin</symbol>
+        <lines>1-207</lines>
+        <reason>GraphQL resolvers wrap mutations/queries with admin-only guard via assertRole; shows current access pattern and enforcement point.</reason>
+      </codeArtifact>
+      <codeArtifact>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>Role enum</symbol>
+        <lines>1-164</lines>
+        <reason>Role enum defines ADMIN, MANAGER, PLAYER and is persisted for users; current role model to align with RBAC.</reason>
+      </codeArtifact>
+      <codeArtifact>
+        <path>src/utils/envUtils.ts</path>
+        <kind>config</kind>
+        <symbol>readEnv</symbol>
+        <lines>1-31</lines>
+        <reason>Env loader requires NEXTAUTH_SECRET, NEXTAUTH_URL, and Google OAuth keys; missing vars fail fast.</reason>
+      </codeArtifact>
+    </code>
+    <dependencies>
+      <dependency>
+        <path>package.json</path>
+        <ecosystem>node</ecosystem>
+        <packages>next@16.x, next-auth@4.24.13, react@19.x, prisma@7.x/@prisma/client@7.x, pg@8.x</packages>
+        <reason>Auth stack built on Next.js app router with NextAuth 4.x (session cookies/JWT), Prisma/Postgres backing users/roles.</reason>
+      </dependency>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint>Secure cookie posture required: httpOnly, sameSite=lax, secure in production (see authOptions cookies and architecture doc).</constraint>
+    <constraint>Deny-by-default RBAC: handlers/resolvers must call assertRole; admin-only mutations currently enforced via withAdmin wrapper.</constraint>
+    <constraint>Env completeness required: NEXTAUTH_SECRET, NEXTAUTH_URL, GOOGLE_OAUTH_CLIENT_ID/SECRET must be present or startup fails.</constraint>
+    <constraint>Audit/logging expectations: auth/authz events logged with requestId; extend to access violation and session issuance.</constraint>
+    <constraint>Role model alignment: Prisma Role enum is ADMIN/MANAGER/PLAYER; map story roles (admin/manager/viewer) accordingly or adjust enum.</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>NextAuth session (JWT strategy)</name>
+      <kind>session</kind>
+      <signature>Session.user: { id: string; role: Role; name?: string; email?: string }</signature>
+      <path>src/service/auth/authOptions.ts</path>
+    </interface>
+    <interface>
+      <name>GraphQL admin guard</name>
+      <kind>function</kind>
+      <signature>withAdmin(resolver) → resolver enforcing Role.ADMIN via assertRole</signature>
+      <path>src/graphql/resolvers.ts</path>
+    </interface>
+    <interface>
+      <name>Auth route</name>
+      <kind>REST</kind>
+      <signature>GET/POST /api/auth/[...nextauth]</signature>
+      <path>src/app/api/auth/[...nextauth]/route.ts</path>
+    </interface>
+  </interfaces>
+  <tests>
+    <standards>Use Jest with @testing-library for UI and integration, ts-jest for TS support, and Next.js test app pattern for route/resolver tests. Cover RBAC at handler/resolver entry with deny-by-default checks; ensure session cookie security (httpOnly/secure) and logging expectations.</standards>
+    <locations>
+      <location>src/**/*.test.ts</location>
+      <location>src/**/*.test.tsx</location>
+      <location>app/api/**/* (route handler tests colocated)</location>
+      <location>test/**/* (shared test utilities)</location>
+    </locations>
+    <ideas>
+      <idea ac="AC1">Sign-in flow issues JWT session with role attached; cookie flags correct (httpOnly, secure in prod, sameSite=lax); role present on session.user.</idea>
+      <idea ac="AC2">Manager hitting admin-only mutation or REST path receives 403; authz log records deny with allowed roles.</idea>
+      <idea ac="AC3">Viewer can access read-only queries/pages; write attempts blocked with 403; no write affordances in UI if applicable.</idea>
+      <idea ac="AC4">API guards enforce role for protected routes/resolvers; assertRole denies on missing/invalid roles; cookies remain httpOnly/secure.</idea>
+      <idea ac="AC5">Coverage check: all protected routes/mutations exercise role enforcement; audit/log entries captured for allow/deny; no unauthorized writes observed in test fixtures.</idea>
+    </ideas>
+  </tests>
+</story-context>
