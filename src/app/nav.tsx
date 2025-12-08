@@ -10,14 +10,31 @@ import {
   NavbarMenuItem,
   NavbarMenuToggle,
 } from "@heroui/navbar";
+import {
+  Avatar,
+  Button,
+  Dropdown,
+  DropdownItem,
+  DropdownMenu,
+  DropdownSection,
+  DropdownTrigger,
+} from "@heroui/react";
+import { Option } from "effect";
 import { usePathname } from "next/navigation";
+import type { Session } from "next-auth";
+import { signIn, signOut } from "next-auth/react";
 
 const menuItems = ["Teams", "Players", "Games", "Draft", "Seasons"].map((item) => ({
   label: item,
   href: `/${item.toLowerCase()}`,
 }));
 
-export default function Nav() {
+type NavProps = {
+  session: Session | null;
+};
+
+export default function Nav(props: NavProps) {
+  const { session } = props;
   const pathname = usePathname();
 
   return (
@@ -45,6 +62,7 @@ export default function Nav() {
             </NavbarItem>
           );
         })}
+        <NavAuthButton session={Option.fromNullable(session)} />
       </NavbarContent>
 
       <NavbarContent className="sm:hidden" justify="end">
@@ -61,5 +79,51 @@ export default function Nav() {
         ))}
       </NavbarMenu>
     </Navbar>
+  );
+}
+
+type NavAuthButtonProps = {
+  session: Option.Option<Session>;
+};
+
+function NavAuthButton(props: NavAuthButtonProps) {
+  const { session } = props;
+
+  return (
+    <div className="ml-4">
+      {session.pipe(
+        Option.map((session) => (
+          <Dropdown key={session.user.id}>
+            <DropdownTrigger>
+              <Avatar name={session.user.name ?? ""} />
+            </DropdownTrigger>
+            <DropdownMenu aria-label="User Actions" disabledKeys={["profile"]}>
+              <DropdownSection showDivider>
+                <DropdownItem key="profile">
+                  <div className="flex flex-col">
+                    <p className="text-sm">{session.user.name}</p>
+                    <p className="text-sm">{session.user.role}</p>
+                  </div>
+                </DropdownItem>
+              </DropdownSection>
+
+              <DropdownItem
+                key="logout"
+                className="text-danger"
+                color="danger"
+                onPress={() => signOut()}
+              >
+                Sign Out
+              </DropdownItem>
+            </DropdownMenu>
+          </Dropdown>
+        )),
+        Option.getOrElse(() => (
+          <Button size="sm" color="primary" onPress={() => signIn("google")}>
+            Sign In
+          </Button>
+        )),
+      )}
+    </div>
   );
 }

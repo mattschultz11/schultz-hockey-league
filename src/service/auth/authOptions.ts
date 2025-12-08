@@ -1,8 +1,9 @@
 import type { DefaultSession, NextAuthOptions } from "next-auth";
+import GoogleProvider from "next-auth/providers/google";
 
 import type { Role } from "@/service/prisma";
 import prisma from "@/service/prisma";
-import { assertNotNullable } from "@/utils/assertionUtils";
+import { env, isProduction } from "@/utils/envUtils";
 
 declare module "next-auth" {
   interface Session extends DefaultSession {
@@ -20,11 +21,8 @@ declare module "next-auth/jwt" {
   }
 }
 
-const secureCookies = process.env.NODE_ENV === "production";
-const authSecret = assertNotNullable(
-  process.env.NEXTAUTH_SECRET,
-  "NEXTAUTH_SECRET is not set - required for NextAuth session encryption",
-);
+const secureCookies = isProduction();
+const authSecret = env.nextAuthSecret;
 
 const logAuth = (event: "allow" | "deny" | "signout", payload: Record<string, unknown>) => {
   const requestId = payload.requestId ?? crypto.randomUUID();
@@ -36,7 +34,12 @@ const logAuth = (event: "allow" | "deny" | "signout", payload: Record<string, un
 export const authOptions: NextAuthOptions = {
   secret: authSecret,
   session: { strategy: "jwt" },
-  providers: [],
+  providers: [
+    GoogleProvider({
+      clientId: env.googleOauthClientId,
+      clientSecret: env.googleOauthClientSecret,
+    }),
+  ],
   callbacks: {
     async jwt({ token }) {
       if (token.email) {

@@ -3,6 +3,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import { auth } from "@/service/auth/authService";
+
 import Footer from "./footer";
 import Nav from "./nav";
 import Providers from "./providers";
@@ -22,11 +24,13 @@ export const metadata: Metadata = {
   description: "Website for the Schultz Hockey League based in metro Detroit",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const session = await auth();
+
   return (
     <html lang="en">
       <body
@@ -34,7 +38,7 @@ export default function RootLayout({
       >
         <Providers>
           <div id="appContainer" className="relative flex flex-col">
-            <Nav />
+            <Nav session={session} />
             <main className="relative mx-auto min-h-[calc(100vh_-_64px_-_64px)] w-full max-w-7xl grow p-6">
               {children}
             </main>

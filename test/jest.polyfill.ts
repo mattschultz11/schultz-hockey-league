@@ -5,8 +5,16 @@ const REQUIRED_ENV_DEFAULTS = {
   DATABASE_URL: DEFAULT_TEST_DB_URL,
   NEXTAUTH_SECRET: "test-nextauth-secret",
   NEXTAUTH_URL: "http://localhost:3000",
+  GOOGLE_OAUTH_CLIENT_ID: "google-client-id",
+  GOOGLE_OAUTH_CLIENT_SECRET: "google-client-secret",
   ENABLE_REQUEST_LOGGING: "false",
 };
+
+Object.entries(REQUIRED_ENV_DEFAULTS).forEach(([key, value]) => {
+  if (!process.env[key]) {
+    process.env[key] = value;
+  }
+});
 
 if (!global.setImmediate) {
   // @ts-expect-error jest globals are writable
@@ -40,9 +48,3 @@ if (!(global as typeof globalThis & { Request: unknown }).Request) {
   global.Response = global.Response ?? Response;
   global.Headers = global.Headers ?? Headers;
 }
-
-Object.entries(REQUIRED_ENV_DEFAULTS).forEach(([key, value]) => {
-  if (!process.env[key]) {
-    process.env[key] = value;
-  }
-});

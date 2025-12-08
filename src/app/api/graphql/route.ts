@@ -5,6 +5,7 @@ import { schema } from "@/graphql/schema";
 import { auth, getRequestId, getSessionUser } from "@/service/auth/authService";
 import prisma from "@/service/prisma";
 import type { ServerContext } from "@/types";
+import { isProduction } from "@/utils/envUtils";
 
 const yoga = createYoga<Record<string, unknown>, ServerContext>({
   schema,
@@ -20,7 +21,7 @@ const yoga = createYoga<Record<string, unknown>, ServerContext>({
     };
   },
   fetchAPI: { Response, Request, Headers },
-  graphiql: process.env.NODE_ENV !== "production",
+  graphiql: !isProduction(),
 });
 
 export const { handleRequest } = yoga;

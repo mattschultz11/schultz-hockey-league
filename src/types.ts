@@ -15,5 +15,7 @@ export type EnvConfig = {
   databaseUrl: string;
   nextAuthSecret: string;
   nextAuthUrl: string;
+  googleOauthClientId: string;
+  googleOauthClientSecret: string;
   enableRequestLogging: boolean;
 };

@@ -10,6 +10,8 @@ const defaults = {
   DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/schultz_hockey_league?schema=public",
   NEXTAUTH_SECRET: "test-secret",
   NEXTAUTH_URL: "http://localhost:3000",
+  GOOGLE_OAUTH_CLIENT_ID: "google-client-id",
+  GOOGLE_OAUTH_CLIENT_SECRET: "google-client-secret",
   ENABLE_REQUEST_LOGGING: "false",
 };
 

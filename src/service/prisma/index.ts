@@ -1,12 +1,10 @@
-import "@dotenvx/dotenvx/config";
-
 import { PrismaPg } from "@prisma/adapter-pg";
 
-import { assertNotNullable } from "@/utils/assertionUtils";
+import { env, isProduction } from "@/utils/envUtils";
 
 import { PrismaClient } from "./generated/client";
 
-const databaseUrl = assertNotNullable(process.env.DATABASE_URL, "DATABASE_URL is not set");
+const databaseUrl = env.databaseUrl;
 
 const globalForPrisma = global as unknown as {
   prisma: PrismaClient;
@@ -22,7 +20,7 @@ const prisma =
     adapter,
   });
 
-if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
+if (!isProduction()) globalForPrisma.prisma = prisma;
 
 export default prisma;
 
