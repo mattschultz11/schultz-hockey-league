@@ -1,23 +1,24 @@
 import { Option } from "effect";
 
 import type { GoalCreateInput, GoalUpdateInput } from "@/graphql/generated";
-import type { Game, Player, Prisma, Team } from "@/lib/prisma";
+import type { Game, Player, Prisma, Team } from "@/service/prisma";
+import type { ServerContext } from "@/types";
+import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
 import { getGameById } from "./gameService";
+import { cleanInput } from "./modelServiceUtils";
 import { getPlayerById, maybeGetPlayerById } from "./playerService";
 import { getTeamById } from "./teamService";
-import type { ServiceContext } from "./types";
-import { assertNonNullableFields, cleanInput, invariant } from "./utils";
 
-export function getGoalsBySeason(seasonId: string, ctx: ServiceContext) {
+export function getGoalsBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.goal.findMany({ where: { game: { seasonId } } });
 }
 
-export function getGoalById(id: string, ctx: ServiceContext) {
+export function getGoalById(id: string, ctx: ServerContext) {
   return ctx.prisma.goal.findUniqueOrThrow({ where: { id } });
 }
 
-export async function createGoal(data: GoalCreateInput, ctx: ServiceContext) {
+export async function createGoal(data: GoalCreateInput, ctx: ServerContext) {
   const { gameId, teamId, scorerId, primaryAssistId, secondaryAssistId } = data;
   const game = await getGameById(gameId, ctx);
   const team = await getTeamById(teamId, ctx);
@@ -30,7 +31,7 @@ export async function createGoal(data: GoalCreateInput, ctx: ServiceContext) {
   return ctx.prisma.goal.create({ data: cleanInput(data) });
 }
 
-export async function updateGoal(id: string, data: GoalUpdateInput, ctx: ServiceContext) {
+export async function updateGoal(id: string, data: GoalUpdateInput, ctx: ServerContext) {
   const payload: GoalUpdateInput = cleanInput(data);
   assertNonNullableFields(payload, ["period", "time", "strength", "teamId", "scorerId"] as const);
 
@@ -86,26 +87,26 @@ function validateGoal(
   });
 }
 
-export function deleteGoal(id: string, ctx: ServiceContext) {
+export function deleteGoal(id: string, ctx: ServerContext) {
   return ctx.prisma.goal.delete({ where: { id } });
 }
 
-export function getGoalGame(goalId: string, ctx: ServiceContext) {
+export function getGoalGame(goalId: string, ctx: ServerContext) {
   return ctx.prisma.goal.findUniqueOrThrow({ where: { id: goalId } }).game();
 }
 
-export function getGoalTeam(goalId: string, ctx: ServiceContext) {
+export function getGoalTeam(goalId: string, ctx: ServerContext) {
   return ctx.prisma.goal.findUniqueOrThrow({ where: { id: goalId } }).team();
 }
 
-export function getGoalScorer(goalId: string, ctx: ServiceContext) {
+export function getGoalScorer(goalId: string, ctx: ServerContext) {
   return ctx.prisma.goal.findUniqueOrThrow({ where: { id: goalId } }).scorer();
 }
 
-export function getGoalPrimaryAssist(goalId: string, ctx: ServiceContext) {
+export function getGoalPrimaryAssist(goalId: string, ctx: ServerContext) {
   return ctx.prisma.goal.findUniqueOrThrow({ where: { id: goalId } }).primaryAssist();
 }
 
-export function getGoalSecondaryAssist(goalId: string, ctx: ServiceContext) {
+export function getGoalSecondaryAssist(goalId: string, ctx: ServerContext) {
   return ctx.prisma.goal.findUniqueOrThrow({ where: { id: goalId } }).secondaryAssist();
 }

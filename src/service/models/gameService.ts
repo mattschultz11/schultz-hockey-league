@@ -1,25 +1,26 @@
 import { Option } from "effect";
 
 import type { GameCreateInput, GameUpdateInput } from "@/graphql/generated";
-import type { Prisma, Team } from "@/lib/prisma";
+import type { Prisma, Team } from "@/service/prisma";
+import type { ServerContext } from "@/types";
+import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
+import { cleanInput, maybeGet } from "./modelServiceUtils";
 import { maybeGetTeamById } from "./teamService";
-import type { ServiceContext } from "./types";
-import { assertNonNullableFields, cleanInput, invariant, maybeGet } from "./utils";
 
-export function getGamesBySeason(seasonId: string, ctx: ServiceContext) {
+export function getGamesBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.game.findMany({ where: { seasonId }, orderBy: { date: "asc", time: "asc" } });
 }
 
-export function getGameById(id: string, ctx: ServiceContext) {
+export function getGameById(id: string, ctx: ServerContext) {
   return ctx.prisma.game.findUniqueOrThrow({ where: { id } });
 }
 
-export function maybeGetGameById(id: string | null | undefined, ctx: ServiceContext) {
+export function maybeGetGameById(id: string | null | undefined, ctx: ServerContext) {
   return maybeGet((id) => ctx.prisma.game.findUnique({ where: { id } }), id, ctx);
 }
 
-export async function createGame(data: GameCreateInput, ctx: ServiceContext) {
+export async function createGame(data: GameCreateInput, ctx: ServerContext) {
   const { homeTeamId, awayTeamId } = data;
 
   const homeTeam = await maybeGetTeamById(homeTeamId, ctx);
@@ -30,7 +31,7 @@ export async function createGame(data: GameCreateInput, ctx: ServiceContext) {
   return ctx.prisma.game.create({ data: cleanInput(data) });
 }
 
-export async function updateGame(id: string, data: GameUpdateInput, ctx: ServiceContext) {
+export async function updateGame(id: string, data: GameUpdateInput, ctx: ServerContext) {
   const payload: GameUpdateInput = cleanInput(data);
   assertNonNullableFields(payload, ["round", "date", "time", "location", "awayTeamId"] as const);
 
@@ -68,35 +69,35 @@ function validateGame(
   );
 }
 
-export function deleteGame(id: string, ctx: ServiceContext) {
+export function deleteGame(id: string, ctx: ServerContext) {
   return ctx.prisma.game.delete({ where: { id } });
 }
 
-export function getGameSeason(gameId: string, ctx: ServiceContext) {
+export function getGameSeason(gameId: string, ctx: ServerContext) {
   return ctx.prisma.game.findUniqueOrThrow({ where: { id: gameId } }).season();
 }
 
-export function getGameHomeTeam(gameId: string, ctx: ServiceContext) {
+export function getGameHomeTeam(gameId: string, ctx: ServerContext) {
   return ctx.prisma.game.findUniqueOrThrow({ where: { id: gameId } }).homeTeam();
 }
 
-export function getGameAwayTeam(gameId: string, ctx: ServiceContext) {
+export function getGameAwayTeam(gameId: string, ctx: ServerContext) {
   return ctx.prisma.game.findUniqueOrThrow({ where: { id: gameId } }).awayTeam();
 }
 
-export function getGameGoals(gameId: string, ctx: ServiceContext) {
+export function getGameGoals(gameId: string, ctx: ServerContext) {
   return ctx.prisma.game
     .findUniqueOrThrow({ where: { id: gameId } })
     .goals({ orderBy: { period: "asc", time: "asc" } });
 }
 
-export function getGamePenalties(gameId: string, ctx: ServiceContext) {
+export function getGamePenalties(gameId: string, ctx: ServerContext) {
   return ctx.prisma.game
     .findUniqueOrThrow({ where: { id: gameId } })
     .penalties({ orderBy: { period: "asc", time: "asc" } });
 }
 
-export async function getGameHomeTeamGoals(gameId: string, ctx: ServiceContext) {
+export async function getGameHomeTeamGoals(gameId: string, ctx: ServerContext) {
   const game = ctx.prisma.game.findUniqueOrThrow({ where: { id: gameId } });
   const homeTeamId = Option.fromNullable((await game).homeTeamId);
 
@@ -105,7 +106,7 @@ export async function getGameHomeTeamGoals(gameId: string, ctx: ServiceContext) 
   });
 }
 
-export async function getGameAwayTeamGoals(gameId: string, ctx: ServiceContext) {
+export async function getGameAwayTeamGoals(gameId: string, ctx: ServerContext) {
   const game = ctx.prisma.game.findUniqueOrThrow({ where: { id: gameId } });
   const awayTeamId = Option.fromNullable((await game).awayTeamId);
 

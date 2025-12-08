@@ -1,13 +1,13 @@
-import { createDraftPick, updateDraftPick } from "@/service/draftPickService";
-import type { ServiceContext } from "@/service/types";
+import { createDraftPick, updateDraftPick } from "@/service/models/draftPickService";
+import prisma from "@/service/prisma";
+import type { ServerContext } from "@/types";
 
-import prisma from "../lib/prisma";
-import type { SeasonModel } from "../modelFactory";
-import { insertPlayer, insertSeason, insertTeam, makeDraftPick } from "../modelFactory";
-import { createCtx } from "../utils";
+import type { SeasonModel } from "../../modelFactory";
+import { insertPlayer, insertSeason, insertTeam, makeDraftPick } from "../../modelFactory";
+import { createCtx } from "../../utils";
 
 describe("draftPickService", () => {
-  let ctx: ServiceContext;
+  let ctx: ServerContext;
   let season: SeasonModel;
 
   beforeAll(async () => {

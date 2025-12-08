@@ -1,11 +1,13 @@
-import type { PrismaClient, User } from "@/lib/prisma";
-import type { ServiceContext } from "@/service/types";
+import { Option } from "effect";
 
-import prisma from "./lib/prisma";
+import type { User } from "@/service/prisma";
+import prisma from "@/service/prisma";
+import type { ServerContext } from "@/types";
 
-export function createCtx(currentUser?: User): ServiceContext {
+export function createCtx(user?: User): ServerContext {
   return {
-    prisma: prisma as PrismaClient,
-    currentUser,
+    prisma,
+    user: Option.fromNullable(user),
+    requestId: "test-request",
   };
 }

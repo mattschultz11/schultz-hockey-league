@@ -1,6 +1,6 @@
 import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
 
-import { PrismaClient } from "./generated/prisma/client";
+import { PrismaClient } from "./generated/client";
 
 const testDbUrl = "file:./tmp/prisma-test.db";
 
@@ -22,4 +22,4 @@ if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;
 
 export default prisma;
 
-export * from "./generated/prisma/client";
+export * from "./generated/client";

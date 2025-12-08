@@ -1,22 +1,23 @@
 import { Option, pipe } from "effect";
 
 import type { DraftPickCreateInput, DraftPickUpdateInput } from "@/graphql/generated";
-import type { DraftPick, Player, Prisma, Team } from "@/lib/prisma";
+import type { DraftPick, Player, Prisma, Team } from "@/service/prisma";
+import type { ServerContext } from "@/types";
+import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
+import { cleanInput } from "./modelServiceUtils";
 import { maybeGetPlayerById } from "./playerService";
 import { maybeGetTeamById } from "./teamService";
-import type { ServiceContext } from "./types";
-import { assertNonNullableFields, cleanInput, invariant } from "./utils";
 
-export function getDraftPicksBySeason(seasonId: string, ctx: ServiceContext) {
+export function getDraftPicksBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.draftPick.findMany({ where: { seasonId }, orderBy: { overall: "asc" } });
 }
 
-export function getDraftPickById(id: string, ctx: ServiceContext) {
+export function getDraftPickById(id: string, ctx: ServerContext) {
   return ctx.prisma.draftPick.findUniqueOrThrow({ where: { id } });
 }
 
-export async function createDraftPick(data: DraftPickCreateInput, ctx: ServiceContext) {
+export async function createDraftPick(data: DraftPickCreateInput, ctx: ServerContext) {
   const player = await maybeGetPlayerById(data.playerId, ctx);
   const team = await maybeGetTeamById(data.teamId, ctx);
 
@@ -44,7 +45,7 @@ export async function createDraftPick(data: DraftPickCreateInput, ctx: ServiceCo
   return (await ctx.prisma.$transaction(queries))[0] as DraftPick;
 }
 
-export async function updateDraftPick(id: string, data: DraftPickUpdateInput, ctx: ServiceContext) {
+export async function updateDraftPick(id: string, data: DraftPickUpdateInput, ctx: ServerContext) {
   const payload = cleanInput(data);
   assertNonNullableFields(payload, ["overall", "round", "pick"] as const);
 
@@ -89,7 +90,7 @@ function syncDraftPickPlayersAndTeams(
   oldDraftPick: DraftPick,
   player: Option.Option<Player>,
   team: Option.Option<Team>,
-  ctx: ServiceContext,
+  ctx: ServerContext,
 ) {
   const playerChanged = Option.getOrNull(player)?.id !== oldDraftPick.playerId;
   const teamChanged = Option.getOrNull(team)?.id !== oldDraftPick.teamId;
@@ -135,18 +136,18 @@ function syncDraftPickPlayersAndTeams(
   return queries;
 }
 
-export function deleteDraftPick(id: string, ctx: ServiceContext) {
+export function deleteDraftPick(id: string, ctx: ServerContext) {
   return ctx.prisma.draftPick.delete({ where: { id } });
 }
 
-export function getDraftPickSeason(draftPickId: string, ctx: ServiceContext) {
+export function getDraftPickSeason(draftPickId: string, ctx: ServerContext) {
   return ctx.prisma.draftPick.findUniqueOrThrow({ where: { id: draftPickId } }).season();
 }
 
-export function getDraftPickTeam(draftPickId: string, ctx: ServiceContext) {
+export function getDraftPickTeam(draftPickId: string, ctx: ServerContext) {
   return ctx.prisma.draftPick.findUniqueOrThrow({ where: { id: draftPickId } }).team();
 }
 
-export function getDraftPickPlayer(draftPickId: string, ctx: ServiceContext) {
+export function getDraftPickPlayer(draftPickId: string, ctx: ServerContext) {
   return ctx.prisma.draftPick.findUniqueOrThrow({ where: { id: draftPickId } }).player();
 }

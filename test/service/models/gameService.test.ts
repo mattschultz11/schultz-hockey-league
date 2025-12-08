@@ -1,12 +1,12 @@
-import { createGame, updateGame } from "@/service/gameService";
-import type { ServiceContext } from "@/service/types";
+import { createGame, updateGame } from "@/service/models/gameService";
+import type { ServerContext } from "@/types";
 
-import type { SeasonModel } from "../modelFactory";
-import { insertSeason, insertTeam, makeGame } from "../modelFactory";
-import { createCtx } from "../utils";
+import type { SeasonModel } from "../../modelFactory";
+import { insertSeason, insertTeam, makeGame } from "../../modelFactory";
+import { createCtx } from "../../utils";
 
 describe("gameService", () => {
-  let ctx: ServiceContext;
+  let ctx: ServerContext;
   let season: SeasonModel;
 
   beforeAll(async () => {

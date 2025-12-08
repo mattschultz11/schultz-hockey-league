@@ -2,28 +2,23 @@ import { Option, pipe } from "effect";
 import { createYoga } from "graphql-yoga";
 
 import { schema } from "@/graphql/schema";
-import prisma from "@/lib/prisma";
+import { auth, getRequestId, getSessionUser } from "@/service/auth/authService";
+import prisma from "@/service/prisma";
+import type { ServerContext } from "@/types";
 
-interface NextContext {
-  params: Promise<Record<string, string>>;
-}
-
-function resolveCurrentUser(request: Request) {
-  return pipe(
-    request.headers.get("x-user-id"),
-    Option.fromNullable,
-    Option.map((id) => prisma.user.findUnique({ where: { id } })),
-    Option.getOrUndefined,
-  );
-}
-
-const yoga = createYoga<NextContext>({
+const yoga = createYoga<Record<string, unknown>, ServerContext>({
   schema,
   graphqlEndpoint: "/api/graphql",
-  context: async ({ request }) => ({
-    prisma,
-    currentUser: await resolveCurrentUser(request),
-  }),
+  context: async ({ request }) => {
+    const session = await auth();
+    const user = await pipe(session, Option.fromNullable, getSessionUser);
+
+    return {
+      prisma,
+      requestId: getRequestId(request),
+      user,
+    };
+  },
   fetchAPI: { Response, Request, Headers },
   graphiql: process.env.NODE_ENV !== "production",
 });

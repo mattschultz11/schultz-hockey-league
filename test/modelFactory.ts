@@ -27,7 +27,7 @@ import type {
   Team,
   User,
 } from "@/graphql/generated";
-import { generateSlug } from "@/service/utils";
+import { generateSlug } from "@/service/models/modelServiceUtils";
 
 import prisma, {
   GloveHand,
@@ -37,7 +37,7 @@ import prisma, {
   Position,
   Role,
   Strength,
-} from "./lib/prisma";
+} from "../src/service/prisma/__mocks__";
 
 export type UserModel = Omit<User, "seasons">;
 

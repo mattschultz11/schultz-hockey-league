@@ -1,12 +1,12 @@
-import { createPlayer, updatePlayer } from "@/service/playerService";
-import type { ServiceContext } from "@/service/types";
+import { createPlayer, updatePlayer } from "@/service/models/playerService";
+import type { ServerContext } from "@/types";
 
-import type { SeasonModel, UserModel } from "../modelFactory";
-import { insertSeason, insertTeam, insertUser, makePlayer } from "../modelFactory";
-import { createCtx } from "../utils";
+import type { SeasonModel, UserModel } from "../../modelFactory";
+import { insertSeason, insertTeam, insertUser, makePlayer } from "../../modelFactory";
+import { createCtx } from "../../utils";
 
 describe("playerService", () => {
-  let ctx: ServiceContext;
+  let ctx: ServerContext;
   let season: SeasonModel;
   let user: UserModel;
 

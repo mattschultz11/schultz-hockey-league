@@ -1,4 +1,4 @@
-import { readEnv } from "@/lib/env";
+import { readEnv } from "@/utils/envUtils";
 
 describe("readEnv", () => {
   const baseEnv = {

@@ -1,11 +1,11 @@
-import type { ServiceContext } from "@/service/types";
-import { createUser, updateUser } from "@/service/userService";
+import { createUser, updateUser } from "@/service/models/userService";
+import type { ServerContext } from "@/types";
 
-import { makeUser } from "../modelFactory";
-import { createCtx } from "../utils";
+import { makeUser } from "../../modelFactory";
+import { createCtx } from "../../utils";
 
 describe("userService", () => {
-  let ctx: ServiceContext;
+  let ctx: ServerContext;
 
   beforeAll(async () => {
     ctx = createCtx();

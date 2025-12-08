@@ -1,12 +1,18 @@
-import { createPenalty, updatePenalty } from "@/service/penaltyService";
-import type { ServiceContext } from "@/service/types";
+import { createPenalty, updatePenalty } from "@/service/models/penaltyService";
+import type { ServerContext } from "@/types";
 
-import type { GameModel, PlayerModel, TeamModel } from "../modelFactory";
-import { insertGame, insertPenalty, insertPlayer, insertTeam, makePenalty } from "../modelFactory";
-import { createCtx } from "../utils";
+import type { GameModel, PlayerModel, TeamModel } from "../../modelFactory";
+import {
+  insertGame,
+  insertPenalty,
+  insertPlayer,
+  insertTeam,
+  makePenalty,
+} from "../../modelFactory";
+import { createCtx } from "../../utils";
 
 describe("penaltyService", () => {
-  let ctx: ServiceContext;
+  let ctx: ServerContext;
   let team: TeamModel;
   let player: PlayerModel;
   let game: GameModel;

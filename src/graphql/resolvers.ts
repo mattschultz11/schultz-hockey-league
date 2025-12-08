@@ -1,22 +1,22 @@
 import type { ValueNode } from "graphql";
 import { GraphQLError, GraphQLScalarType, Kind } from "graphql";
 
-import { logAuthCheck } from "@/auth/authorization";
-import { Role } from "@/lib/prisma";
-import * as draftPickService from "@/service/draftPickService";
-import * as gameService from "@/service/gameService";
-import * as goalService from "@/service/goalService";
-import * as leagueService from "@/service/leagueService";
-import * as penaltyService from "@/service/penaltyService";
-import * as playerService from "@/service/playerService";
-import * as seasonService from "@/service/seasonService";
-import * as teamService from "@/service/teamService";
-import type { ServiceContext } from "@/service/types";
-import * as userService from "@/service/userService";
+import { assertRole, AuthError } from "@/service/auth/authService";
+import * as draftPickService from "@/service/models/draftPickService";
+import * as gameService from "@/service/models/gameService";
+import * as goalService from "@/service/models/goalService";
+import * as leagueService from "@/service/models/leagueService";
+import * as penaltyService from "@/service/models/penaltyService";
+import * as playerService from "@/service/models/playerService";
+import * as seasonService from "@/service/models/seasonService";
+import * as teamService from "@/service/models/teamService";
+import * as userService from "@/service/models/userService";
+import { Role } from "@/service/prisma";
+import type { ServerContext } from "@/types";
 
 import type { ResolverFn, Resolvers } from "./generated";
 
-export type GraphQLContext = ServiceContext;
+export type GraphQLContext = ServerContext;
 
 function parseDateValue(value: unknown) {
   if (value === null || value === undefined || value === "") {
@@ -55,17 +55,14 @@ function serialize(value: unknown) {
 }
 
 function ensureAdmin(ctx: GraphQLContext) {
-  if (!ctx.sessionRole) {
-    logAuthCheck(ctx.requestId, "unauthorized", { required: Role.ADMIN });
-    throw new GraphQLError("Unauthorized", { extensions: { code: "UNAUTHORIZED" } });
+  try {
+    return assertRole(ctx, [Role.ADMIN]);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      throw new GraphQLError(error.message, { extensions: { code: error.status } });
+    }
+    throw error;
   }
-
-  if (ctx.sessionRole !== Role.ADMIN) {
-    logAuthCheck(ctx.requestId, "deny", { required: Role.ADMIN, role: ctx.sessionRole });
-    throw new GraphQLError("Forbidden", { extensions: { code: "FORBIDDEN" } });
-  }
-
-  logAuthCheck(ctx.requestId, "allow", { required: Role.ADMIN, role: ctx.sessionRole });
 }
 
 function withAdmin<TParent, TArgs, TResult>(

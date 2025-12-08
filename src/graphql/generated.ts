@@ -11,8 +11,8 @@ import type {
   Season as PrismaSeason,
   Team as PrismaTeam,
   User as PrismaUser,
-} from "@/lib/prisma";
-import type { ServiceContext } from "@/service/types";
+} from "@/service/prisma";
+import type { ServerContext } from "@/types";
 
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
@@ -849,7 +849,7 @@ export interface DateTimeScalarConfig
 }
 
 export type UserResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["User"] = ResolversParentTypes["User"],
 > = {
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
@@ -866,7 +866,7 @@ export type UserResolvers<
 };
 
 export type LeagueResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["League"] = ResolversParentTypes["League"],
 > = {
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
@@ -883,7 +883,7 @@ export type LeagueResolvers<
 };
 
 export type SeasonResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["Season"] = ResolversParentTypes["Season"],
 > = {
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
@@ -907,7 +907,7 @@ export type SeasonResolvers<
 };
 
 export type TeamResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["Team"] = ResolversParentTypes["Team"],
 > = {
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
@@ -933,7 +933,7 @@ export type TeamResolvers<
 };
 
 export type PlayerResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["Player"] = ResolversParentTypes["Player"],
 > = {
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
@@ -957,7 +957,7 @@ export type PlayerResolvers<
 };
 
 export type GameResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["Game"] = ResolversParentTypes["Game"],
 > = {
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
@@ -982,7 +982,7 @@ export type GameResolvers<
 };
 
 export type GoalResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["Goal"] = ResolversParentTypes["Goal"],
 > = {
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
@@ -1002,7 +1002,7 @@ export type GoalResolvers<
 };
 
 export type PenaltyResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["Penalty"] = ResolversParentTypes["Penalty"],
 > = {
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
@@ -1020,7 +1020,7 @@ export type PenaltyResolvers<
 };
 
 export type DraftPickResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["DraftPick"] = ResolversParentTypes["DraftPick"],
 > = {
   id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
@@ -1038,7 +1038,7 @@ export type DraftPickResolvers<
 };
 
 export type QueryResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["Query"] = ResolversParentTypes["Query"],
 > = {
   users?: Resolver<Array<ResolversTypes["User"]>, ParentType, ContextType>;
@@ -1137,7 +1137,7 @@ export type QueryResolvers<
 };
 
 export type MutationResolvers<
-  ContextType = ServiceContext,
+  ContextType = ServerContext,
   ParentType extends ResolversParentTypes["Mutation"] = ResolversParentTypes["Mutation"],
 > = {
   createUser?: Resolver<
@@ -1304,7 +1304,7 @@ export type MutationResolvers<
   >;
 };
 
-export type Resolvers<ContextType = ServiceContext> = {
+export type Resolvers<ContextType = ServerContext> = {
   DateTime?: GraphQLScalarType;
   User?: UserResolvers<ContextType>;
   League?: LeagueResolvers<ContextType>;

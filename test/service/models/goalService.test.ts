@@ -1,12 +1,12 @@
-import { createGoal, updateGoal } from "@/service/goalService";
-import type { ServiceContext } from "@/service/types";
+import { createGoal, updateGoal } from "@/service/models/goalService";
+import type { ServerContext } from "@/types";
 
-import type { GameModel, PlayerModel, TeamModel } from "../modelFactory";
-import { insertGame, insertPlayer, insertTeam, makeGoal } from "../modelFactory";
-import { createCtx } from "../utils";
+import type { GameModel, PlayerModel, TeamModel } from "../../modelFactory";
+import { insertGame, insertPlayer, insertTeam, makeGoal } from "../../modelFactory";
+import { createCtx } from "../../utils";
 
 describe("goalService", () => {
-  let ctx: ServiceContext;
+  let ctx: ServerContext;
   let team: TeamModel;
   let scorer: PlayerModel;
   let game: GameModel;

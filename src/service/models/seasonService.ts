@@ -1,31 +1,32 @@
 import { Option, pipe } from "effect";
 
 import type { SeasonCreateInput, SeasonUpdateInput } from "@/graphql/generated";
-import type { Prisma, Season } from "@/lib/prisma";
+import type { Prisma, Season } from "@/service/prisma";
+import type { ServerContext } from "@/types";
+import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
-import type { ServiceContext } from "./types";
-import { assertNonNullableFields, cleanInput, generateSlug, invariant, maybeGet } from "./utils";
+import { cleanInput, generateSlug, maybeGet } from "./modelServiceUtils";
 
-export function getSeasonsByLeague(leagueId: string, ctx: ServiceContext) {
+export function getSeasonsByLeague(leagueId: string, ctx: ServerContext) {
   return ctx.prisma.season.findMany({ where: { leagueId }, orderBy: { startDate: "desc" } });
 }
 
-export function getSeasonById(id: string, ctx: ServiceContext) {
+export function getSeasonById(id: string, ctx: ServerContext) {
   return ctx.prisma.season.findUniqueOrThrow({ where: { id } });
 }
 
-export function maybeGetSeasonById(id: string | null | undefined, ctx: ServiceContext) {
+export function maybeGetSeasonById(id: string | null | undefined, ctx: ServerContext) {
   return maybeGet((id) => ctx.prisma.season.findUnique({ where: { id } }), id, ctx);
 }
 
-export function getSeasonBySlug(leagueId: string, slug: string, ctx: ServiceContext) {
+export function getSeasonBySlug(leagueId: string, slug: string, ctx: ServerContext) {
   return ctx.prisma.season.findUniqueOrThrow({ where: { leagueId_slug: { leagueId, slug } } });
 }
 
 export function maybeGetSeasonBySlug(
   leagueId: string,
   slug: string | null | undefined,
-  ctx: ServiceContext,
+  ctx: ServerContext,
 ) {
   return maybeGet(
     (slug) => ctx.prisma.season.findUnique({ where: { leagueId_slug: { leagueId, slug } } }),
@@ -34,7 +35,7 @@ export function maybeGetSeasonBySlug(
   );
 }
 
-export async function createSeason(data: SeasonCreateInput, ctx: ServiceContext) {
+export async function createSeason(data: SeasonCreateInput, ctx: ServerContext) {
   const slug = generateSlug(data.name);
   const seasonWithSlug = await maybeGetSeasonBySlug(data.leagueId, slug, ctx);
 
@@ -43,7 +44,7 @@ export async function createSeason(data: SeasonCreateInput, ctx: ServiceContext)
   return ctx.prisma.season.create({ data: { ...cleanInput(data), slug } });
 }
 
-export async function updateSeason(id: string, data: SeasonUpdateInput, ctx: ServiceContext) {
+export async function updateSeason(id: string, data: SeasonUpdateInput, ctx: ServerContext) {
   const payload: SeasonUpdateInput = cleanInput(data);
   assertNonNullableFields(payload, ["name", "startDate", "endDate"] as const);
 
@@ -67,28 +68,28 @@ function validateSeason(seasonId: string, seasonWithSlug: Option.Option<Season>)
   );
 }
 
-export function deleteSeason(id: string, ctx: ServiceContext) {
+export function deleteSeason(id: string, ctx: ServerContext) {
   return ctx.prisma.season.delete({ where: { id } });
 }
 
-export function getSeasonLeague(seasonId: string, ctx: ServiceContext) {
+export function getSeasonLeague(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.season.findUniqueOrThrow({ where: { id: seasonId } }).league();
 }
 
-export function getSeasonPlayers(seasonId: string, ctx: ServiceContext) {
+export function getSeasonPlayers(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.season
     .findUniqueOrThrow({ where: { id: seasonId } })
     .players({ orderBy: { draftPick: { overall: "asc" } } });
 }
 
-export function getSeasonTeams(seasonId: string, ctx: ServiceContext) {
+export function getSeasonTeams(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.season.findUniqueOrThrow({ where: { id: seasonId } }).teams();
 }
 
-export function getSeasonGames(seasonId: string, ctx: ServiceContext) {
+export function getSeasonGames(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.season.findUniqueOrThrow({ where: { id: seasonId } }).games();
 }
 
-export function getSeasonDraft(seasonId: string, ctx: ServiceContext) {
+export function getSeasonDraft(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.season.findUniqueOrThrow({ where: { id: seasonId } }).draft();
 }

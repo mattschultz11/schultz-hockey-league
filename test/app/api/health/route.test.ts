@@ -1,14 +1,5 @@
 import { GET } from "@/app/api/health/route";
-import prisma from "@/lib/prisma";
-
-jest.mock("@/lib/prisma", () => ({
-  __esModule: true,
-  default: {
-    $queryRaw: jest.fn(),
-  },
-}));
-
-const mockedPrisma = prisma as unknown as { $queryRaw: jest.Mock };
+import prisma from "@/service/prisma";
 
 describe("GET /api/health", () => {
   const infoSpy = jest.spyOn(console, "info").mockImplementation(() => {});
@@ -31,7 +22,7 @@ describe("GET /api/health", () => {
     }) as unknown as Request;
 
   it("returns ok response with build metadata and logs timing", async () => {
-    mockedPrisma.$queryRaw.mockResolvedValueOnce(1);
+    jest.spyOn(prisma, "$queryRaw").mockResolvedValueOnce(1);
 
     const request = makeRequest({ "x-request-id": "req-123" });
 
@@ -54,7 +45,7 @@ describe("GET /api/health", () => {
   });
 
   it("returns 503 response when db probe fails and logs error", async () => {
-    mockedPrisma.$queryRaw.mockRejectedValueOnce(new Error("db down"));
+    jest.spyOn(prisma, "$queryRaw").mockRejectedValueOnce(new Error("db down"));
 
     const response = await GET(makeRequest());
     const body = await response.json();

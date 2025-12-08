@@ -1,33 +1,34 @@
 import { Option, pipe } from "effect";
 
 import type { TeamCreateInput, TeamUpdateInput } from "@/graphql/generated";
-import type { Player, Prisma, Team } from "@/lib/prisma";
-import { Result } from "@/lib/prisma";
+import type { Player, Prisma, Team } from "@/service/prisma";
+import { Result } from "@/service/prisma";
+import type { ServerContext } from "@/types";
+import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
+import { cleanInput, generateSlug, maybeGet } from "./modelServiceUtils";
 import { maybeGetPlayerById } from "./playerService";
-import type { ServiceContext } from "./types";
-import { assertNonNullableFields, cleanInput, generateSlug, invariant, maybeGet } from "./utils";
 
-export function getTeamsBySeason(seasonId: string, ctx: ServiceContext) {
+export function getTeamsBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.team.findMany({ where: { seasonId } });
 }
 
-export function getTeamById(id: string, ctx: ServiceContext) {
+export function getTeamById(id: string, ctx: ServerContext) {
   return ctx.prisma.team.findUniqueOrThrow({ where: { id } });
 }
 
-export function maybeGetTeamById(id: string | null | undefined, ctx: ServiceContext) {
+export function maybeGetTeamById(id: string | null | undefined, ctx: ServerContext) {
   return maybeGet((id) => ctx.prisma.team.findUnique({ where: { id } }), id, ctx);
 }
 
-export function getTeamBySlug(seasonId: string, slug: string, ctx: ServiceContext) {
+export function getTeamBySlug(seasonId: string, slug: string, ctx: ServerContext) {
   return ctx.prisma.team.findUniqueOrThrow({ where: { seasonId_slug: { seasonId, slug } } });
 }
 
 export function maybeGetTeamBySlug(
   seasonId: string,
   slug: string | null | undefined,
-  ctx: ServiceContext,
+  ctx: ServerContext,
 ) {
   return maybeGet(
     (slug) => ctx.prisma.team.findUnique({ where: { seasonId_slug: { seasonId, slug } } }),
@@ -36,7 +37,7 @@ export function maybeGetTeamBySlug(
   );
 }
 
-export async function createTeam(data: TeamCreateInput, ctx: ServiceContext) {
+export async function createTeam(data: TeamCreateInput, ctx: ServerContext) {
   const slug = generateSlug(data.name);
   const teamWithSlug = await maybeGetTeamBySlug(data.seasonId, slug, ctx);
   const manager = await maybeGetPlayerById(data.managerId, ctx);
@@ -46,7 +47,7 @@ export async function createTeam(data: TeamCreateInput, ctx: ServiceContext) {
   return ctx.prisma.team.create({ data: { ...cleanInput(data), slug } });
 }
 
-export async function updateTeam(id: string, data: TeamUpdateInput, ctx: ServiceContext) {
+export async function updateTeam(id: string, data: TeamUpdateInput, ctx: ServerContext) {
   const payload: TeamUpdateInput = cleanInput(data);
   assertNonNullableFields(payload, ["name"] as const);
 
@@ -80,43 +81,43 @@ function validateTeam(
   );
 }
 
-export function deleteTeam(id: string, ctx: ServiceContext) {
+export function deleteTeam(id: string, ctx: ServerContext) {
   return ctx.prisma.team.delete({ where: { id } });
 }
 
-export function getTeamSeason(teamId: string, ctx: ServiceContext) {
+export function getTeamSeason(teamId: string, ctx: ServerContext) {
   return ctx.prisma.team.findUniqueOrThrow({ where: { id: teamId } }).season();
 }
 
-export function getTeamManager(teamId: string, ctx: ServiceContext) {
+export function getTeamManager(teamId: string, ctx: ServerContext) {
   return ctx.prisma.team.findUniqueOrThrow({ where: { id: teamId } }).manager();
 }
 
-export function getTeamPlayers(teamId: string, ctx: ServiceContext) {
+export function getTeamPlayers(teamId: string, ctx: ServerContext) {
   return ctx.prisma.team
     .findUniqueOrThrow({ where: { id: teamId } })
     .players({ orderBy: { number: "asc" } });
 }
 
-export async function getTeamGames(teamId: string, ctx: ServiceContext) {
+export async function getTeamGames(teamId: string, ctx: ServerContext) {
   return ctx.prisma.game.findMany({
     where: { OR: [{ homeTeamId: teamId }, { awayTeamId: teamId }] },
     orderBy: { date: "asc", time: "asc" },
   });
 }
 
-export function getTeamGoals(teamId: string, ctx: ServiceContext) {
+export function getTeamGoals(teamId: string, ctx: ServerContext) {
   return ctx.prisma.team.findUniqueOrThrow({ where: { id: teamId } }).goals();
 }
 
-export function getTeamPenalties(teamId: string, ctx: ServiceContext) {
+export function getTeamPenalties(teamId: string, ctx: ServerContext) {
   return ctx.prisma.team.findUniqueOrThrow({ where: { id: teamId } }).penalties();
 }
 
-export function getTeamDraftPicks(teamId: string, ctx: ServiceContext) {
+export function getTeamDraftPicks(teamId: string, ctx: ServerContext) {
   return ctx.prisma.team.findUniqueOrThrow({ where: { id: teamId } }).draftPicks();
 }
-export async function getTeamWins(id: string, ctx: ServiceContext) {
+export async function getTeamWins(id: string, ctx: ServerContext) {
   return (await getTeamGames(id, ctx)).filter(
     (game) =>
       (game.homeTeamId === id && game.homeTeamResult === Result.WIN) ||
@@ -124,7 +125,7 @@ export async function getTeamWins(id: string, ctx: ServiceContext) {
   );
 }
 
-export async function getTeamLosses(id: string, ctx: ServiceContext) {
+export async function getTeamLosses(id: string, ctx: ServerContext) {
   return (await getTeamGames(id, ctx)).filter(
     (game) =>
       (game.homeTeamId === id && game.homeTeamResult === Result.LOSS) ||
@@ -132,7 +133,7 @@ export async function getTeamLosses(id: string, ctx: ServiceContext) {
   );
 }
 
-export async function getTeamTies(id: string, ctx: ServiceContext) {
+export async function getTeamTies(id: string, ctx: ServerContext) {
   return (await getTeamGames(id, ctx)).filter(
     (game) =>
       (game.homeTeamId === id && game.homeTeamResult === Result.TIE) ||
@@ -140,7 +141,7 @@ export async function getTeamTies(id: string, ctx: ServiceContext) {
   );
 }
 
-export async function getTeamPoints(id: string, ctx: ServiceContext) {
+export async function getTeamPoints(id: string, ctx: ServerContext) {
   return (await getTeamGames(id, ctx))
     .map((game) => (game.homeTeamId === id ? game.homeTeamPoints : game.awayTeamPoints) ?? 0)
     .reduce((acc, points) => acc + points, 0);

@@ -3,7 +3,9 @@ import "./jest.polyfill";
 
 import { seed } from "@ngneat/falso";
 
-import prisma from "./lib/prisma";
+import prisma from "@/service/prisma";
+
+jest.mock("@/service/prisma");
 
 async function clearDatabase() {
   await prisma.draftPick.deleteMany();

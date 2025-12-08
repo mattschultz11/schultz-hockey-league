@@ -1,21 +1,22 @@
 import type { PenaltyCreateInput, PenaltyUpdateInput } from "@/graphql/generated";
-import type { Game, Player, Prisma, Team } from "@/lib/prisma";
+import type { Game, Player, Prisma, Team } from "@/service/prisma";
+import type { ServerContext } from "@/types";
+import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
 import { getGameById } from "./gameService";
+import { cleanInput } from "./modelServiceUtils";
 import { getPlayerById } from "./playerService";
 import { getTeamById } from "./teamService";
-import type { ServiceContext } from "./types";
-import { assertNonNullableFields, cleanInput, invariant } from "./utils";
 
-export function getPenaltiesBySeason(seasonId: string, ctx: ServiceContext) {
+export function getPenaltiesBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.penalty.findMany({ where: { game: { seasonId } } });
 }
 
-export function getPenaltyById(id: string, ctx: ServiceContext) {
+export function getPenaltyById(id: string, ctx: ServerContext) {
   return ctx.prisma.penalty.findUniqueOrThrow({ where: { id } });
 }
 
-export async function createPenalty(data: PenaltyCreateInput, ctx: ServiceContext) {
+export async function createPenalty(data: PenaltyCreateInput, ctx: ServerContext) {
   const { gameId, teamId, playerId } = data;
   const game = await getGameById(gameId, ctx);
   const team = await getTeamById(teamId, ctx);
@@ -26,7 +27,7 @@ export async function createPenalty(data: PenaltyCreateInput, ctx: ServiceContex
   return ctx.prisma.penalty.create({ data: cleanInput(data) });
 }
 
-export async function updatePenalty(id: string, data: PenaltyUpdateInput, ctx: ServiceContext) {
+export async function updatePenalty(id: string, data: PenaltyUpdateInput, ctx: ServerContext) {
   const payload: PenaltyUpdateInput = cleanInput(data);
   assertNonNullableFields(payload, [
     "period",
@@ -56,18 +57,18 @@ function validatePenalty(game: Game, team: Team, player: Player) {
   invariant(team.id === player.teamId, "Player must be on the team");
 }
 
-export function deletePenalty(id: string, ctx: ServiceContext) {
+export function deletePenalty(id: string, ctx: ServerContext) {
   return ctx.prisma.penalty.delete({ where: { id } });
 }
 
-export function getPenaltyGame(penaltyId: string, ctx: ServiceContext) {
+export function getPenaltyGame(penaltyId: string, ctx: ServerContext) {
   return ctx.prisma.penalty.findUniqueOrThrow({ where: { id: penaltyId } }).game();
 }
 
-export function getPenaltyTeam(penaltyId: string, ctx: ServiceContext) {
+export function getPenaltyTeam(penaltyId: string, ctx: ServerContext) {
   return ctx.prisma.penalty.findUniqueOrThrow({ where: { id: penaltyId } }).team();
 }
 
-export function getPenaltyPlayer(penaltyId: string, ctx: ServiceContext) {
+export function getPenaltyPlayer(penaltyId: string, ctx: ServerContext) {
   return ctx.prisma.penalty.findUniqueOrThrow({ where: { id: penaltyId } }).player();
 }
