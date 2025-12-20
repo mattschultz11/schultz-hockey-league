@@ -46,3 +46,7 @@ next-env.d.ts
 # editor files
 .vscode
 .cursor
+
+# llm
+.claude/*
+!.claude/commands

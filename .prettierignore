@@ -7,4 +7,5 @@ out
 package-lock.json
 public
 tmp
-.bmad
+_bmad
+.claude
