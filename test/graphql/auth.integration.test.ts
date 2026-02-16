@@ -4,7 +4,13 @@ import { GraphQLError } from "graphql";
 
 import type { ResolverFn } from "@/graphql/generated";
 import { type GraphQLContext, resolvers } from "@/graphql/resolvers";
-import { assertManagerOfTeam, AuthError } from "@/service/auth/authService";
+import {
+  assertLeagueAccess,
+  assertManagerOfTeam,
+  assertSeasonAccess,
+  AuthError,
+} from "@/service/auth/authService";
+import { PolicyName, withPolicy } from "@/service/auth/rbacPolicy";
 import type { League, Season, Team, User } from "@/service/prisma";
 import { Role } from "@/service/prisma";
 
@@ -448,6 +454,245 @@ describe("GraphQL Auth Integration", () => {
         expect(error).toBeInstanceOf(AuthError);
         expect((error as AuthError).status).toBe(403);
       }
+    });
+  });
+
+  describe("League scoping", () => {
+    it("manager can access their own league", async () => {
+      // Create a manager user
+      const managerUser = await insertUser({ role: Role.MANAGER });
+
+      // Create a league and season
+      const league = await insertLeague();
+      const season = await insertSeason({ leagueId: league.id });
+
+      // Create a player for the manager in that season (links them to the league)
+      await insertPlayer({
+        userId: managerUser.id,
+        seasonId: season.id,
+      });
+
+      // Create context for the manager
+      const ctx = createCtx(managerUser) as GraphQLContext;
+
+      // Manager should be able to access their league
+      const result = await assertLeagueAccess(ctx, league.id);
+      expect(result).toBe(ctx);
+    });
+
+    it("manager cannot access another league (403)", async () => {
+      // Create a manager user
+      const managerUser = await insertUser({ role: Role.MANAGER });
+
+      // Create a league where the manager has access
+      const ownLeague = await insertLeague();
+      const ownSeason = await insertSeason({ leagueId: ownLeague.id });
+      await insertPlayer({
+        userId: managerUser.id,
+        seasonId: ownSeason.id,
+      });
+
+      // Create ANOTHER league that the manager does NOT have access to
+      const otherLeague = await insertLeague();
+
+      // Create context for the manager
+      const ctx = createCtx(managerUser) as GraphQLContext;
+
+      // Manager should NOT be able to access other league
+      try {
+        await assertLeagueAccess(ctx, otherLeague.id);
+        fail("Expected AuthError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AuthError);
+        expect((error as AuthError).status).toBe(403);
+        expect((error as AuthError).message).toBe("Access denied: not in this league");
+      }
+    });
+
+    it("manager with no player record cannot access any league (403)", async () => {
+      // Create a manager user with no player records
+      const managerUser = await insertUser({ role: Role.MANAGER });
+
+      // Create a league
+      const league = await insertLeague();
+
+      // Create context for the manager
+      const ctx = createCtx(managerUser) as GraphQLContext;
+
+      // Manager should NOT be able to access any league
+      try {
+        await assertLeagueAccess(ctx, league.id);
+        fail("Expected AuthError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AuthError);
+        expect((error as AuthError).status).toBe(403);
+      }
+    });
+  });
+
+  describe("Season scoping", () => {
+    it("manager can access their own season", async () => {
+      // Create a manager user
+      const managerUser = await insertUser({ role: Role.MANAGER });
+
+      // Create a season
+      const season = await insertSeason();
+
+      // Create a player for the manager in that season
+      await insertPlayer({
+        userId: managerUser.id,
+        seasonId: season.id,
+      });
+
+      // Create context for the manager
+      const ctx = createCtx(managerUser) as GraphQLContext;
+
+      // Manager should be able to access their season
+      const result = await assertSeasonAccess(ctx, season.id);
+      expect(result).toBe(ctx);
+    });
+
+    it("manager cannot access another season (403)", async () => {
+      // Create a manager user
+      const managerUser = await insertUser({ role: Role.MANAGER });
+
+      // Create a season where the manager has access
+      const ownSeason = await insertSeason();
+      await insertPlayer({
+        userId: managerUser.id,
+        seasonId: ownSeason.id,
+      });
+
+      // Create ANOTHER season that the manager does NOT have access to
+      const otherSeason = await insertSeason();
+
+      // Create context for the manager
+      const ctx = createCtx(managerUser) as GraphQLContext;
+
+      // Manager should NOT be able to access other season
+      try {
+        await assertSeasonAccess(ctx, otherSeason.id);
+        fail("Expected AuthError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AuthError);
+        expect((error as AuthError).status).toBe(403);
+        expect((error as AuthError).message).toBe("Access denied: not in this season");
+      }
+    });
+
+    it("manager with no player record cannot access any season (403)", async () => {
+      // Create a manager user with no player records
+      const managerUser = await insertUser({ role: Role.MANAGER });
+
+      // Create a season
+      const season = await insertSeason();
+
+      // Create context for the manager
+      const ctx = createCtx(managerUser) as GraphQLContext;
+
+      // Manager should NOT be able to access any season
+      try {
+        await assertSeasonAccess(ctx, season.id);
+        fail("Expected AuthError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AuthError);
+        expect((error as AuthError).status).toBe(403);
+      }
+    });
+
+    it("manager gets 'Season not found' for non-existent seasonId", async () => {
+      const managerUser = await insertUser({ role: Role.MANAGER });
+      const ctx = createCtx(managerUser) as GraphQLContext;
+
+      try {
+        await assertSeasonAccess(ctx, "non-existent-season-id");
+        fail("Expected AuthError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(AuthError);
+        expect((error as AuthError).status).toBe(403);
+        expect((error as AuthError).message).toBe("Season not found");
+      }
+    });
+  });
+
+  describe("withPolicy scope integration", () => {
+    const mockInfo = {
+      parentType: { name: "Mutation" },
+      fieldName: "testResolver",
+    } as GraphQLResolveInfo;
+
+    describe("LEAGUE_ACCESS policy", () => {
+      it("allows manager to access their league via withPolicy", async () => {
+        const managerUser = await insertUser({ role: Role.MANAGER });
+        const league = await insertLeague();
+        const season = await insertSeason({ leagueId: league.id });
+        await insertPlayer({ userId: managerUser.id, seasonId: season.id });
+
+        const ctx = createCtx(managerUser) as GraphQLContext;
+        const mockResolver = jest.fn().mockResolvedValue("success");
+        const wrapped = withPolicy(PolicyName.LEAGUE_ACCESS, mockResolver);
+
+        const result = await wrapped({}, { leagueId: league.id }, ctx, mockInfo);
+
+        expect(result).toBe("success");
+        expect(mockResolver).toHaveBeenCalled();
+      });
+
+      it("denies manager for other league via withPolicy (403)", async () => {
+        const managerUser = await insertUser({ role: Role.MANAGER });
+        const ownLeague = await insertLeague();
+        const ownSeason = await insertSeason({ leagueId: ownLeague.id });
+        await insertPlayer({ userId: managerUser.id, seasonId: ownSeason.id });
+
+        const otherLeague = await insertLeague();
+        const ctx = createCtx(managerUser) as GraphQLContext;
+        const mockResolver = jest.fn();
+        const wrapped = withPolicy(PolicyName.LEAGUE_ACCESS, mockResolver);
+
+        await expect(
+          wrapped({}, { leagueId: otherLeague.id }, ctx, mockInfo),
+        ).rejects.toMatchObject({
+          message: "Access denied: not in this league",
+          extensions: { code: 403 },
+        });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("SEASON_ACCESS policy", () => {
+      it("allows manager to access their season via withPolicy", async () => {
+        const managerUser = await insertUser({ role: Role.MANAGER });
+        const season = await insertSeason();
+        await insertPlayer({ userId: managerUser.id, seasonId: season.id });
+
+        const ctx = createCtx(managerUser) as GraphQLContext;
+        const mockResolver = jest.fn().mockResolvedValue("success");
+        const wrapped = withPolicy(PolicyName.SEASON_ACCESS, mockResolver);
+
+        const result = await wrapped({}, { seasonId: season.id }, ctx, mockInfo);
+
+        expect(result).toBe("success");
+        expect(mockResolver).toHaveBeenCalled();
+      });
+
+      it("denies manager for other season via withPolicy (403)", async () => {
+        const managerUser = await insertUser({ role: Role.MANAGER });
+        const ownSeason = await insertSeason();
+        await insertPlayer({ userId: managerUser.id, seasonId: ownSeason.id });
+
+        const otherSeason = await insertSeason();
+        const ctx = createCtx(managerUser) as GraphQLContext;
+        const mockResolver = jest.fn();
+        const wrapped = withPolicy(PolicyName.SEASON_ACCESS, mockResolver);
+
+        await expect(
+          wrapped({}, { seasonId: otherSeason.id }, ctx, mockInfo),
+        ).rejects.toMatchObject({
+          message: "Access denied: not in this season",
+          extensions: { code: 403 },
+        });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
     });
   });
 });

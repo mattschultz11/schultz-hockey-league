@@ -14,7 +14,7 @@ import * as userService from "@/service/models/userService";
 import { Role } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
-import type { ResolverFn, Resolvers } from "./generated";
+import type { Resolvers } from "./generated";
 
 export type GraphQLContext = ServerContext;
 
@@ -54,6 +54,10 @@ function serialize(value: unknown) {
   throw new TypeError("DateTime serialization expects a Date or string");
 }
 
+/**
+ * Helper to ensure the current user has admin role.
+ * Throws GraphQLError with appropriate status code on failure.
+ */
 function ensureAdmin(ctx: GraphQLContext) {
   try {
     return assertRole(ctx, [Role.ADMIN]);
@@ -65,12 +69,20 @@ function ensureAdmin(ctx: GraphQLContext) {
   }
 }
 
-function withAdmin<TParent, TArgs, TResult>(
-  resolver: ResolverFn<TResult, TParent, GraphQLContext, TArgs>,
-): ResolverFn<TResult, TParent, GraphQLContext, TArgs> {
-  return (parent, args, ctx, info) => {
+/**
+ * Higher-order function that wraps a resolver to require admin role.
+ * Uses a 3-arg resolver signature (no GraphQLResolveInfo) for ergonomic use
+ * with existing mutations. The AuthError→GraphQLError conversion is duplicated
+ * from withPolicy() because withPolicy() requires 4-arg resolvers and returns
+ * async — changing withAdmin's signature would break all 27 existing mutations.
+ * For new resolvers needing scope enforcement, prefer withPolicy() from rbacPolicy.ts.
+ */
+function withAdmin<TResult, TParent, TArgs>(
+  resolver: (parent: TParent, args: TArgs, ctx: GraphQLContext) => TResult,
+): (parent: TParent, args: TArgs, ctx: GraphQLContext) => TResult {
+  return (parent, args, ctx) => {
     ensureAdmin(ctx);
-    return resolver(parent, args, ctx, info);
+    return resolver(parent, args, ctx);
   };
 }
 

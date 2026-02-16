@@ -3,8 +3,10 @@ import { Option } from "effect";
 import { Role } from "@/service/prisma";
 
 import {
+  assertLeagueAccess,
   assertManagerOfTeam,
   assertRole,
+  assertSeasonAccess,
   AuthError,
   requireAdmin,
   requireAtLeast,
@@ -220,5 +222,123 @@ describe("assertManagerOfTeam", () => {
   });
 
   // Note: Tests for MANAGER team scoping require database mocking
+  // and are covered in integration tests with a test database
+});
+
+describe("assertLeagueAccess", () => {
+  const leagueId = "league-123";
+
+  it("allows ADMIN for any league", async () => {
+    const user = makeUser({ role: Role.ADMIN });
+    const ctx = createCtx(user);
+
+    await expect(assertLeagueAccess(ctx, leagueId)).resolves.toBe(ctx);
+  });
+
+  it("allows PLAYER (viewer) for any league", async () => {
+    const user = makeUser({ role: Role.PLAYER });
+    const ctx = createCtx(user);
+
+    await expect(assertLeagueAccess(ctx, leagueId)).resolves.toBe(ctx);
+  });
+
+  it("denies unauthenticated users", async () => {
+    const ctx = {
+      ...createCtx(),
+      user: Option.none(),
+    };
+
+    await expect(assertLeagueAccess(ctx, leagueId)).rejects.toThrow(
+      expect.objectContaining({
+        status: 401,
+        message: "Unauthorized",
+      }),
+    );
+  });
+
+  it("logs allow for ADMIN with admin_bypass reason", async () => {
+    const consoleSpy = jest.spyOn(console, "debug").mockImplementation();
+    const user = makeUser({ role: Role.ADMIN });
+    const ctx = createCtx(user);
+
+    await assertLeagueAccess(ctx, leagueId, "Query.league");
+
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"reason":"admin_bypass"'));
+    consoleSpy.mockRestore();
+  });
+
+  it("logs allow for PLAYER with viewer_read_access reason", async () => {
+    const consoleSpy = jest.spyOn(console, "debug").mockImplementation();
+    const user = makeUser({ role: Role.PLAYER });
+    const ctx = createCtx(user);
+
+    await assertLeagueAccess(ctx, leagueId, "Query.league");
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"reason":"viewer_read_access"'),
+    );
+    consoleSpy.mockRestore();
+  });
+
+  // Note: MANAGER league scoping tests require database mocking
+  // and are covered in integration tests with a test database
+});
+
+describe("assertSeasonAccess", () => {
+  const seasonId = "season-123";
+
+  it("allows ADMIN for any season", async () => {
+    const user = makeUser({ role: Role.ADMIN });
+    const ctx = createCtx(user);
+
+    await expect(assertSeasonAccess(ctx, seasonId)).resolves.toBe(ctx);
+  });
+
+  it("allows PLAYER (viewer) for any season", async () => {
+    const user = makeUser({ role: Role.PLAYER });
+    const ctx = createCtx(user);
+
+    await expect(assertSeasonAccess(ctx, seasonId)).resolves.toBe(ctx);
+  });
+
+  it("denies unauthenticated users", async () => {
+    const ctx = {
+      ...createCtx(),
+      user: Option.none(),
+    };
+
+    await expect(assertSeasonAccess(ctx, seasonId)).rejects.toThrow(
+      expect.objectContaining({
+        status: 401,
+        message: "Unauthorized",
+      }),
+    );
+  });
+
+  it("logs allow for ADMIN with admin_bypass reason", async () => {
+    const consoleSpy = jest.spyOn(console, "debug").mockImplementation();
+    const user = makeUser({ role: Role.ADMIN });
+    const ctx = createCtx(user);
+
+    await assertSeasonAccess(ctx, seasonId, "Query.season");
+
+    expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('"reason":"admin_bypass"'));
+    consoleSpy.mockRestore();
+  });
+
+  it("logs allow for PLAYER with viewer_read_access reason", async () => {
+    const consoleSpy = jest.spyOn(console, "debug").mockImplementation();
+    const user = makeUser({ role: Role.PLAYER });
+    const ctx = createCtx(user);
+
+    await assertSeasonAccess(ctx, seasonId, "Query.season");
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining('"reason":"viewer_read_access"'),
+    );
+    consoleSpy.mockRestore();
+  });
+
+  // Note: MANAGER season scoping tests require database mocking
   // and are covered in integration tests with a test database
 });

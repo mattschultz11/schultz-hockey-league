@@ -1,0 +1,263 @@
+<story-context id="1-3-rbac-enforcement-helpers" v="1.0">
+  <metadata>
+    <epicId>1</epicId>
+    <storyId>1.3</storyId>
+    <title>RBAC Enforcement Helpers</title>
+    <status>ready-for-dev</status>
+    <generatedAt>2025-12-21</generatedAt>
+    <generator>BMAD Story Context Workflow</generator>
+    <sourceStoryPath>_bmad-output/sprint-artifacts/1-3-rbac-enforcement-helpers.md</sourceStoryPath>
+  </metadata>
+
+  <story>
+    <asA>developer</asA>
+    <iWant>reusable policy helpers</iWant>
+    <soThat>APIs consistently enforce roles</soThat>
+    <tasks>
+      <task id="1" status="pending">Verify existing auth infrastructure (AC: #1)
+        <subtask>Review authService.ts for existing guard functions</subtask>
+        <subtask>Confirm withAdmin() wrapper pattern in resolvers.ts</subtask>
+        <subtask>Identify any gaps in current role enforcement</subtask>
+      </task>
+      <task id="2" status="pending">Create centralized policy module (AC: #2)
+        <subtask>Create src/service/auth/rbacPolicy.ts</subtask>
+        <subtask>Define PolicyName type/enum for named policies</subtask>
+        <subtask>Create policy registry mapping names to role requirements</subtask>
+        <subtask>Export getPolicy(name: PolicyName) function</subtask>
+      </task>
+      <task id="3" status="pending">Add league-scoped access guard (AC: #3)
+        <subtask>Implement assertLeagueAccess(ctx, leagueId) in authService.ts</subtask>
+        <subtask>ADMIN bypasses league check (can access all leagues)</subtask>
+        <subtask>MANAGER must have a player record in the league</subtask>
+        <subtask>PLAYER (viewer) can access all leagues (read-only)</subtask>
+        <subtask>Log scope violations with userId and requestedLeagueId</subtask>
+      </task>
+      <task id="4" status="pending">Add season-scoped access guard (AC: #3)
+        <subtask>Implement assertSeasonAccess(ctx, seasonId) in authService.ts</subtask>
+        <subtask>Derive leagueId from seasonId for validation</subtask>
+        <subtask>Apply same logic as league scoping</subtask>
+        <subtask>Log scope violations with userId, seasonId, and leagueId</subtask>
+      </task>
+      <task id="5" status="pending">Create withPolicy() higher-order function (AC: #1, #2)
+        <subtask>Implement withPolicy(policyName, resolverFn) wrapper</subtask>
+        <subtask>Support multiple policies: withPolicy(['admin', 'managerOfTeam'], resolverFn)</subtask>
+        <subtask>Integrate with existing logging for audit trail</subtask>
+        <subtask>Return proper GraphQL errors with codes</subtask>
+      </task>
+      <task id="6" status="pending">Migrate withAdmin() to policy system (AC: #2)
+        <subtask>Refactor withAdmin() to use withPolicy('admin', ...)</subtask>
+        <subtask>Ensure backward compatibility with existing resolvers</subtask>
+        <subtask>Verify all 27 mutations still work correctly</subtask>
+      </task>
+      <task id="7" status="pending">Write comprehensive unit tests (AC: #4)
+        <subtask>Create test/service/auth/rbacPolicy.test.ts</subtask>
+        <subtask>Test: Admin can access any resource</subtask>
+        <subtask>Test: Manager can only access scoped resources</subtask>
+        <subtask>Test: Player (viewer) has read-only access</subtask>
+        <subtask>Test: Unauthenticated users are denied (401)</subtask>
+        <subtask>Test: League scoping enforced correctly</subtask>
+        <subtask>Test: Season scoping enforced correctly</subtask>
+        <subtask>Test: Policy changes take effect immediately</subtask>
+      </task>
+    </tasks>
+  </story>
+
+  <acceptanceCriteria>
+    <criterion id="1">
+      <given>an API handler or GraphQL resolver</given>
+      <when>a policy helper is applied with required role</when>
+      <then>unauthorized roles receive HTTP 403 Forbidden AND authorized roles proceed to the handler logic</then>
+    </criterion>
+    <criterion id="2">
+      <given>RBAC policies are updated centrally</given>
+      <when>a guarded endpoint is called</when>
+      <then>the updated policy is reflected immediately AND no code duplication exists across endpoints</then>
+    </criterion>
+    <criterion id="3">
+      <given>a policy helper with league/season scoping</given>
+      <when>a user attempts to access resources outside their scope</when>
+      <then>access is denied with 403 AND the denial is logged with user context</then>
+    </criterion>
+    <criterion id="4">
+      <given>the policy helper module</given>
+      <when>unit tests are run</when>
+      <then>all RBAC scenarios pass (admin access, manager scoped, viewer read-only, unauthorized denial)</then>
+    </criterion>
+  </acceptanceCriteria>
+
+  <artifacts>
+    <docs>
+      <doc>
+        <path>_bmad-output/architecture.md</path>
+        <title>Architecture</title>
+        <section>Security Architecture</section>
+        <snippet>RBAC: admin/manager/viewer enforced at handler/resolver entry; deny by default; policies encapsulated per feature. All queries/writes scoped by league/season/team.</snippet>
+      </doc>
+      <doc>
+        <path>_bmad-output/architecture.md</path>
+        <title>Architecture</title>
+        <section>Authentication and Authorization</section>
+        <snippet>NextAuth sessions with RBAC (admin/manager/viewer) enforced at API layer; session-backed via secure cookies. Role checks at handler/resolver entry.</snippet>
+      </doc>
+      <doc>
+        <path>_bmad-output/epics.md</path>
+        <title>Epic Breakdown</title>
+        <section>Story 1.3: RBAC Enforcement Helpers</section>
+        <snippet>Create reusable policy helpers for APIs to consistently enforce roles. League/season scoping for access control. Unit tests for all RBAC scenarios.</snippet>
+      </doc>
+      <doc>
+        <path>_bmad-output/prd.md</path>
+        <title>PRD</title>
+        <section>Roles and Access (FR-016, FR-017, FR-018)</section>
+        <snippet>FR-016: Admins have full write access. FR-017: Team Managers have limited write access (scoped to their team). FR-018: Viewers have read-only access.</snippet>
+      </doc>
+    </docs>
+
+    <code>
+      <file>
+        <path>src/service/auth/authService.ts</path>
+        <kind>service</kind>
+        <symbol>assertRole, logAuthCheck, AuthError, requireRole, requireAdmin, requireAtLeast, assertManagerOfTeam</symbol>
+        <lines>1-217</lines>
+        <reason>Core auth guards to extend with league/season scoping. Contains existing RBAC implementation patterns.</reason>
+      </file>
+      <file>
+        <path>src/graphql/resolvers.ts</path>
+        <kind>resolver</kind>
+        <symbol>withAdmin, ensureAdmin</symbol>
+        <lines>57-75</lines>
+        <reason>Existing withAdmin() wrapper to migrate to new policy system. All 27 mutations use this pattern.</reason>
+      </file>
+      <file>
+        <path>src/types.ts</path>
+        <kind>types</kind>
+        <symbol>AuthContext, ServerContext</symbol>
+        <lines>1-22</lines>
+        <reason>Context types used by auth guards. ServerContext includes prisma client.</reason>
+      </file>
+      <file>
+        <path>prisma/schema.prisma</path>
+        <kind>schema</kind>
+        <symbol>Role, Player, Season, League, Team</symbol>
+        <lines>32-131</lines>
+        <reason>Data model for league/season scoping. Player.userId links users to seasons via teams.</reason>
+      </file>
+      <file>
+        <path>test/service/auth/authService.test.ts</path>
+        <kind>test</kind>
+        <symbol>assertRole, requireRole, requireAdmin, requireAtLeast, assertManagerOfTeam tests</symbol>
+        <lines>1-224</lines>
+        <reason>Test patterns to follow. Uses createCtx(), makeUser() from test utilities.</reason>
+      </file>
+      <file>
+        <path>test/graphql/auth.integration.test.ts</path>
+        <kind>test</kind>
+        <symbol>GraphQL Auth Integration tests</symbol>
+        <lines>1-453</lines>
+        <reason>Integration test patterns with real database. Tests all role combinations.</reason>
+      </file>
+      <file>
+        <path>test/utils.ts</path>
+        <kind>test-utility</kind>
+        <symbol>createCtx</symbol>
+        <reason>Test context creation utility. Provides prisma mock and user context.</reason>
+      </file>
+      <file>
+        <path>test/modelFactory.ts</path>
+        <kind>test-utility</kind>
+        <symbol>makeUser, insertUser, insertLeague, insertSeason, insertTeam, insertPlayer</symbol>
+        <reason>Test data factories for creating users, leagues, seasons, teams, players.</reason>
+      </file>
+    </code>
+
+    <dependencies>
+      <node>
+        <package name="effect" version="^3.19.3">Functional programming library with Option type for user presence checks</package>
+        <package name="next-auth" version="^4.24.13">Authentication library (stay on v4, do not upgrade to v5)</package>
+        <package name="graphql" version="^16.12.0">GraphQL core library with GraphQLError</package>
+        <package name="@prisma/client" version="^7.0.1">Database ORM client</package>
+        <package name="jest" version="^30.2.0">Testing framework</package>
+      </node>
+    </dependencies>
+  </artifacts>
+
+  <constraints>
+    <constraint type="architecture">Deny by default - guards at resolver entry point</constraint>
+    <constraint type="architecture">Role enforcement via API layer, not middleware</constraint>
+    <constraint type="architecture">All queries/writes scoped by league/season/team per FR-020</constraint>
+    <constraint type="pattern">Use Effect Option for user presence checks</constraint>
+    <constraint type="pattern">Structured JSON logging with requestId correlation</constraint>
+    <constraint type="pattern">GraphQL errors with extensions.code for HTTP status</constraint>
+    <constraint type="compatibility">Do NOT modify NextAuth configuration (authOptions.ts)</constraint>
+    <constraint type="compatibility">Do NOT change existing assertRole() or assertManagerOfTeam() signatures</constraint>
+    <constraint type="compatibility">Maintain backward compatibility with existing withAdmin() usage</constraint>
+  </constraints>
+
+  <interfaces>
+    <interface>
+      <name>assertRole</name>
+      <kind>function</kind>
+      <signature>assertRole(ctx: AuthContext, allowed: Role[], endpoint?: string): AuthContext</signature>
+      <path>src/service/auth/authService.ts</path>
+    </interface>
+    <interface>
+      <name>assertManagerOfTeam</name>
+      <kind>function</kind>
+      <signature>assertManagerOfTeam(ctx: ServerContext, teamId: string, endpoint?: string): Promise&lt;ServerContext&gt;</signature>
+      <path>src/service/auth/authService.ts</path>
+    </interface>
+    <interface>
+      <name>logAuthCheck</name>
+      <kind>function</kind>
+      <signature>logAuthCheck(requestId: string, outcome: "allow" | "deny" | "unauthorized", details: LogAuthCheckDetails): void</signature>
+      <path>src/service/auth/authService.ts</path>
+    </interface>
+    <interface>
+      <name>AuthError</name>
+      <kind>class</kind>
+      <signature>class AuthError extends Error { constructor(message: string, status: 401 | 403); }</signature>
+      <path>src/service/auth/authService.ts</path>
+    </interface>
+    <interface>
+      <name>withAdmin</name>
+      <kind>function</kind>
+      <signature>withAdmin&lt;TParent, TArgs, TResult&gt;(resolver: ResolverFn): ResolverFn</signature>
+      <path>src/graphql/resolvers.ts</path>
+    </interface>
+    <interface>
+      <name>ServerContext</name>
+      <kind>type</kind>
+      <signature>type ServerContext = AuthContext &amp; { prisma: PrismaClient }</signature>
+      <path>src/types.ts</path>
+    </interface>
+  </interfaces>
+
+  <tests>
+    <standards>
+      Jest 30.2.0 with @swc/jest for fast TypeScript compilation. Tests mirror src/ structure in test/ directory.
+      Use createCtx() from test/utils.ts for context creation with prisma mock.
+      Use makeUser(), insertUser(), insertLeague(), etc. from test/modelFactory.ts for test data.
+      Integration tests use real SQLite test database via Prisma mock.
+      Run tests with: npm test -- --runInBand
+      Mock next-auth/next with jest.mock for unit tests.
+    </standards>
+    <locations>
+      <location>test/service/auth/*.test.ts</location>
+      <location>test/graphql/*.test.ts</location>
+    </locations>
+    <ideas>
+      <idea acRef="1">Test withPolicy('admin') allows ADMIN, denies MANAGER/PLAYER</idea>
+      <idea acRef="1">Test withPolicy('manager') allows ADMIN and MANAGER, denies PLAYER</idea>
+      <idea acRef="2">Test getPolicy() returns correct config for each PolicyName</idea>
+      <idea acRef="2">Test policy registry has no duplicate entries</idea>
+      <idea acRef="3">Test assertLeagueAccess allows ADMIN for any league</idea>
+      <idea acRef="3">Test assertLeagueAccess allows PLAYER (viewer) for any league (read-only)</idea>
+      <idea acRef="3">Test assertLeagueAccess allows MANAGER only for their league</idea>
+      <idea acRef="3">Test assertLeagueAccess denies MANAGER outside their league with 403</idea>
+      <idea acRef="3">Test assertSeasonAccess follows same pattern as league</idea>
+      <idea acRef="3">Test scope violations are logged with userId, requestedId</idea>
+      <idea acRef="4">Test unauthenticated user receives 401 Unauthorized</idea>
+      <idea acRef="4">Integration test: all 27 mutations still work with migrated withAdmin</idea>
+    </ideas>
+  </tests>
+</story-context>

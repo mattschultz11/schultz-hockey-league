@@ -141,6 +141,173 @@ export function requireAtLeast(minRole: Role) {
 }
 
 /**
+ * Asserts that the authenticated user has access to the specified league.
+ * - ADMIN: Can access all leagues
+ * - MANAGER: Must have a player record in the league
+ * - PLAYER: Can access all leagues (read-only)
+ * SECURITY CRITICAL: Enforces league-scoping per FR-020.
+ */
+export async function assertLeagueAccess(
+  ctx: ServerContext,
+  leagueId: string,
+  endpoint?: string,
+): Promise<ServerContext> {
+  return Option.match(ctx.user, {
+    onSome: async (user) => {
+      // Admin can access all leagues
+      if (user.role === Role.ADMIN) {
+        logAuthCheck(ctx.requestId, "allow", {
+          endpoint,
+          userId: user.id,
+          role: user.role,
+          reason: "admin_bypass",
+        });
+        return ctx;
+      }
+
+      // PLAYER (viewer) can read all leagues
+      if (user.role === Role.PLAYER) {
+        logAuthCheck(ctx.requestId, "allow", {
+          endpoint,
+          userId: user.id,
+          role: user.role,
+          reason: "viewer_read_access",
+        });
+        return ctx;
+      }
+
+      // MANAGER must have a player record in the league
+      if (user.role === Role.MANAGER) {
+        const hasLeagueAccess = await ctx.prisma.player.findFirst({
+          where: {
+            userId: user.id,
+            season: { leagueId: leagueId },
+          },
+        });
+
+        if (!hasLeagueAccess) {
+          logAuthCheck(ctx.requestId, "deny", {
+            endpoint,
+            userId: user.id,
+            role: user.role,
+            reason: "league_scope_violation",
+          });
+          throw new AuthError("Access denied: not in this league", 403);
+        }
+
+        logAuthCheck(ctx.requestId, "allow", {
+          endpoint,
+          userId: user.id,
+          role: user.role,
+          reason: "manager_in_league",
+        });
+        return ctx;
+      }
+
+      throw new AuthError("Forbidden", 403);
+    },
+    onNone: () => {
+      logAuthCheck(ctx.requestId, "unauthorized", {
+        endpoint,
+        reason: "no_session",
+      });
+      throw new AuthError("Unauthorized", 401);
+    },
+  });
+}
+
+/**
+ * Asserts that the authenticated user has access to the specified season.
+ * - ADMIN: Can access all seasons
+ * - MANAGER: Must have a player record in the season
+ * - PLAYER: Can access all seasons (read-only)
+ * SECURITY CRITICAL: Enforces season-scoping per FR-020.
+ */
+export async function assertSeasonAccess(
+  ctx: ServerContext,
+  seasonId: string,
+  endpoint?: string,
+): Promise<ServerContext> {
+  return Option.match(ctx.user, {
+    onSome: async (user) => {
+      // Admin can access all seasons
+      if (user.role === Role.ADMIN) {
+        logAuthCheck(ctx.requestId, "allow", {
+          endpoint,
+          userId: user.id,
+          role: user.role,
+          reason: "admin_bypass",
+        });
+        return ctx;
+      }
+
+      // PLAYER (viewer) can read all seasons
+      if (user.role === Role.PLAYER) {
+        logAuthCheck(ctx.requestId, "allow", {
+          endpoint,
+          userId: user.id,
+          role: user.role,
+          reason: "viewer_read_access",
+        });
+        return ctx;
+      }
+
+      // MANAGER must have a player record in this season
+      if (user.role === Role.MANAGER) {
+        const season = await ctx.prisma.season.findUnique({
+          where: { id: seasonId },
+          select: { id: true },
+        });
+
+        if (!season) {
+          logAuthCheck(ctx.requestId, "deny", {
+            endpoint,
+            userId: user.id,
+            role: user.role,
+            reason: "season_not_found",
+          });
+          throw new AuthError("Season not found", 403);
+        }
+
+        const hasSeasonAccess = await ctx.prisma.player.findFirst({
+          where: {
+            userId: user.id,
+            seasonId: seasonId,
+          },
+        });
+
+        if (!hasSeasonAccess) {
+          logAuthCheck(ctx.requestId, "deny", {
+            endpoint,
+            userId: user.id,
+            role: user.role,
+            reason: "season_scope_violation",
+          });
+          throw new AuthError("Access denied: not in this season", 403);
+        }
+
+        logAuthCheck(ctx.requestId, "allow", {
+          endpoint,
+          userId: user.id,
+          role: user.role,
+          reason: "manager_in_season",
+        });
+        return ctx;
+      }
+
+      throw new AuthError("Forbidden", 403);
+    },
+    onNone: () => {
+      logAuthCheck(ctx.requestId, "unauthorized", {
+        endpoint,
+        reason: "no_session",
+      });
+      throw new AuthError("Unauthorized", 401);
+    },
+  });
+}
+
+/**
  * Asserts that the authenticated user is either an ADMIN (bypass) or a MANAGER who owns the specified team.
  * SECURITY CRITICAL: Enforces team-scoping for manager operations per FR-017.
  */
