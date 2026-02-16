@@ -5,7 +5,7 @@ const createJestConfig = nextJest({
   dir: "./",
 });
 
-const config: Config.InitialProjectOptions = {
+const config: Config.InitialOptions = {
   testEnvironment: "jest-environment-jsdom",
   extensionsToTreatAsEsm: [".ts", ".tsx", ".mts"],
   globalSetup: "<rootDir>/test/jest.global-setup.mjs",
@@ -18,6 +18,27 @@ const config: Config.InitialProjectOptions = {
   setupFilesAfterEnv: ["<rootDir>/test/jest.setup.ts"],
   transformIgnorePatterns: ["/node_modules/(?!@prisma/client/)"],
   testPathIgnorePatterns: ["/node_modules/", "/.next/"],
+  collectCoverageFrom: [
+    "src/**/*.ts",
+    "!src/**/*.d.ts",
+    "!src/service/prisma/generated/**",
+    "!src/graphql/generated/**",
+  ],
+  coverageThreshold: {
+    global: {},
+    "src/service/auth/": {
+      statements: 80,
+      branches: 75,
+      functions: 70,
+      lines: 80,
+    },
+    "src/service/models/": {
+      statements: 60,
+      branches: 35,
+      functions: 55,
+      lines: 60,
+    },
+  },
 };
 
 export default createJestConfig(config);

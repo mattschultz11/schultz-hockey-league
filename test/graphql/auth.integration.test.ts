@@ -11,7 +11,7 @@ import {
   AuthError,
 } from "@/service/auth/authService";
 import { PolicyName, withPolicy } from "@/service/auth/rbacPolicy";
-import type { League, Season, Team, User } from "@/service/prisma";
+import type { League, Player, Season, Team, User } from "@/service/prisma";
 import { Role } from "@/service/prisma";
 
 import {
@@ -20,7 +20,9 @@ import {
   insertSeason,
   insertTeam,
   insertUser,
+  makeGame,
   makeLeague,
+  makePlayer,
   makeSeason,
   makeTeam,
 } from "../modelFactory";
@@ -40,16 +42,17 @@ async function invokeResolver<TResult, TParent, TArgs>(
   ctx: GraphQLContext,
 ): Promise<TResult> {
   if (typeof resolver === "function") {
-    return (resolver as ResolverFn<TResult, TParent, GraphQLContext, TArgs>)(
-      parent,
-      args,
-      ctx,
-      {} as GraphQLResolveInfo,
-    );
+    return (resolver as ResolverFn<TResult, TParent, GraphQLContext, TArgs>)(parent, args, ctx, {
+      parentType: { name: "Mutation" },
+      fieldName: "unknown",
+    } as GraphQLResolveInfo);
   }
   // ResolverWithResolve case
   const resolverObj = resolver as { resolve: ResolverFn<TResult, TParent, GraphQLContext, TArgs> };
-  return resolverObj.resolve(parent, args, ctx, {} as GraphQLResolveInfo);
+  return resolverObj.resolve(parent, args, ctx, {
+    parentType: { name: "Mutation" },
+    fieldName: "unknown",
+  } as GraphQLResolveInfo);
 }
 
 /**
@@ -693,6 +696,135 @@ describe("GraphQL Auth Integration", () => {
         });
         expect(mockResolver).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe("Manager season-scoped create mutations", () => {
+    it("manager can createPlayer in their own season", async () => {
+      const managerUser = await insertUser({ role: Role.MANAGER });
+      const season = await insertSeason();
+      await insertPlayer({ userId: managerUser.id, seasonId: season.id });
+
+      const ctx = createCtx(managerUser) as GraphQLContext;
+      const playerInput = makePlayer({ seasonId: season.id, userId: managerUser.id });
+
+      const result = await invokeResolver<Player, unknown, unknown>(
+        resolvers.Mutation!.createPlayer,
+        {},
+        {
+          data: {
+            seasonId: season.id,
+            userId: managerUser.id,
+            position: playerInput.position,
+            number: playerInput.number,
+            playerRating: playerInput.playerRating,
+            goalieRating: playerInput.goalieRating,
+            lockerRating: playerInput.lockerRating,
+            registrationNumber: playerInput.registrationNumber,
+          },
+        },
+        ctx,
+      );
+
+      expect(result).toBeDefined();
+      expect(result.seasonId).toBe(season.id);
+    });
+
+    it("manager denied createPlayer in another season (403)", async () => {
+      const managerUser = await insertUser({ role: Role.MANAGER });
+      const ownSeason = await insertSeason();
+      await insertPlayer({ userId: managerUser.id, seasonId: ownSeason.id });
+
+      const otherSeason = await insertSeason();
+      const ctx = createCtx(managerUser) as GraphQLContext;
+      const playerInput = makePlayer({ seasonId: otherSeason.id });
+
+      try {
+        await invokeResolver(
+          resolvers.Mutation!.createPlayer,
+          {},
+          {
+            data: {
+              seasonId: otherSeason.id,
+              userId: playerInput.userId,
+              position: playerInput.position,
+              number: playerInput.number,
+              playerRating: playerInput.playerRating,
+              goalieRating: playerInput.goalieRating,
+              lockerRating: playerInput.lockerRating,
+              registrationNumber: playerInput.registrationNumber,
+            },
+          },
+          ctx,
+        );
+        fail("Expected GraphQLError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).extensions?.code).toBe(403);
+      }
+    });
+
+    it("player denied createPlayer (403)", async () => {
+      const playerUser = await insertUser({ role: Role.PLAYER });
+      const season = await insertSeason();
+      await insertPlayer({ userId: playerUser.id, seasonId: season.id });
+
+      const ctx = createCtx(playerUser) as GraphQLContext;
+      const playerInput = makePlayer({ seasonId: season.id });
+
+      try {
+        await invokeResolver(
+          resolvers.Mutation!.createPlayer,
+          {},
+          {
+            data: {
+              seasonId: season.id,
+              userId: playerInput.userId,
+              position: playerInput.position,
+              number: playerInput.number,
+              playerRating: playerInput.playerRating,
+              goalieRating: playerInput.goalieRating,
+              lockerRating: playerInput.lockerRating,
+              registrationNumber: playerInput.registrationNumber,
+            },
+          },
+          ctx,
+        );
+        fail("Expected GraphQLError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).extensions?.code).toBe(403);
+      }
+    });
+
+    it("unauthenticated denied createGame (401)", async () => {
+      const season = await insertSeason();
+      const ctx = {
+        ...createCtx(),
+        user: Option.none(),
+      } as GraphQLContext;
+      const gameInput = makeGame({ seasonId: season.id });
+
+      try {
+        await invokeResolver(
+          resolvers.Mutation!.createGame,
+          {},
+          {
+            data: {
+              seasonId: season.id,
+              round: gameInput.round,
+              date: gameInput.date,
+              time: gameInput.time,
+              location: gameInput.location,
+            },
+          },
+          ctx,
+        );
+        fail("Expected GraphQLError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).extensions?.code).toBe(401);
+      }
     });
   });
 });

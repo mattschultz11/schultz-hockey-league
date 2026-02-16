@@ -1,8 +1,18 @@
-import { createGoal, updateGoal } from "@/service/models/goalService";
+import { randUuid } from "@ngneat/falso";
+
+import { NotFoundError } from "@/service/errors";
+import {
+  createGoal,
+  deleteGoal,
+  getGoalById,
+  getGoalsBySeason,
+  updateGoal,
+} from "@/service/models/goalService";
+import { Strength } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
 import type { GameModel, PlayerModel, TeamModel } from "../../modelFactory";
-import { insertGame, insertPlayer, insertTeam, makeGoal } from "../../modelFactory";
+import { insertGame, insertPlayer, insertSeason, insertTeam, makeGoal } from "../../modelFactory";
 import { createCtx } from "../../utils";
 
 describe("goalService", () => {
@@ -151,5 +161,59 @@ describe("goalService", () => {
     await expect(() => updateGoal(created.id, { teamId: otherTeam.id }, ctx)).rejects.toThrow(
       "Team must be in the game",
     );
+  });
+
+  it("can get a goal by id", async () => {
+    const goal = await createGoal(
+      makeGoal({ gameId: game.id, teamId: team.id, scorerId: scorer.id }),
+      ctx,
+    );
+
+    const found = await getGoalById(goal.id, ctx);
+
+    expect(found).toMatchObject(goal);
+  });
+
+  it("throws NotFoundError when getting a non-existent goal", async () => {
+    await expect(getGoalById(randUuid(), ctx)).rejects.toThrow(NotFoundError);
+  });
+
+  it("can list goals by season", async () => {
+    const season = await insertSeason();
+    const seasonTeam = await insertTeam({ seasonId: season.id });
+    const seasonScorer = await insertPlayer({ seasonId: season.id, teamId: seasonTeam.id });
+    const seasonGame = await insertGame({ seasonId: season.id, homeTeamId: seasonTeam.id });
+
+    await createGoal(
+      makeGoal({ gameId: seasonGame.id, teamId: seasonTeam.id, scorerId: seasonScorer.id }),
+      ctx,
+    );
+
+    const goals = await getGoalsBySeason(season.id, ctx);
+
+    expect(goals.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("can update a goal", async () => {
+    const goal = await createGoal(
+      makeGoal({ gameId: game.id, teamId: team.id, scorerId: scorer.id }),
+      ctx,
+    );
+
+    const updated = await updateGoal(goal.id, { period: 3, strength: Strength.POWERPLAY }, ctx);
+
+    expect(updated.period).toBe(3);
+    expect(updated.strength).toBe(Strength.POWERPLAY);
+  });
+
+  it("can delete a goal", async () => {
+    const goal = await createGoal(
+      makeGoal({ gameId: game.id, teamId: team.id, scorerId: scorer.id }),
+      ctx,
+    );
+
+    await deleteGoal(goal.id, ctx);
+
+    await expect(getGoalById(goal.id, ctx)).rejects.toThrow(NotFoundError);
   });
 });

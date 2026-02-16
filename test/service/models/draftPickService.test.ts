@@ -1,4 +1,13 @@
-import { createDraftPick, updateDraftPick } from "@/service/models/draftPickService";
+import { randUuid } from "@ngneat/falso";
+
+import { NotFoundError } from "@/service/errors";
+import {
+  createDraftPick,
+  deleteDraftPick,
+  getDraftPickById,
+  getDraftPicksBySeason,
+  updateDraftPick,
+} from "@/service/models/draftPickService";
 import prisma from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
@@ -156,5 +165,59 @@ describe("draftPickService", () => {
         ctx,
       ),
     ).rejects.toThrow("Player must be in the same season as the draft pick");
+  });
+
+  it("can get a draft pick by id", async () => {
+    const draftPick = await createDraftPick(
+      makeDraftPick({ seasonId: season.id, playerId: null, teamId: null }),
+      ctx,
+    );
+
+    const found = await getDraftPickById(draftPick.id, ctx);
+
+    expect(found).toMatchObject(draftPick);
+  });
+
+  it("throws NotFoundError when getting a non-existent draft pick", async () => {
+    await expect(getDraftPickById(randUuid(), ctx)).rejects.toThrow(NotFoundError);
+  });
+
+  it("can list draft picks by season", async () => {
+    await createDraftPick(
+      makeDraftPick({ seasonId: season.id, playerId: null, teamId: null }),
+      ctx,
+    );
+    await createDraftPick(
+      makeDraftPick({ seasonId: season.id, playerId: null, teamId: null }),
+      ctx,
+    );
+
+    const draftPicks = await getDraftPicksBySeason(season.id, ctx);
+
+    expect(draftPicks.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("can update draft pick fields", async () => {
+    const draftPick = await createDraftPick(
+      makeDraftPick({ seasonId: season.id, playerId: null, teamId: null }),
+      ctx,
+    );
+
+    const updated = await updateDraftPick(draftPick.id, { overall: 1, round: 1, pick: 1 }, ctx);
+
+    expect(updated.overall).toBe(1);
+    expect(updated.round).toBe(1);
+    expect(updated.pick).toBe(1);
+  });
+
+  it("can delete a draft pick", async () => {
+    const draftPick = await createDraftPick(
+      makeDraftPick({ seasonId: season.id, playerId: null, teamId: null }),
+      ctx,
+    );
+
+    await deleteDraftPick(draftPick.id, ctx);
+
+    await expect(getDraftPickById(draftPick.id, ctx)).rejects.toThrow(NotFoundError);
   });
 });

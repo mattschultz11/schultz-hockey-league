@@ -1,11 +1,13 @@
 import { Option, pipe } from "effect";
 
 import type { DraftPickCreateInput, DraftPickUpdateInput } from "@/graphql/generated";
+import { NotFoundError } from "@/service/errors";
 import type { DraftPick, Player, Prisma, Team } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
-import { cleanInput } from "./modelServiceUtils";
+import { draftPickCreateSchema, draftPickUpdateSchema } from "../validation/schemas";
+import { cleanInput, validate } from "./modelServiceUtils";
 import { maybeGetPlayerById } from "./playerService";
 import { maybeGetTeamById } from "./teamService";
 
@@ -13,11 +15,14 @@ export function getDraftPicksBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.draftPick.findMany({ where: { seasonId }, orderBy: { overall: "asc" } });
 }
 
-export function getDraftPickById(id: string, ctx: ServerContext) {
-  return ctx.prisma.draftPick.findUniqueOrThrow({ where: { id } });
+export async function getDraftPickById(id: string, ctx: ServerContext) {
+  const draftPick = await ctx.prisma.draftPick.findUnique({ where: { id } });
+  if (!draftPick) throw new NotFoundError("DraftPick", id);
+  return draftPick;
 }
 
 export async function createDraftPick(data: DraftPickCreateInput, ctx: ServerContext) {
+  validate(draftPickCreateSchema, data);
   const player = await maybeGetPlayerById(data.playerId, ctx);
   const team = await maybeGetTeamById(data.teamId, ctx);
 
@@ -46,6 +51,7 @@ export async function createDraftPick(data: DraftPickCreateInput, ctx: ServerCon
 }
 
 export async function updateDraftPick(id: string, data: DraftPickUpdateInput, ctx: ServerContext) {
+  validate(draftPickUpdateSchema, data);
   const payload = cleanInput(data);
   assertNonNullableFields(payload, ["overall", "round", "pick"] as const);
 
@@ -140,14 +146,16 @@ export function deleteDraftPick(id: string, ctx: ServerContext) {
   return ctx.prisma.draftPick.delete({ where: { id } });
 }
 
-export function getDraftPickSeason(draftPickId: string, ctx: ServerContext) {
-  return ctx.prisma.draftPick.findUniqueOrThrow({ where: { id: draftPickId } }).season();
+export async function getDraftPickSeason(draftPickId: string, ctx: ServerContext) {
+  const season = await ctx.prisma.draftPick.findUnique({ where: { id: draftPickId } })?.season();
+  if (!season) throw new NotFoundError("DraftPick", draftPickId);
+  return season;
 }
 
-export function getDraftPickTeam(draftPickId: string, ctx: ServerContext) {
-  return ctx.prisma.draftPick.findUniqueOrThrow({ where: { id: draftPickId } }).team();
+export async function getDraftPickTeam(draftPickId: string, ctx: ServerContext) {
+  return (await ctx.prisma.draftPick.findUnique({ where: { id: draftPickId } })?.team()) ?? null;
 }
 
-export function getDraftPickPlayer(draftPickId: string, ctx: ServerContext) {
-  return ctx.prisma.draftPick.findUniqueOrThrow({ where: { id: draftPickId } }).player();
+export async function getDraftPickPlayer(draftPickId: string, ctx: ServerContext) {
+  return (await ctx.prisma.draftPick.findUnique({ where: { id: draftPickId } })?.player()) ?? null;
 }

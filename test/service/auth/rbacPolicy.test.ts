@@ -6,6 +6,7 @@ import {
   assertSeasonAccess,
 } from "@/service/auth/authService";
 import { getPolicy, PolicyName, withPolicy } from "@/service/auth/rbacPolicy";
+import { ConflictError, NotFoundError, ValidationError } from "@/service/errors";
 import { Role } from "@/service/prisma";
 
 import { makeUser } from "../../modelFactory";
@@ -324,6 +325,196 @@ describe("withPolicy", () => {
         });
         expect(mockResolver).not.toHaveBeenCalled();
       });
+    });
+
+    describe("args.data fallback lookup", () => {
+      it("finds seasonId in args.data when not in top-level args", async () => {
+        const mockResolver = jest.fn().mockResolvedValue("success");
+        const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+        const wrappedResolver = withPolicy(PolicyName.SEASON_ACCESS, mockResolver);
+
+        const result = await wrappedResolver(
+          {},
+          { data: { seasonId: "season-456" } },
+          ctx,
+          mockInfo,
+        );
+
+        expect(result).toBe("success");
+        expect(mockAssertSeasonAccess).toHaveBeenCalledWith(
+          ctx,
+          "season-456",
+          "Mutation.testResolver",
+        );
+      });
+
+      it("finds leagueId in args.data when not in top-level args", async () => {
+        const mockResolver = jest.fn().mockResolvedValue("success");
+        const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+        const wrappedResolver = withPolicy(PolicyName.LEAGUE_ACCESS, mockResolver);
+
+        const result = await wrappedResolver(
+          {},
+          { data: { leagueId: "league-123" } },
+          ctx,
+          mockInfo,
+        );
+
+        expect(result).toBe("success");
+        expect(mockAssertLeagueAccess).toHaveBeenCalledWith(
+          ctx,
+          "league-123",
+          "Mutation.testResolver",
+        );
+      });
+
+      it("finds teamId in args.data when not in top-level args", async () => {
+        const mockResolver = jest.fn().mockResolvedValue("success");
+        const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+        const wrappedResolver = withPolicy(PolicyName.MANAGER_OF_TEAM, mockResolver);
+
+        const result = await wrappedResolver({}, { data: { teamId: "team-789" } }, ctx, mockInfo);
+
+        expect(result).toBe("success");
+        expect(mockAssertManagerOfTeam).toHaveBeenCalledWith(
+          ctx,
+          "team-789",
+          "Mutation.testResolver",
+        );
+      });
+
+      it("top-level args take precedence over args.data", async () => {
+        const mockResolver = jest.fn().mockResolvedValue("success");
+        const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+        const wrappedResolver = withPolicy(PolicyName.SEASON_ACCESS, mockResolver);
+
+        await wrappedResolver(
+          {},
+          { seasonId: "top-level", data: { seasonId: "nested" } },
+          ctx,
+          mockInfo,
+        );
+
+        expect(mockAssertSeasonAccess).toHaveBeenCalledWith(
+          ctx,
+          "top-level",
+          "Mutation.testResolver",
+        );
+      });
+
+      it("throws INTERNAL_SERVER_ERROR when scope field missing from both args and args.data", async () => {
+        const mockResolver = jest.fn();
+        const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+        const wrappedResolver = withPolicy(PolicyName.SEASON_ACCESS, mockResolver);
+
+        await expect(
+          wrappedResolver({}, { data: { name: "no-season-here" } }, ctx, mockInfo),
+        ).rejects.toMatchObject({
+          message: expect.stringContaining("args or args.data"),
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
+
+      it("throws INTERNAL_SERVER_ERROR when args.data is not an object", async () => {
+        const mockResolver = jest.fn();
+        const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+        const wrappedResolver = withPolicy(PolicyName.SEASON_ACCESS, mockResolver);
+
+        await expect(
+          wrappedResolver({}, { data: "not-an-object" }, ctx, mockInfo),
+        ).rejects.toMatchObject({
+          message: expect.stringContaining("args or args.data"),
+          extensions: { code: "INTERNAL_SERVER_ERROR" },
+        });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("multi-policy AND with args.data", () => {
+      it("MANAGER + SEASON_ACCESS allows manager with args.data.seasonId", async () => {
+        const mockResolver = jest.fn().mockResolvedValue("success");
+        const ctx = createCtx(makeUser({ role: Role.MANAGER }));
+        const wrappedResolver = withPolicy(
+          [PolicyName.MANAGER, PolicyName.SEASON_ACCESS],
+          mockResolver,
+        );
+
+        const result = await wrappedResolver(
+          {},
+          { data: { seasonId: "season-456" } },
+          ctx,
+          mockInfo,
+        );
+
+        expect(result).toBe("success");
+        expect(mockAssertSeasonAccess).toHaveBeenCalledWith(
+          ctx,
+          "season-456",
+          "Mutation.testResolver",
+        );
+      });
+
+      it("MANAGER + SEASON_ACCESS denies player role", async () => {
+        const mockResolver = jest.fn();
+        const ctx = createCtx(makeUser({ role: Role.PLAYER }));
+        const wrappedResolver = withPolicy(
+          [PolicyName.MANAGER, PolicyName.SEASON_ACCESS],
+          mockResolver,
+        );
+
+        await expect(
+          wrappedResolver({}, { data: { seasonId: "season-456" } }, ctx, mockInfo),
+        ).rejects.toMatchObject({
+          message: "Forbidden",
+          extensions: { code: 403 },
+        });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe("service error translation", () => {
+    it("translates ValidationError to BAD_USER_INPUT", async () => {
+      const mockResolver = jest.fn().mockRejectedValue(new ValidationError("Invalid input"));
+      const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+      const wrappedResolver = withPolicy(PolicyName.ADMIN, mockResolver);
+
+      await expect(wrappedResolver({}, {}, ctx, mockInfo)).rejects.toMatchObject({
+        message: "Invalid input",
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+    });
+
+    it("translates NotFoundError to NOT_FOUND", async () => {
+      const mockResolver = jest.fn().mockRejectedValue(new NotFoundError("Team", "abc-123"));
+      const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+      const wrappedResolver = withPolicy(PolicyName.ADMIN, mockResolver);
+
+      await expect(wrappedResolver({}, {}, ctx, mockInfo)).rejects.toMatchObject({
+        message: "Team not found: abc-123",
+        extensions: { code: "NOT_FOUND" },
+      });
+    });
+
+    it("translates ConflictError to CONFLICT", async () => {
+      const mockResolver = jest.fn().mockRejectedValue(new ConflictError("Already exists"));
+      const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+      const wrappedResolver = withPolicy(PolicyName.ADMIN, mockResolver);
+
+      await expect(wrappedResolver({}, {}, ctx, mockInfo)).rejects.toMatchObject({
+        message: "Already exists",
+        extensions: { code: "CONFLICT" },
+      });
+    });
+
+    it("re-throws unknown errors", async () => {
+      const unknownError = new Error("unexpected");
+      const mockResolver = jest.fn().mockRejectedValue(unknownError);
+      const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+      const wrappedResolver = withPolicy(PolicyName.ADMIN, mockResolver);
+
+      await expect(wrappedResolver({}, {}, ctx, mockInfo)).rejects.toBe(unknownError);
     });
   });
 });

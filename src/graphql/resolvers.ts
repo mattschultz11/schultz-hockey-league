@@ -1,7 +1,7 @@
 import type { ValueNode } from "graphql";
-import { GraphQLError, GraphQLScalarType, Kind } from "graphql";
+import { GraphQLScalarType, Kind } from "graphql";
 
-import { assertRole, AuthError } from "@/service/auth/authService";
+import { PolicyName, withPolicy } from "@/service/auth/rbacPolicy";
 import * as draftPickService from "@/service/models/draftPickService";
 import * as gameService from "@/service/models/gameService";
 import * as goalService from "@/service/models/goalService";
@@ -11,7 +11,6 @@ import * as playerService from "@/service/models/playerService";
 import * as seasonService from "@/service/models/seasonService";
 import * as teamService from "@/service/models/teamService";
 import * as userService from "@/service/models/userService";
-import { Role } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
 import type { Resolvers } from "./generated";
@@ -48,42 +47,14 @@ function serialize(value: unknown) {
   }
 
   if (typeof value === "string") {
-    return new Date(value).toISOString();
+    const date = new Date(value);
+    if (isNaN(date.getTime())) {
+      throw new TypeError(`DateTime serialization received an invalid date string: "${value}"`);
+    }
+    return date.toISOString();
   }
 
   throw new TypeError("DateTime serialization expects a Date or string");
-}
-
-/**
- * Helper to ensure the current user has admin role.
- * Throws GraphQLError with appropriate status code on failure.
- */
-function ensureAdmin(ctx: GraphQLContext) {
-  try {
-    return assertRole(ctx, [Role.ADMIN]);
-  } catch (error) {
-    if (error instanceof AuthError) {
-      throw new GraphQLError(error.message, { extensions: { code: error.status } });
-    }
-    throw error;
-  }
-}
-
-/**
- * Higher-order function that wraps a resolver to require admin role.
- * Uses a 3-arg resolver signature (no GraphQLResolveInfo) for ergonomic use
- * with existing mutations. The AuthError→GraphQLError conversion is duplicated
- * from withPolicy() because withPolicy() requires 4-arg resolvers and returns
- * async — changing withAdmin's signature would break all 27 existing mutations.
- * For new resolvers needing scope enforcement, prefer withPolicy() from rbacPolicy.ts.
- */
-function withAdmin<TResult, TParent, TArgs>(
-  resolver: (parent: TParent, args: TArgs, ctx: GraphQLContext) => TResult,
-): (parent: TParent, args: TArgs, ctx: GraphQLContext) => TResult {
-  return (parent, args, ctx) => {
-    ensureAdmin(ctx);
-    return resolver(parent, args, ctx);
-  };
 }
 
 export const resolvers: Resolvers = {
@@ -128,45 +99,96 @@ export const resolvers: Resolvers = {
   },
 
   Mutation: {
-    createUser: withAdmin((_p, args, ctx) => userService.createUser(args.data, ctx)),
-    updateUser: withAdmin((_p, args, ctx) => userService.updateUser(args.id, args.data, ctx)),
-    deleteUser: withAdmin((_p, args, ctx) => userService.deleteUser(args.id, ctx)),
+    createUser: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      userService.createUser(args.data, ctx),
+    ),
+    updateUser: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      userService.updateUser(args.id, args.data, ctx),
+    ),
+    deleteUser: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      userService.deleteUser(args.id, ctx),
+    ),
 
-    createLeague: withAdmin((_p, args, ctx) => leagueService.createLeague(args.data, ctx)),
-    updateLeague: withAdmin((_p, args, ctx) => leagueService.updateLeague(args.id, args.data, ctx)),
-    deleteLeague: withAdmin((_p, args, ctx) => leagueService.deleteLeague(args.id, ctx)),
+    createLeague: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      leagueService.createLeague(args.data, ctx),
+    ),
+    updateLeague: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      leagueService.updateLeague(args.id, args.data, ctx),
+    ),
+    deleteLeague: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      leagueService.deleteLeague(args.id, ctx),
+    ),
 
-    createSeason: withAdmin((_p, args, ctx) => seasonService.createSeason(args.data, ctx)),
-    updateSeason: withAdmin((_p, args, ctx) => seasonService.updateSeason(args.id, args.data, ctx)),
-    deleteSeason: withAdmin((_p, args, ctx) => seasonService.deleteSeason(args.id, ctx)),
+    createSeason: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      seasonService.createSeason(args.data, ctx),
+    ),
+    updateSeason: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      seasonService.updateSeason(args.id, args.data, ctx),
+    ),
+    deleteSeason: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      seasonService.deleteSeason(args.id, ctx),
+    ),
 
-    createTeam: withAdmin((_p, args, ctx) => teamService.createTeam(args.data, ctx)),
-    updateTeam: withAdmin((_p, args, ctx) => teamService.updateTeam(args.id, args.data, ctx)),
-    deleteTeam: withAdmin((_p, args, ctx) => teamService.deleteTeam(args.id, ctx)),
+    createTeam: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      teamService.createTeam(args.data, ctx),
+    ),
+    updateTeam: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      teamService.updateTeam(args.id, args.data, ctx),
+    ),
+    deleteTeam: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      teamService.deleteTeam(args.id, ctx),
+    ),
 
-    createPlayer: withAdmin((_p, args, ctx) => playerService.createPlayer(args.data, ctx)),
-    updatePlayer: withAdmin((_p, args, ctx) => playerService.updatePlayer(args.id, args.data, ctx)),
-    deletePlayer: withAdmin((_p, args, ctx) => playerService.deletePlayer(args.id, ctx)),
+    createPlayer: withPolicy([PolicyName.MANAGER, PolicyName.SEASON_ACCESS], (_p, args, ctx) =>
+      playerService.createPlayer(args.data, ctx),
+    ),
+    // TODO: Allow MANAGER with season scope once withPolicy supports resolving scope from resource ID
+    updatePlayer: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      playerService.updatePlayer(args.id, args.data, ctx),
+    ),
+    deletePlayer: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      playerService.deletePlayer(args.id, ctx),
+    ),
 
-    createGame: withAdmin((_p, args, ctx) => gameService.createGame(args.data, ctx)),
-    updateGame: withAdmin((_p, args, ctx) => gameService.updateGame(args.id, args.data, ctx)),
-    deleteGame: withAdmin((_p, args, ctx) => gameService.deleteGame(args.id, ctx)),
+    createGame: withPolicy([PolicyName.MANAGER, PolicyName.SEASON_ACCESS], (_p, args, ctx) =>
+      gameService.createGame(args.data, ctx),
+    ),
+    updateGame: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      gameService.updateGame(args.id, args.data, ctx),
+    ),
+    deleteGame: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      gameService.deleteGame(args.id, ctx),
+    ),
 
-    createGoal: withAdmin((_p, args, ctx) => goalService.createGoal(args.data, ctx)),
-    updateGoal: withAdmin((_p, args, ctx) => goalService.updateGoal(args.id, args.data, ctx)),
-    deleteGoal: withAdmin((_p, args, ctx) => goalService.deleteGoal(args.id, ctx)),
+    createGoal: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      goalService.createGoal(args.data, ctx),
+    ),
+    updateGoal: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      goalService.updateGoal(args.id, args.data, ctx),
+    ),
+    deleteGoal: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      goalService.deleteGoal(args.id, ctx),
+    ),
 
-    createPenalty: withAdmin((_p, args, ctx) => penaltyService.createPenalty(args.data, ctx)),
-    updatePenalty: withAdmin((_p, args, ctx) =>
+    createPenalty: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      penaltyService.createPenalty(args.data, ctx),
+    ),
+    updatePenalty: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       penaltyService.updatePenalty(args.id, args.data, ctx),
     ),
-    deletePenalty: withAdmin((_p, args, ctx) => penaltyService.deletePenalty(args.id, ctx)),
+    deletePenalty: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      penaltyService.deletePenalty(args.id, ctx),
+    ),
 
-    createDraftPick: withAdmin((_p, args, ctx) => draftPickService.createDraftPick(args.data, ctx)),
-    updateDraftPick: withAdmin((_p, args, ctx) =>
+    createDraftPick: withPolicy([PolicyName.MANAGER, PolicyName.SEASON_ACCESS], (_p, args, ctx) =>
+      draftPickService.createDraftPick(args.data, ctx),
+    ),
+    updateDraftPick: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       draftPickService.updateDraftPick(args.id, args.data, ctx),
     ),
-    deleteDraftPick: withAdmin((_p, args, ctx) => draftPickService.deleteDraftPick(args.id, ctx)),
+    deleteDraftPick: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      draftPickService.deleteDraftPick(args.id, ctx),
+    ),
   },
 
   User: {
@@ -236,12 +258,18 @@ export const resolvers: Resolvers = {
       gameService.getGameSeason(parent.id, ctx),
     homeTeam: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       gameService.getGameHomeTeam(parent.id, ctx),
-    homeTeamGoals: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
-      gameService.getGameHomeTeamGoals(parent.id, ctx),
+    homeTeamGoals: (
+      parent: { id: string; homeTeamId: string | null },
+      _args: unknown,
+      ctx: GraphQLContext,
+    ) => gameService.getGameHomeTeamGoals(parent.id, parent.homeTeamId, ctx),
     awayTeam: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       gameService.getGameAwayTeam(parent.id, ctx),
-    awayTeamGoals: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
-      gameService.getGameAwayTeamGoals(parent.id, ctx),
+    awayTeamGoals: (
+      parent: { id: string; awayTeamId: string | null },
+      _args: unknown,
+      ctx: GraphQLContext,
+    ) => gameService.getGameAwayTeamGoals(parent.id, parent.awayTeamId, ctx),
     goals: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       gameService.getGameGoals(parent.id, ctx),
     penalties: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>

@@ -1,26 +1,32 @@
 import { Option, pipe } from "effect";
 
 import type { LeagueCreateInput, LeagueUpdateInput } from "@/graphql/generated";
+import { NotFoundError } from "@/service/errors";
 import type { League, Prisma } from "@/service/prisma";
 import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
 import type { ServerContext } from "../../types";
-import { cleanInput, generateSlug, maybeGet } from "./modelServiceUtils";
+import { leagueCreateSchema, leagueUpdateSchema } from "../validation/schemas";
+import { cleanInput, generateSlug, maybeGet, validate } from "./modelServiceUtils";
 
 export function getLeagues(ctx: ServerContext) {
   return ctx.prisma.league.findMany({ orderBy: { skillLevel: "asc" } });
 }
 
-export function getLeagueById(id: string, ctx: ServerContext) {
-  return ctx.prisma.league.findUniqueOrThrow({ where: { id } });
+export async function getLeagueById(id: string, ctx: ServerContext) {
+  const league = await ctx.prisma.league.findUnique({ where: { id } });
+  if (!league) throw new NotFoundError("League", id);
+  return league;
 }
 
 export function maybeGetLeagueById(id: string | null | undefined, ctx: ServerContext) {
   return maybeGet((id) => ctx.prisma.league.findUnique({ where: { id } }), id, ctx);
 }
 
-export function getLeagueBySlug(slug: string, ctx: ServerContext) {
-  return ctx.prisma.league.findUniqueOrThrow({ where: { slug } });
+export async function getLeagueBySlug(slug: string, ctx: ServerContext) {
+  const league = await ctx.prisma.league.findUnique({ where: { slug } });
+  if (!league) throw new NotFoundError("League", slug);
+  return league;
 }
 
 export function maybeGetLeagueBySlug(slug: string | null | undefined, ctx: ServerContext) {
@@ -28,6 +34,7 @@ export function maybeGetLeagueBySlug(slug: string | null | undefined, ctx: Serve
 }
 
 export async function createLeague(data: LeagueCreateInput, ctx: ServerContext) {
+  validate(leagueCreateSchema, data);
   const slug = generateSlug(data.name);
   const leagueWithSlug = await maybeGetLeagueBySlug(slug, ctx);
 
@@ -37,6 +44,7 @@ export async function createLeague(data: LeagueCreateInput, ctx: ServerContext) 
 }
 
 export async function updateLeague(id: string, _data: LeagueUpdateInput, ctx: ServerContext) {
+  validate(leagueUpdateSchema, _data);
   const payload: LeagueUpdateInput = cleanInput(_data);
   assertNonNullableFields(payload, ["name"] as const);
 
@@ -64,8 +72,9 @@ export function deleteLeague(id: string, ctx: ServerContext) {
   return ctx.prisma.league.delete({ where: { id } });
 }
 
-export function getLeagueSeasons(leagueId: string, ctx: ServerContext) {
-  return ctx.prisma.league
-    .findUniqueOrThrow({ where: { id: leagueId } })
-    .seasons({ orderBy: { startDate: "desc" } });
+export async function getLeagueSeasons(leagueId: string, ctx: ServerContext) {
+  const seasons = await ctx.prisma.league
+    .findUnique({ where: { id: leagueId } })
+    ?.seasons({ orderBy: { startDate: "desc" } });
+  return seasons ?? [];
 }

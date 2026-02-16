@@ -1,4 +1,14 @@
-import { createPenalty, updatePenalty } from "@/service/models/penaltyService";
+import { randUuid } from "@ngneat/falso";
+
+import { NotFoundError } from "@/service/errors";
+import {
+  createPenalty,
+  deletePenalty,
+  getPenaltiesBySeason,
+  getPenaltyById,
+  updatePenalty,
+} from "@/service/models/penaltyService";
+import { PenaltyCategory } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
 import type { GameModel, PlayerModel, TeamModel } from "../../modelFactory";
@@ -6,6 +16,7 @@ import {
   insertGame,
   insertPenalty,
   insertPlayer,
+  insertSeason,
   insertTeam,
   makePenalty,
 } from "../../modelFactory";
@@ -80,5 +91,63 @@ describe("penaltyService", () => {
         ctx,
       ),
     ).rejects.toThrow("Team must be in the game");
+  });
+
+  it("can get a penalty by id", async () => {
+    const penalty = await createPenalty(
+      makePenalty({ gameId: game.id, teamId: team.id, playerId: player.id }),
+      ctx,
+    );
+
+    const found = await getPenaltyById(penalty.id, ctx);
+
+    expect(found).toMatchObject(penalty);
+  });
+
+  it("throws NotFoundError when getting a non-existent penalty", async () => {
+    await expect(getPenaltyById(randUuid(), ctx)).rejects.toThrow(NotFoundError);
+  });
+
+  it("can list penalties by season", async () => {
+    const season = await insertSeason();
+    const seasonTeam = await insertTeam({ seasonId: season.id });
+    const seasonPlayer = await insertPlayer({ seasonId: season.id, teamId: seasonTeam.id });
+    const seasonGame = await insertGame({ seasonId: season.id, homeTeamId: seasonTeam.id });
+
+    await createPenalty(
+      makePenalty({ gameId: seasonGame.id, teamId: seasonTeam.id, playerId: seasonPlayer.id }),
+      ctx,
+    );
+
+    const penalties = await getPenaltiesBySeason(season.id, ctx);
+
+    expect(penalties.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("can update a penalty", async () => {
+    const penalty = await createPenalty(
+      makePenalty({ gameId: game.id, teamId: team.id, playerId: player.id }),
+      ctx,
+    );
+
+    const updated = await updatePenalty(
+      penalty.id,
+      { category: PenaltyCategory.MAJOR, minutes: 5 },
+      ctx,
+    );
+
+    expect(updated.category).toBe(PenaltyCategory.MAJOR);
+    expect(updated.minutes).toBe(5);
+  });
+
+  it("can delete a penalty", async () => {
+    const penalty = await createPenalty(
+      makePenalty({ gameId: game.id, teamId: team.id, playerId: player.id }),
+      ctx,
+    );
+
+    await deletePenalty(penalty.id, ctx);
+
+    await expect(getPenaltyById(penalty.id, ctx)).rejects.toThrow(NotFoundError);
   });
 });

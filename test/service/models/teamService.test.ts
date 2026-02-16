@@ -1,4 +1,14 @@
-import { createTeam, updateTeam } from "@/service/models/teamService";
+import { randUuid } from "@ngneat/falso";
+
+import { NotFoundError } from "@/service/errors";
+import {
+  createTeam,
+  deleteTeam,
+  getTeamById,
+  getTeamBySlug,
+  getTeamsBySeason,
+  updateTeam,
+} from "@/service/models/teamService";
 import type { ServerContext } from "@/types";
 
 import type { SeasonModel } from "../../modelFactory";
@@ -62,5 +72,54 @@ describe("teamService", () => {
     await expect(() => updateTeam(team.id, { managerId: otherManager.id }, ctx)).rejects.toThrow(
       "Manager must be in the same season as the team",
     );
+  });
+
+  it("can get a team by id", async () => {
+    const team = await createTeam(makeTeam({ seasonId: season.id }), ctx);
+
+    const found = await getTeamById(team.id, ctx);
+
+    expect(found).toMatchObject(team);
+  });
+
+  it("throws NotFoundError when getting a non-existent team by id", async () => {
+    await expect(getTeamById(randUuid(), ctx)).rejects.toThrow(NotFoundError);
+  });
+
+  it("can get a team by slug", async () => {
+    const team = await createTeam(makeTeam({ seasonId: season.id }), ctx);
+
+    const found = await getTeamBySlug(season.id, team.slug, ctx);
+
+    expect(found).toMatchObject(team);
+  });
+
+  it("throws NotFoundError when getting a non-existent team by slug", async () => {
+    await expect(getTeamBySlug(season.id, "non-existent-slug", ctx)).rejects.toThrow(NotFoundError);
+  });
+
+  it("can list teams by season", async () => {
+    await createTeam(makeTeam({ seasonId: season.id }), ctx);
+    await createTeam(makeTeam({ seasonId: season.id }), ctx);
+
+    const teams = await getTeamsBySeason(season.id, ctx);
+
+    expect(teams.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("can update a team name", async () => {
+    const team = await createTeam(makeTeam({ seasonId: season.id }), ctx);
+
+    const updated = await updateTeam(team.id, { name: "New Name" }, ctx);
+
+    expect(updated.name).toBe("New Name");
+  });
+
+  it("can delete a team", async () => {
+    const team = await createTeam(makeTeam({ seasonId: season.id }), ctx);
+
+    await deleteTeam(team.id, ctx);
+
+    await expect(getTeamById(team.id, ctx)).rejects.toThrow(NotFoundError);
   });
 });

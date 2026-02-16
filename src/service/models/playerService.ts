@@ -1,19 +1,23 @@
 import { Option } from "effect";
 
 import type { PlayerCreateInput, PlayerUpdateInput } from "@/graphql/generated";
+import { NotFoundError } from "@/service/errors";
 import type { Team } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 import { invariant } from "@/utils/assertionUtils";
 
-import { cleanInput, maybeGet } from "./modelServiceUtils";
+import { playerCreateSchema, playerUpdateSchema } from "../validation/schemas";
+import { cleanInput, maybeGet, validate } from "./modelServiceUtils";
 import { maybeGetTeamById } from "./teamService";
 
 export function getPlayersBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.player.findMany({ where: { seasonId } });
 }
 
-export function getPlayerById(id: string, ctx: ServerContext) {
-  return ctx.prisma.player.findUniqueOrThrow({ where: { id } });
+export async function getPlayerById(id: string, ctx: ServerContext) {
+  const player = await ctx.prisma.player.findUnique({ where: { id } });
+  if (!player) throw new NotFoundError("Player", id);
+  return player;
 }
 
 export function maybeGetPlayerById(id: string | null | undefined, ctx: ServerContext) {
@@ -21,6 +25,7 @@ export function maybeGetPlayerById(id: string | null | undefined, ctx: ServerCon
 }
 
 export async function createPlayer(data: PlayerCreateInput, ctx: ServerContext) {
+  validate(playerCreateSchema, data);
   const team = await maybeGetTeamById(data.teamId, ctx);
 
   validatePlayerTeam(data.seasonId, team);
@@ -29,6 +34,7 @@ export async function createPlayer(data: PlayerCreateInput, ctx: ServerContext) 
 }
 
 export async function updatePlayer(id: string, data: PlayerUpdateInput, ctx: ServerContext) {
+  validate(playerUpdateSchema, data);
   const player = await getPlayerById(id, ctx);
   const team = await maybeGetTeamById(data.teamId ?? player.teamId, ctx);
 
@@ -50,38 +56,42 @@ export function deletePlayer(id: string, ctx: ServerContext) {
   return ctx.prisma.player.delete({ where: { id } });
 }
 
-export function getPlayerUser(playerId: string, ctx: ServerContext) {
-  return ctx.prisma.player.findUniqueOrThrow({ where: { id: playerId } }).user();
+export async function getPlayerUser(playerId: string, ctx: ServerContext) {
+  const user = await ctx.prisma.player.findUnique({ where: { id: playerId } })?.user();
+  if (!user) throw new NotFoundError("Player", playerId);
+  return user;
 }
 
-export function getPlayerSeason(playerId: string, ctx: ServerContext) {
-  return ctx.prisma.player.findUniqueOrThrow({ where: { id: playerId } }).season();
+export async function getPlayerSeason(playerId: string, ctx: ServerContext) {
+  const season = await ctx.prisma.player.findUnique({ where: { id: playerId } })?.season();
+  if (!season) throw new NotFoundError("Player", playerId);
+  return season;
 }
 
-export function getPlayerManagedTeam(playerId: string, ctx: ServerContext) {
-  return ctx.prisma.player.findUniqueOrThrow({ where: { id: playerId } }).managedTeam();
+export async function getPlayerManagedTeam(playerId: string, ctx: ServerContext) {
+  return (await ctx.prisma.player.findUnique({ where: { id: playerId } })?.managedTeam()) ?? null;
 }
 
-export function getPlayerTeam(playerId: string, ctx: ServerContext) {
-  return ctx.prisma.player.findUniqueOrThrow({ where: { id: playerId } }).team();
+export async function getPlayerTeam(playerId: string, ctx: ServerContext) {
+  return (await ctx.prisma.player.findUnique({ where: { id: playerId } })?.team()) ?? null;
 }
 
-export function getPlayerGoals(playerId: string, ctx: ServerContext) {
-  return ctx.prisma.player.findUniqueOrThrow({ where: { id: playerId } }).goals();
+export async function getPlayerGoals(playerId: string, ctx: ServerContext) {
+  const goals = await ctx.prisma.player.findUnique({ where: { id: playerId } })?.goals();
+  return goals ?? [];
 }
 
-export async function getPlayerAssists(playerId: string, ctx: ServerContext) {
-  const player = await ctx.prisma.player.findUniqueOrThrow({ where: { id: playerId } });
-
+export function getPlayerAssists(playerId: string, ctx: ServerContext) {
   return ctx.prisma.goal.findMany({
-    where: { OR: [{ primaryAssistId: player.id }, { secondaryAssistId: player.id }] },
+    where: { OR: [{ primaryAssistId: playerId }, { secondaryAssistId: playerId }] },
   });
 }
 
-export function getPlayerPenalties(playerId: string, ctx: ServerContext) {
-  return ctx.prisma.player.findUniqueOrThrow({ where: { id: playerId } }).penalties();
+export async function getPlayerPenalties(playerId: string, ctx: ServerContext) {
+  const penalties = await ctx.prisma.player.findUnique({ where: { id: playerId } })?.penalties();
+  return penalties ?? [];
 }
 
-export function getPlayerDraftPick(playerId: string, ctx: ServerContext) {
-  return ctx.prisma.player.findUniqueOrThrow({ where: { id: playerId } }).draftPick();
+export async function getPlayerDraftPick(playerId: string, ctx: ServerContext) {
+  return (await ctx.prisma.player.findUnique({ where: { id: playerId } })?.draftPick()) ?? null;
 }

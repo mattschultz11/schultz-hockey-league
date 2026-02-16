@@ -1,4 +1,14 @@
-import { createSeason, updateSeason } from "@/service/models/seasonService";
+import { randUuid } from "@ngneat/falso";
+
+import { NotFoundError } from "@/service/errors";
+import {
+  createSeason,
+  deleteSeason,
+  getSeasonById,
+  getSeasonBySlug,
+  getSeasonsByLeague,
+  updateSeason,
+} from "@/service/models/seasonService";
 import type { ServerContext } from "@/types";
 
 import type { LeagueModel } from "../../modelFactory";
@@ -45,5 +55,65 @@ describe("seasonService", () => {
         ctx,
       ),
     ).rejects.toThrow("Season with this name already exists");
+  });
+
+  it("can get a season by id", async () => {
+    const season = await createSeason(makeSeason({ leagueId: league.id }), ctx);
+
+    const found = await getSeasonById(season.id, ctx);
+
+    expect(found).toMatchObject(season);
+  });
+
+  it("throws NotFoundError when getting a non-existent season by id", async () => {
+    await expect(getSeasonById(randUuid(), ctx)).rejects.toThrow(NotFoundError);
+  });
+
+  it("can get a season by slug", async () => {
+    const season = await createSeason(makeSeason({ leagueId: league.id }), ctx);
+
+    const found = await getSeasonBySlug(league.id, season.slug, ctx);
+
+    expect(found).toMatchObject(season);
+  });
+
+  it("throws NotFoundError when getting a non-existent season by slug", async () => {
+    await expect(getSeasonBySlug(league.id, "non-existent-slug", ctx)).rejects.toThrow(
+      NotFoundError,
+    );
+  });
+
+  it("can list seasons by league", async () => {
+    await createSeason(makeSeason({ leagueId: league.id }), ctx);
+    await createSeason(makeSeason({ leagueId: league.id }), ctx);
+
+    const seasons = await getSeasonsByLeague(league.id, ctx);
+
+    expect(seasons.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("returns empty list for league with no seasons", async () => {
+    const emptyLeague = await insertLeague();
+
+    const seasons = await getSeasonsByLeague(emptyLeague.id, ctx);
+
+    expect(seasons).toEqual([]);
+  });
+
+  it("can update a season", async () => {
+    const season = await createSeason(makeSeason({ leagueId: league.id }), ctx);
+    const newDate = new Date("2026-06-01");
+
+    const updated = await updateSeason(season.id, { startDate: newDate }, ctx);
+
+    expect(updated.startDate).toEqual(newDate);
+  });
+
+  it("can delete a season", async () => {
+    const season = await createSeason(makeSeason({ leagueId: league.id }), ctx);
+
+    await deleteSeason(season.id, ctx);
+
+    await expect(getSeasonById(season.id, ctx)).rejects.toThrow(NotFoundError);
   });
 });

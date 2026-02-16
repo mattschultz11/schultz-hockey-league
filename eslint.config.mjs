@@ -66,6 +66,7 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     "tmp/**",
     "_bmad/**",
+    "coverage/**",
   ]),
 ]);
 

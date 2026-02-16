@@ -12,7 +12,7 @@
     "lint-staged": "lint-staged",
     "test": "jest --passWithNoTests",
     "test:watch": "npm run test -- --watch",
-    "test:ci": "npm run test -- --runInBand",
+    "test:ci": "npm run test -- --runInBand --coverage",
     "typecheck": "tsc --noEmit",
     "codegen": "node --loader ts-node/esm codegen.mjs",
     "format": "prettier --write .",

@@ -1,11 +1,13 @@
 import { Predicate } from "effect";
 
+import { ValidationError } from "@/service/errors";
+
 export class InvariantError extends Error {
   name = "InvariantError";
 }
 
 export function invariant(condition: unknown, message?: string): asserts condition {
-  if (!condition) throw new InvariantError(message ?? "Invariant failed");
+  if (!condition) throw new ValidationError(message ?? "Invariant failed");
 }
 
 export function assertNotNullable<T>(value: T, message?: string): NonNullable<T> {

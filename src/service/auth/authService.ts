@@ -204,6 +204,7 @@ export async function assertLeagueAccess(
         return ctx;
       }
 
+      // Exhaustive guard — unreachable unless a new role is added
       throw new AuthError("Forbidden", 403);
     },
     onNone: () => {
@@ -295,6 +296,7 @@ export async function assertSeasonAccess(
         return ctx;
       }
 
+      // Exhaustive guard — unreachable unless a new role is added
       throw new AuthError("Forbidden", 403);
     },
     onNone: () => {

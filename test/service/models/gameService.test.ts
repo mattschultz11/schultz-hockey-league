@@ -1,4 +1,13 @@
-import { createGame, updateGame } from "@/service/models/gameService";
+import { randCity, randUuid } from "@ngneat/falso";
+
+import { NotFoundError } from "@/service/errors";
+import {
+  createGame,
+  deleteGame,
+  getGameById,
+  getGamesBySeason,
+  updateGame,
+} from "@/service/models/gameService";
 import type { ServerContext } from "@/types";
 
 import type { SeasonModel } from "../../modelFactory";
@@ -94,5 +103,54 @@ describe("gameService", () => {
     await expect(() => updateGame(created.id, { awayTeamId: homeTeam.id }, ctx)).rejects.toThrow(
       "Home and away teams cannot be the same",
     );
+  });
+
+  it("can get a game by id", async () => {
+    const game = await createGame(
+      makeGame({ seasonId: season.id, homeTeamId: null, awayTeamId: null }),
+      ctx,
+    );
+
+    const found = await getGameById(game.id, ctx);
+
+    expect(found).toMatchObject(game);
+  });
+
+  it("throws NotFoundError when getting a non-existent game", async () => {
+    await expect(getGameById(randUuid(), ctx)).rejects.toThrow(NotFoundError);
+  });
+
+  it("can list games by season", async () => {
+    await createGame(makeGame({ seasonId: season.id }), ctx);
+    await createGame(makeGame({ seasonId: season.id }), ctx);
+
+    const games = await getGamesBySeason(season.id, ctx);
+
+    expect(games.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("can update a game", async () => {
+    const homeTeam = await insertTeam({ seasonId: season.id });
+    const awayTeam = await insertTeam({ seasonId: season.id });
+    const game = await createGame(
+      makeGame({ seasonId: season.id, homeTeamId: homeTeam.id, awayTeamId: awayTeam.id }),
+      ctx,
+    );
+    const newLocation = randCity();
+
+    const updated = await updateGame(game.id, { location: newLocation }, ctx);
+
+    expect(updated.location).toBe(newLocation);
+  });
+
+  it("can delete a game", async () => {
+    const game = await createGame(
+      makeGame({ seasonId: season.id, homeTeamId: null, awayTeamId: null }),
+      ctx,
+    );
+
+    await deleteGame(game.id, ctx);
+
+    await expect(getGameById(game.id, ctx)).rejects.toThrow(NotFoundError);
   });
 });

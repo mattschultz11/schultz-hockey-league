@@ -2,6 +2,7 @@ import type { GraphQLResolveInfo } from "graphql";
 import { GraphQLError } from "graphql";
 
 import type { GraphQLContext } from "@/graphql/resolvers";
+import { ConflictError, NotFoundError, ValidationError } from "@/service/errors";
 import { Role } from "@/service/prisma";
 
 import {
@@ -111,14 +112,23 @@ export function withPolicy<TResult, TParent, TArgs extends object>(
           };
           const requiredField = scopeFieldMap[config.requiresScope];
 
-          if (!(requiredField in args)) {
+          // Look up scope ID: top-level args first, then args.data (mutation pattern)
+          let scopeValue: string | undefined;
+          if (requiredField in args) {
+            scopeValue = (args as Record<string, string>)[requiredField];
+          } else {
+            const data = (args as Record<string, unknown>).data;
+            if (data != null && typeof data === "object" && requiredField in data) {
+              scopeValue = (data as Record<string, string>)[requiredField];
+            }
+          }
+
+          if (scopeValue === undefined) {
             throw new GraphQLError(
-              `Policy "${policyName}" requires "${config.requiresScope}" scope but "${requiredField}" not found in resolver args`,
+              `Policy "${policyName}" requires "${config.requiresScope}" scope but "${requiredField}" not found in args or args.data`,
               { extensions: { code: "INTERNAL_SERVER_ERROR" } },
             );
           }
-
-          const scopeValue = (args as Record<string, string>)[requiredField];
           switch (config.requiresScope) {
             case "team":
               await assertManagerOfTeam(ctx, scopeValue, endpoint);
@@ -133,10 +143,19 @@ export function withPolicy<TResult, TParent, TArgs extends object>(
         }
       }
 
-      return resolver(parent, args, ctx, info);
+      return await resolver(parent, args, ctx, info);
     } catch (error) {
       if (error instanceof AuthError) {
         throw new GraphQLError(error.message, { extensions: { code: error.status } });
+      }
+      if (error instanceof ValidationError) {
+        throw new GraphQLError(error.message, { extensions: { code: "BAD_USER_INPUT" } });
+      }
+      if (error instanceof NotFoundError) {
+        throw new GraphQLError(error.message, { extensions: { code: "NOT_FOUND" } });
+      }
+      if (error instanceof ConflictError) {
+        throw new GraphQLError(error.message, { extensions: { code: "CONFLICT" } });
       }
       throw error;
     }
