@@ -8,6 +8,7 @@ import type {
   League as PrismaLeague,
   Penalty as PrismaPenalty,
   Player as PrismaPlayer,
+  Registration as PrismaRegistration,
   Season as PrismaSeason,
   Team as PrismaTeam,
   User as PrismaUser,
@@ -133,6 +134,7 @@ export type Season = {
   teams: Array<Team>;
   games: Array<Game>;
   draft: Array<DraftPick>;
+  registrations: Array<Registration>;
 };
 
 export type Team = {
@@ -171,9 +173,9 @@ export type Player = {
   teamId?: Maybe<Scalars["ID"]["output"]>;
   position?: Maybe<Position>;
   number?: Maybe<Scalars["Int"]["output"]>;
-  playerRating?: Maybe<Scalars["Int"]["output"]>;
-  goalieRating?: Maybe<Scalars["Int"]["output"]>;
-  lockerRating?: Maybe<Scalars["Int"]["output"]>;
+  playerRating?: Maybe<Scalars["Float"]["output"]>;
+  goalieRating?: Maybe<Scalars["Float"]["output"]>;
+  lockerRating?: Maybe<Scalars["Float"]["output"]>;
   registrationNumber?: Maybe<Scalars["String"]["output"]>;
   goals: Array<Goal>;
   assists: Array<Goal>;
@@ -250,8 +252,28 @@ export type DraftPick = {
   teamId?: Maybe<Scalars["ID"]["output"]>;
   player?: Maybe<Player>;
   playerId?: Maybe<Scalars["ID"]["output"]>;
-  playerRating?: Maybe<Scalars["Int"]["output"]>;
-  goalieRating?: Maybe<Scalars["Int"]["output"]>;
+  playerRating?: Maybe<Scalars["Float"]["output"]>;
+  goalieRating?: Maybe<Scalars["Float"]["output"]>;
+};
+
+export type Registration = {
+  __typename?: "Registration";
+  id: Scalars["ID"]["output"];
+  createdAt: Scalars["DateTime"]["output"];
+  updatedAt: Scalars["DateTime"]["output"];
+  season: Season;
+  seasonId: Scalars["ID"]["output"];
+  email: Scalars["String"]["output"];
+  firstName?: Maybe<Scalars["String"]["output"]>;
+  lastName?: Maybe<Scalars["String"]["output"]>;
+  phone?: Maybe<Scalars["String"]["output"]>;
+  birthday?: Maybe<Scalars["DateTime"]["output"]>;
+  handedness?: Maybe<Handedness>;
+  gloveHand?: Maybe<GloveHand>;
+  position?: Maybe<Position>;
+  playerRating?: Maybe<Scalars["Float"]["output"]>;
+  goalieRating?: Maybe<Scalars["Float"]["output"]>;
+  referral?: Maybe<Scalars["String"]["output"]>;
 };
 
 export type Query = {
@@ -274,6 +296,8 @@ export type Query = {
   penalty?: Maybe<Penalty>;
   draftPicks: Array<DraftPick>;
   draftPick?: Maybe<DraftPick>;
+  registrations: Array<Registration>;
+  registration?: Maybe<Registration>;
 };
 
 export type QueryUserArgs = {
@@ -282,6 +306,10 @@ export type QueryUserArgs = {
 
 export type QueryLeagueArgs = {
   id: Scalars["ID"]["input"];
+};
+
+export type QuerySeasonsArgs = {
+  leagueId: Scalars["ID"]["input"];
 };
 
 export type QuerySeasonArgs = {
@@ -333,6 +361,14 @@ export type QueryDraftPicksArgs = {
 };
 
 export type QueryDraftPickArgs = {
+  id: Scalars["ID"]["input"];
+};
+
+export type QueryRegistrationsArgs = {
+  seasonId: Scalars["ID"]["input"];
+};
+
+export type QueryRegistrationArgs = {
   id: Scalars["ID"]["input"];
 };
 
@@ -422,9 +458,9 @@ export type PlayerCreateInput = {
   teamId?: InputMaybe<Scalars["ID"]["input"]>;
   position?: InputMaybe<Position>;
   number?: InputMaybe<Scalars["Int"]["input"]>;
-  playerRating?: InputMaybe<Scalars["Int"]["input"]>;
-  goalieRating?: InputMaybe<Scalars["Int"]["input"]>;
-  lockerRating?: InputMaybe<Scalars["Int"]["input"]>;
+  playerRating?: InputMaybe<Scalars["Float"]["input"]>;
+  goalieRating?: InputMaybe<Scalars["Float"]["input"]>;
+  lockerRating?: InputMaybe<Scalars["Float"]["input"]>;
   registrationNumber?: InputMaybe<Scalars["String"]["input"]>;
 };
 
@@ -432,9 +468,9 @@ export type PlayerUpdateInput = {
   teamId?: InputMaybe<Scalars["ID"]["input"]>;
   position?: InputMaybe<Position>;
   number?: InputMaybe<Scalars["Int"]["input"]>;
-  playerRating?: InputMaybe<Scalars["Int"]["input"]>;
-  goalieRating?: InputMaybe<Scalars["Int"]["input"]>;
-  lockerRating?: InputMaybe<Scalars["Int"]["input"]>;
+  playerRating?: InputMaybe<Scalars["Float"]["input"]>;
+  goalieRating?: InputMaybe<Scalars["Float"]["input"]>;
+  lockerRating?: InputMaybe<Scalars["Float"]["input"]>;
   registrationNumber?: InputMaybe<Scalars["String"]["input"]>;
 };
 
@@ -545,6 +581,7 @@ export type Mutation = {
   createDraftPick: DraftPick;
   updateDraftPick: DraftPick;
   deleteDraftPick: DraftPick;
+  register: Registration;
 };
 
 export type MutationCreateUserArgs = {
@@ -664,6 +701,25 @@ export type MutationDeleteDraftPickArgs = {
   id: Scalars["ID"]["input"];
 };
 
+export type MutationRegisterArgs = {
+  data: RegistrationInput;
+};
+
+export type RegistrationInput = {
+  seasonId: Scalars["ID"]["input"];
+  email: Scalars["String"]["input"];
+  firstName: Scalars["String"]["input"];
+  lastName: Scalars["String"]["input"];
+  phone: Scalars["String"]["input"];
+  birthday: Scalars["DateTime"]["input"];
+  handedness?: InputMaybe<Handedness>;
+  gloveHand?: InputMaybe<GloveHand>;
+  position: Position;
+  playerRating?: InputMaybe<Scalars["Float"]["input"]>;
+  goalieRating?: InputMaybe<Scalars["Float"]["input"]>;
+  referral?: InputMaybe<Scalars["String"]["input"]>;
+};
+
 export type ResolverTypeWrapper<T> = Promise<T> | T;
 
 export type ResolverWithResolve<TResult, TParent, TContext, TArgs> = {
@@ -779,10 +835,12 @@ export type ResolversTypes = {
   Team: ResolverTypeWrapper<PrismaTeam>;
   Int: ResolverTypeWrapper<Scalars["Int"]["output"]>;
   Player: ResolverTypeWrapper<PrismaPlayer>;
+  Float: ResolverTypeWrapper<Scalars["Float"]["output"]>;
   Game: ResolverTypeWrapper<PrismaGame>;
   Goal: ResolverTypeWrapper<PrismaGoal>;
   Penalty: ResolverTypeWrapper<PrismaPenalty>;
   DraftPick: ResolverTypeWrapper<PrismaDraftPick>;
+  Registration: ResolverTypeWrapper<PrismaRegistration>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   UserCreateInput: UserCreateInput;
   UserUpdateInput: UserUpdateInput;
@@ -803,6 +861,7 @@ export type ResolversTypes = {
   DraftPickCreateInput: DraftPickCreateInput;
   DraftPickUpdateInput: DraftPickUpdateInput;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
+  RegistrationInput: RegistrationInput;
 };
 
 /** Mapping between all available schema types and the resolvers parents */
@@ -817,10 +876,12 @@ export type ResolversParentTypes = {
   Team: PrismaTeam;
   Int: Scalars["Int"]["output"];
   Player: PrismaPlayer;
+  Float: Scalars["Float"]["output"];
   Game: PrismaGame;
   Goal: PrismaGoal;
   Penalty: PrismaPenalty;
   DraftPick: PrismaDraftPick;
+  Registration: PrismaRegistration;
   Query: Record<PropertyKey, never>;
   UserCreateInput: UserCreateInput;
   UserUpdateInput: UserUpdateInput;
@@ -841,6 +902,7 @@ export type ResolversParentTypes = {
   DraftPickCreateInput: DraftPickCreateInput;
   DraftPickUpdateInput: DraftPickUpdateInput;
   Mutation: Record<PropertyKey, never>;
+  RegistrationInput: RegistrationInput;
 };
 
 export interface DateTimeScalarConfig
@@ -904,6 +966,7 @@ export type SeasonResolvers<
   teams?: Resolver<Array<ResolversTypes["Team"]>, ParentType, ContextType>;
   games?: Resolver<Array<ResolversTypes["Game"]>, ParentType, ContextType>;
   draft?: Resolver<Array<ResolversTypes["DraftPick"]>, ParentType, ContextType>;
+  registrations?: Resolver<Array<ResolversTypes["Registration"]>, ParentType, ContextType>;
 };
 
 export type TeamResolvers<
@@ -946,9 +1009,9 @@ export type PlayerResolvers<
   teamId?: Resolver<Maybe<ResolversTypes["ID"]>, ParentType, ContextType>;
   position?: Resolver<Maybe<ResolversTypes["Position"]>, ParentType, ContextType>;
   number?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>;
-  playerRating?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>;
-  goalieRating?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>;
-  lockerRating?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>;
+  playerRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
+  goalieRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
+  lockerRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
   registrationNumber?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
   goals?: Resolver<Array<ResolversTypes["Goal"]>, ParentType, ContextType>;
   assists?: Resolver<Array<ResolversTypes["Goal"]>, ParentType, ContextType>;
@@ -1033,8 +1096,30 @@ export type DraftPickResolvers<
   teamId?: Resolver<Maybe<ResolversTypes["ID"]>, ParentType, ContextType>;
   player?: Resolver<Maybe<ResolversTypes["Player"]>, ParentType, ContextType>;
   playerId?: Resolver<Maybe<ResolversTypes["ID"]>, ParentType, ContextType>;
-  playerRating?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>;
-  goalieRating?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>;
+  playerRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
+  goalieRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
+};
+
+export type RegistrationResolvers<
+  ContextType = ServerContext,
+  ParentType extends ResolversParentTypes["Registration"] = ResolversParentTypes["Registration"],
+> = {
+  id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes["DateTime"], ParentType, ContextType>;
+  updatedAt?: Resolver<ResolversTypes["DateTime"], ParentType, ContextType>;
+  season?: Resolver<ResolversTypes["Season"], ParentType, ContextType>;
+  seasonId?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  email?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  firstName?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
+  lastName?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
+  phone?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
+  birthday?: Resolver<Maybe<ResolversTypes["DateTime"]>, ParentType, ContextType>;
+  handedness?: Resolver<Maybe<ResolversTypes["Handedness"]>, ParentType, ContextType>;
+  gloveHand?: Resolver<Maybe<ResolversTypes["GloveHand"]>, ParentType, ContextType>;
+  position?: Resolver<Maybe<ResolversTypes["Position"]>, ParentType, ContextType>;
+  playerRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
+  goalieRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
+  referral?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
 };
 
 export type QueryResolvers<
@@ -1055,7 +1140,12 @@ export type QueryResolvers<
     ContextType,
     RequireFields<QueryLeagueArgs, "id">
   >;
-  seasons?: Resolver<Array<ResolversTypes["Season"]>, ParentType, ContextType>;
+  seasons?: Resolver<
+    Array<ResolversTypes["Season"]>,
+    ParentType,
+    ContextType,
+    RequireFields<QuerySeasonsArgs, "leagueId">
+  >;
   season?: Resolver<
     Maybe<ResolversTypes["Season"]>,
     ParentType,
@@ -1133,6 +1223,18 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryDraftPickArgs, "id">
+  >;
+  registrations?: Resolver<
+    Array<ResolversTypes["Registration"]>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryRegistrationsArgs, "seasonId">
+  >;
+  registration?: Resolver<
+    Maybe<ResolversTypes["Registration"]>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryRegistrationArgs, "id">
   >;
 };
 
@@ -1302,6 +1404,12 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationDeleteDraftPickArgs, "id">
   >;
+  register?: Resolver<
+    ResolversTypes["Registration"],
+    ParentType,
+    ContextType,
+    RequireFields<MutationRegisterArgs, "data">
+  >;
 };
 
 export type Resolvers<ContextType = ServerContext> = {
@@ -1315,6 +1423,7 @@ export type Resolvers<ContextType = ServerContext> = {
   Goal?: GoalResolvers<ContextType>;
   Penalty?: PenaltyResolvers<ContextType>;
   DraftPick?: DraftPickResolvers<ContextType>;
+  Registration?: RegistrationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
 };

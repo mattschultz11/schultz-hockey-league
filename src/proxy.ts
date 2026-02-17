@@ -2,14 +2,14 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const PUBLIC_PATHS = ["/", "/api/auth", "/api/health"];
+const PROTECTED_PATHS = ["/admin"];
 
-function isPublicPath(pathname: string) {
-  return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
+function isProtectedPath(pathname: string) {
+  return PROTECTED_PATHS.some((p) => pathname === p || pathname.startsWith(p + "/"));
 }
 
-export async function middleware(request: NextRequest) {
-  if (isPublicPath(request.nextUrl.pathname)) {
+export async function proxy(request: NextRequest) {
+  if (!isProtectedPath(request.nextUrl.pathname)) {
     return NextResponse.next();
   }
 
@@ -19,10 +19,6 @@ export async function middleware(request: NextRequest) {
   });
 
   if (!token) {
-    if (request.nextUrl.pathname.startsWith("/api/")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const signInUrl = new URL("/api/auth/signin", request.url);
     signInUrl.searchParams.set("callbackUrl", request.url);
     return NextResponse.redirect(signInUrl);

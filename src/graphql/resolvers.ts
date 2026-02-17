@@ -8,6 +8,7 @@ import * as goalService from "@/service/models/goalService";
 import * as leagueService from "@/service/models/leagueService";
 import * as penaltyService from "@/service/models/penaltyService";
 import * as playerService from "@/service/models/playerService";
+import * as registrationService from "@/service/models/registrationService";
 import * as seasonService from "@/service/models/seasonService";
 import * as teamService from "@/service/models/teamService";
 import * as userService from "@/service/models/userService";
@@ -96,6 +97,10 @@ export const resolvers: Resolvers = {
 
     draftPicks: (_p, args, ctx) => draftPickService.getDraftPicksBySeason(args.seasonId, ctx),
     draftPick: (_p, args, ctx) => draftPickService.getDraftPickById(args.id, ctx),
+
+    registrations: (_p, args, ctx) =>
+      registrationService.getRegistrationsBySeason(args.seasonId, ctx),
+    registration: (_p, args, ctx) => registrationService.getRegistrationById(args.id, ctx),
   },
 
   Mutation: {
@@ -189,6 +194,8 @@ export const resolvers: Resolvers = {
     deleteDraftPick: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       draftPickService.deleteDraftPick(args.id, ctx),
     ),
+
+    register: (_p, args, ctx) => registrationService.registerForSeason(args.data, ctx),
   },
 
   User: {
@@ -210,6 +217,8 @@ export const resolvers: Resolvers = {
       seasonService.getSeasonGames(parent.id, ctx),
     draft: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       seasonService.getSeasonDraft(parent.id, ctx),
+    registrations: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
+      registrationService.getRegistrationsBySeason(parent.id, ctx),
   },
   Team: {
     season: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
@@ -302,5 +311,9 @@ export const resolvers: Resolvers = {
       draftPickService.getDraftPickTeam(parent.id, ctx),
     player: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       draftPickService.getDraftPickPlayer(parent.id, ctx),
+  },
+  Registration: {
+    season: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
+      registrationService.getRegistrationSeason(parent.id, ctx),
   },
 };

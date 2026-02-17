@@ -122,6 +122,7 @@ export const typeDefs = /* GraphQL */ `
     teams: [Team!]!
     games: [Game!]!
     draft: [DraftPick!]!
+    registrations: [Registration!]!
   }
 
   type Team {
@@ -158,9 +159,9 @@ export const typeDefs = /* GraphQL */ `
     teamId: ID
     position: Position
     number: Int
-    playerRating: Int
-    goalieRating: Int
-    lockerRating: Int
+    playerRating: Float
+    goalieRating: Float
+    lockerRating: Float
     registrationNumber: String
     goals: [Goal!]!
     assists: [Goal!]!
@@ -233,8 +234,27 @@ export const typeDefs = /* GraphQL */ `
     teamId: ID
     player: Player
     playerId: ID
-    playerRating: Int
-    goalieRating: Int
+    playerRating: Float
+    goalieRating: Float
+  }
+
+  type Registration {
+    id: ID!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    season: Season!
+    seasonId: ID!
+    email: String!
+    firstName: String
+    lastName: String
+    phone: String
+    birthday: DateTime
+    handedness: Handedness
+    gloveHand: GloveHand
+    position: Position
+    playerRating: Float
+    goalieRating: Float
+    referral: String
   }
 
   type Query {
@@ -244,7 +264,7 @@ export const typeDefs = /* GraphQL */ `
     leagues: [League!]!
     league(id: ID!): League
 
-    seasons: [Season!]!
+    seasons(leagueId: ID!): [Season!]!
     season(id: ID!): Season
 
     teams(seasonId: ID!): [Team!]!
@@ -264,6 +284,9 @@ export const typeDefs = /* GraphQL */ `
 
     draftPicks(seasonId: ID!): [DraftPick!]!
     draftPick(id: ID!): DraftPick
+
+    registrations(seasonId: ID!): [Registration!]!
+    registration(id: ID!): Registration
   }
 
   input UserCreateInput {
@@ -352,9 +375,9 @@ export const typeDefs = /* GraphQL */ `
     teamId: ID
     position: Position
     number: Int
-    playerRating: Int
-    goalieRating: Int
-    lockerRating: Int
+    playerRating: Float
+    goalieRating: Float
+    lockerRating: Float
     registrationNumber: String
   }
 
@@ -362,9 +385,9 @@ export const typeDefs = /* GraphQL */ `
     teamId: ID
     position: Position
     number: Int
-    playerRating: Int
-    goalieRating: Int
-    lockerRating: Int
+    playerRating: Float
+    goalieRating: Float
+    lockerRating: Float
     registrationNumber: String
   }
 
@@ -482,5 +505,22 @@ export const typeDefs = /* GraphQL */ `
     createDraftPick(data: DraftPickCreateInput!): DraftPick!
     updateDraftPick(id: ID!, data: DraftPickUpdateInput!): DraftPick!
     deleteDraftPick(id: ID!): DraftPick!
+
+    register(data: RegistrationInput!): Registration!
+  }
+
+  input RegistrationInput {
+    seasonId: ID!
+    email: String!
+    firstName: String!
+    lastName: String!
+    phone: String!
+    birthday: DateTime!
+    handedness: Handedness
+    gloveHand: GloveHand
+    position: Position!
+    playerRating: Float
+    goalieRating: Float
+    referral: String
   }
 `;

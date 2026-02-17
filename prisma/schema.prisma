@@ -73,10 +73,11 @@ model Season {
   thursdays  Boolean     @default(false)
   fridays    Boolean     @default(false)
   saturdays  Boolean     @default(false)
-  players    Player[]
-  teams      Team[]
-  games      Game[]
-  draft      DraftPick[]
+  players       Player[]
+  teams         Team[]
+  games         Game[]
+  draft         DraftPick[]
+  registrations Registration[]
 
   @@unique([leagueId, slug])
 }
@@ -118,9 +119,9 @@ model Player {
   teamId             String?
   position           Position?
   number             Int?
-  playerRating       Int?
-  goalieRating       Int?
-  lockerRating       Int?
+  playerRating       Float?
+  goalieRating       Float?
+  lockerRating       Float?
   registrationNumber String?
   goals              Goal[]     @relation("Scorer")
   primaryAssists     Goal[]     @relation("PrimaryAssist")
@@ -250,6 +251,27 @@ enum PenaltyType {
   UNSPORTSMANLIKE_CONDUCT
 }
 
+model Registration {
+  id           String      @id @default(uuid())
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  season       Season      @relation(fields: [seasonId], references: [id])
+  seasonId     String
+  email        String
+  firstName    String?
+  lastName     String?
+  phone        String?
+  birthday     DateTime?
+  handedness   Handedness?
+  gloveHand    GloveHand?
+  position     Position?
+  playerRating Float?
+  goalieRating Float?
+  referral     String?
+
+  @@unique([seasonId, email])
+}
+
 model DraftPick {
   id           String   @id @default(uuid())
   createdAt    DateTime @default(now())
@@ -264,7 +286,7 @@ model DraftPick {
   player       Player?  @relation(fields: [playerId], references: [id])
   playerId     String?  @unique
   /// Snapshot of the player's rating at the time of the draft
-  playerRating Int?
+  playerRating Float?
   /// Snapshot of the goalie's rating at the time of the draft
-  goalieRating Int?
+  goalieRating Float?
 }

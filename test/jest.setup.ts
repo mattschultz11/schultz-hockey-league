@@ -14,6 +14,7 @@ async function clearDatabase() {
   await prisma.game.deleteMany();
   await prisma.player.deleteMany();
   await prisma.team.deleteMany();
+  await prisma.registration.deleteMany();
   await prisma.season.deleteMany();
   await prisma.league.deleteMany();
   await prisma.user.deleteMany();

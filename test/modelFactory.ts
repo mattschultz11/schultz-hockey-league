@@ -23,6 +23,7 @@ import type {
   League,
   Penalty,
   Player,
+  Registration,
   Season,
   Team,
   User,
@@ -120,7 +121,10 @@ export async function insertLeague(overrides: Partial<LeagueModel> = {}): Promis
   });
 }
 
-export type SeasonModel = Omit<Season, "players" | "teams" | "games" | "draft" | "league">;
+export type SeasonModel = Omit<
+  Season,
+  "players" | "teams" | "games" | "draft" | "league" | "registrations"
+>;
 
 export function makeSeason(
   season: Partial<
@@ -605,5 +609,73 @@ export async function insertDraftPick(
 
   return await prisma.draftPick.create({
     data: draftPick,
+  });
+}
+
+export type RegistrationModel = Omit<Registration, "season" | "createdAt" | "updatedAt">;
+
+export function makeRegistration(
+  registration: Partial<
+    Pick<
+      RegistrationModel,
+      | "id"
+      | "email"
+      | "firstName"
+      | "lastName"
+      | "phone"
+      | "birthday"
+      | "handedness"
+      | "gloveHand"
+      | "position"
+      | "playerRating"
+      | "goalieRating"
+      | "seasonId"
+    >
+  > = {},
+): RegistrationModel {
+  const {
+    id = randUuid(),
+    seasonId = randUuid(),
+    email = randEmail(),
+    firstName = randFirstName(),
+    lastName = randLastName(),
+    phone = randPhoneNumber(),
+    birthday = randPastDate({ years: randNumber({ min: 21, max: 60 }) }),
+    handedness = rand([Handedness.LEFT, Handedness.RIGHT] as const),
+    gloveHand = null,
+    position = rand([Position.G, Position.D, Position.D_F, Position.F, Position.F_D] as const),
+    playerRating = randNumber({ min: 1, max: 5 }),
+    goalieRating = null,
+  } = registration;
+
+  return {
+    id,
+    seasonId,
+    email,
+    firstName,
+    lastName,
+    phone,
+    birthday,
+    handedness,
+    gloveHand,
+    position,
+    playerRating,
+    goalieRating,
+  };
+}
+
+export async function insertRegistration(
+  overrides: Partial<RegistrationModel> = {},
+): Promise<RegistrationModel> {
+  const registration = makeRegistration(overrides);
+  const { seasonId } = registration;
+
+  const season = await prisma.season.findUnique({ where: { id: seasonId } });
+  if (Predicate.isNullable(season)) {
+    await insertSeason({ id: seasonId });
+  }
+
+  return await prisma.registration.create({
+    data: registration,
   });
 }

@@ -18,7 +18,7 @@ const Id = Schema.UUID;
 const OptionalId = Schema.NullishOr(Schema.UUID);
 
 const JerseyNumber = Schema.NullishOr(Schema.Int.pipe(Schema.between(1, 99)));
-const Rating = Schema.NullishOr(Schema.Int.pipe(Schema.between(1, 5)));
+const Rating = Schema.NullishOr(Schema.Number.pipe(Schema.between(1, 5)));
 const Period = Schema.Int.pipe(Schema.between(1, 5));
 const PenaltyMinutes = Schema.Int.pipe(Schema.greaterThanOrEqualTo(1));
 const GameTime = Schema.Int.pipe(Schema.greaterThanOrEqualTo(0));
@@ -256,4 +256,19 @@ export const draftPickUpdateSchema = Schema.Struct({
   pick: Schema.NullishOr(PositiveInt),
   teamId: OptionalId,
   playerId: OptionalId,
+});
+
+export const registrationSchema = Schema.Struct({
+  seasonId: Id,
+  email: Email,
+  firstName: OptionalName,
+  lastName: OptionalName,
+  phone: OptionalString,
+  birthday: Schema.optional(DateTimeField),
+  handedness: Schema.NullishOr(HandednessEnum),
+  gloveHand: Schema.NullishOr(GloveHandEnum),
+  position: Schema.NullishOr(PositionEnum),
+  playerRating: Rating,
+  goalieRating: Rating,
+  referral: OptionalString,
 });

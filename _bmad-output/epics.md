@@ -344,6 +344,44 @@ So that changes are traceable.
 
 ---
 
+### Story 1.5: Season Registration
+
+As a **player**,
+I want to register for a season via a public form,
+So that I can sign up without needing an admin to create my account.
+
+**Acceptance Criteria:**
+
+**Given** a valid season exists
+**When** I navigate to `/register/[seasonId]`
+**Then** the registration form loads without requiring authentication
+**And** the form displays the season name and fields for personal info, player preferences, and self evaluation
+
+**Given** I fill out the registration form with a new email address
+**When** I submit the form
+**Then** a new User is created with role PLAYER
+**And** a new Player record is created for that season
+**And** I see a success confirmation message
+
+**Given** I fill out the registration form with an existing email address
+**When** I submit the form
+**Then** the existing User is updated with the submitted fields
+**And** the existing User's role is preserved (not overwritten)
+**And** if a Player record already exists for that season, it is updated
+**And** if no Player record exists for that season, a new one is created
+
+**Given** I submit the form with invalid data (missing email, invalid jersey number, etc.)
+**When** validation runs
+**Then** the form displays field-level error messages
+**And** no User or Player records are created or modified
+
+**Given** I am an admin
+**When** I navigate to `/admin/registrations/[seasonId]`
+**Then** I see a table of all players registered for that season
+**And** I can inline-edit player fields (position, number, ratings, registration number)
+
+---
+
 ## Epic 2: Draft Board & Rosters
 
 **Goal:** Run in-person drafts with live board, keepers, and roster publication.

@@ -6,7 +6,7 @@ export default function Footer() {
     <div className="relative mx-auto w-full max-w-7xl px-6 pb-3">
       <div className="flex flex-col items-center justify-center gap-1">
         <p className="text-default-400 text-sm">
-          © 2025 SHL - Schultz Hockey League, LLC. All rights reserved.
+          © 2026 SHL - Schultz Hockey League, LLC. All rights reserved.
         </p>
         <div className="flex items-center gap-1">
           <Link
