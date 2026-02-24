@@ -1,11 +1,12 @@
 import { randEmail, randFirstName, randLastName, randPhoneNumber, randUuid } from "@ngneat/falso";
 
 import { NotFoundError, ValidationError } from "@/service/errors";
-import { registerForSeason } from "@/service/models/registrationService";
+import { acceptRegistrations, registerForSeason } from "@/service/models/registrationService";
+import prisma from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
 import type { SeasonModel } from "../../modelFactory";
-import { insertSeason } from "../../modelFactory";
+import { insertRegistration, insertSeason, insertUser } from "../../modelFactory";
 import { createCtx } from "../../utils";
 
 describe("registrationService", () => {
@@ -152,5 +153,108 @@ describe("registrationService", () => {
     expect(result.position).toBe("G");
     expect(result.playerRating).toBe(2);
     expect(result.goalieRating).toBe(4);
+  });
+
+  describe("acceptRegistrations", () => {
+    it("creates User and Player from registration", async () => {
+      const reg = await insertRegistration({
+        seasonId: season.id,
+        firstName: "John",
+        lastName: "Doe",
+        position: "F",
+        playerRating: 3,
+      });
+
+      const players = await acceptRegistrations(season.id, [reg.id], ctx);
+
+      expect(players).toHaveLength(1);
+      expect(players[0].seasonId).toBe(season.id);
+      expect(players[0].position).toBe("F");
+      expect(players[0].playerRating).toBe(3);
+
+      // Verify User was created
+      const user = await prisma.user.findUnique({ where: { email: reg.email } });
+      expect(user).not.toBeNull();
+      expect(user!.firstName).toBe("John");
+      expect(user!.lastName).toBe("Doe");
+      expect(user!.role).toBe("PLAYER");
+    });
+
+    it("updates existing User for returning player", async () => {
+      const email = randEmail();
+      const existingUser = await insertUser({
+        email,
+        firstName: "Old",
+        lastName: "Name",
+        role: "MANAGER",
+      });
+
+      const reg = await insertRegistration({
+        seasonId: season.id,
+        email,
+        firstName: "New",
+        lastName: "Name",
+        position: "D",
+      });
+
+      const players = await acceptRegistrations(season.id, [reg.id], ctx);
+
+      expect(players).toHaveLength(1);
+
+      // User profile updated but role preserved
+      const user = await prisma.user.findUnique({ where: { id: existingUser.id } });
+      expect(user!.firstName).toBe("New");
+      expect(user!.role).toBe("MANAGER");
+    });
+
+    it("is idempotent — updates existing Player if already accepted", async () => {
+      const reg = await insertRegistration({
+        seasonId: season.id,
+        position: "D",
+        playerRating: 2,
+      });
+
+      const firstResult = await acceptRegistrations(season.id, [reg.id], ctx);
+      const playerId = firstResult[0].id;
+
+      // Accept again with same registration (position may have been updated on reg)
+      const secondResult = await acceptRegistrations(season.id, [reg.id], ctx);
+
+      expect(secondResult).toHaveLength(1);
+      expect(secondResult[0].id).toBe(playerId);
+    });
+
+    it("handles multiple registrations in one call", async () => {
+      const reg1 = await insertRegistration({ seasonId: season.id });
+      const reg2 = await insertRegistration({ seasonId: season.id });
+      const reg3 = await insertRegistration({ seasonId: season.id });
+
+      const players = await acceptRegistrations(season.id, [reg1.id, reg2.id, reg3.id], ctx);
+
+      expect(players).toHaveLength(3);
+    });
+
+    it("rejects registrations not belonging to the season", async () => {
+      const otherSeason = await insertSeason();
+      const reg = await insertRegistration({ seasonId: otherSeason.id });
+
+      await expect(acceptRegistrations(season.id, [reg.id], ctx)).rejects.toThrow(ValidationError);
+    });
+
+    it("rejects empty registrationIds array", async () => {
+      await expect(acceptRegistrations(season.id, [], ctx)).rejects.toThrow(ValidationError);
+    });
+
+    it("rejects invalid season ID", async () => {
+      await expect(acceptRegistrations(randUuid(), [randUuid()], ctx)).rejects.toThrow(
+        NotFoundError,
+      );
+    });
+
+    it("throws NotFoundError when registration IDs do not exist", async () => {
+      await expect(acceptRegistrations(season.id, [randUuid()], ctx)).rejects.toThrow(
+        NotFoundError,
+      );
+    });
   });
 });

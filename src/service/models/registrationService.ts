@@ -1,7 +1,7 @@
-import { NotFoundError } from "@/service/errors";
+import { NotFoundError, ValidationError } from "@/service/errors";
 import type { ServerContext } from "@/types";
 
-import { registrationSchema } from "../validation/schemas";
+import { acceptRegistrationsSchema, registrationSchema } from "../validation/schemas";
 import { cleanInput, validate } from "./modelServiceUtils";
 import { getSeasonById } from "./seasonService";
 
@@ -58,4 +58,93 @@ export async function getRegistrationSeason(registrationId: string, ctx: ServerC
     .season();
   if (!season) throw new NotFoundError("Registration", registrationId);
   return season;
+}
+
+export async function acceptRegistrations(
+  seasonId: string,
+  registrationIds: string[],
+  ctx: ServerContext,
+) {
+  const validated = validate(acceptRegistrationsSchema, { seasonId, registrationIds });
+
+  // Verify season exists
+  await getSeasonById(validated.seasonId, ctx);
+
+  // Fetch all registrations and verify they belong to this season
+  const registrations = await ctx.prisma.registration.findMany({
+    where: { id: { in: [...validated.registrationIds] } },
+  });
+
+  if (registrations.length !== validated.registrationIds.length) {
+    const foundIds = new Set(registrations.map((r) => r.id));
+    const missing = validated.registrationIds.filter((id) => !foundIds.has(id));
+    throw new NotFoundError("Registration", missing.join(", "));
+  }
+
+  const wrongSeason = registrations.filter((r) => r.seasonId !== validated.seasonId);
+  if (wrongSeason.length > 0) {
+    throw new ValidationError(
+      `Registrations do not belong to this season: ${wrongSeason.map((r) => r.id).join(", ")}`,
+    );
+  }
+
+  return ctx.prisma.$transaction(async (tx) => {
+    const players = [];
+
+    for (const reg of registrations) {
+      // Upsert User by email — create with registration fields, update profile only
+      const user = await tx.user.upsert({
+        where: { email: reg.email },
+        create: {
+          email: reg.email,
+          firstName: reg.firstName,
+          lastName: reg.lastName,
+          phone: reg.phone,
+          birthday: reg.birthday,
+          handedness: reg.handedness,
+          gloveHand: reg.gloveHand,
+          role: "PLAYER",
+        },
+        update: {
+          firstName: reg.firstName,
+          lastName: reg.lastName,
+          phone: reg.phone,
+          birthday: reg.birthday,
+          handedness: reg.handedness,
+          gloveHand: reg.gloveHand,
+        },
+      });
+
+      // Find existing Player for this user+season
+      const existingPlayer = await tx.player.findFirst({
+        where: { userId: user.id, seasonId: validated.seasonId },
+      });
+
+      const playerData = {
+        classification: reg.classification,
+        position: reg.position,
+        playerRating: reg.playerRating,
+        goalieRating: reg.goalieRating,
+      };
+
+      if (existingPlayer) {
+        const updated = await tx.player.update({
+          where: { id: existingPlayer.id },
+          data: playerData,
+        });
+        players.push(updated);
+      } else {
+        const created = await tx.player.create({
+          data: {
+            userId: user.id,
+            seasonId: validated.seasonId,
+            ...playerData,
+          },
+        });
+        players.push(created);
+      }
+    }
+
+    return players;
+  });
 }

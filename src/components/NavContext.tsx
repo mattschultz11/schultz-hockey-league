@@ -1,6 +1,7 @@
 "use client";
 
-import { createContext, type ReactNode, useCallback, useContext, useState } from "react";
+import type { ReactNode } from "react";
+import { createContext, useCallback, useContext, useState } from "react";
 
 export type NavItem = { label: string; href: string };
 

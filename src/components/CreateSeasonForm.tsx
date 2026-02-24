@@ -3,9 +3,10 @@
 import { gql } from "@apollo/client";
 import { useMutation } from "@apollo/client/react";
 import { Button, Checkbox, DatePicker, Input } from "@heroui/react";
-import { type CalendarDate } from "@internationalized/date";
+import type { CalendarDate } from "@internationalized/date";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 
 const CREATE_SEASON_MUTATION = gql`
   mutation CreateSeason($data: SeasonCreateInput!) {

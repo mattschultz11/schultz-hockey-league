@@ -196,6 +196,10 @@ export const resolvers: Resolvers = {
     ),
 
     register: (_p, args, ctx) => registrationService.registerForSeason(args.data, ctx),
+
+    acceptRegistrations: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      registrationService.acceptRegistrations(args.seasonId, args.registrationIds, ctx),
+    ),
   },
 
   User: {

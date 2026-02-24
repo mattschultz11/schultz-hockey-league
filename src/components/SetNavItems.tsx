@@ -2,7 +2,8 @@
 
 import { useEffect } from "react";
 
-import { type NavItem, useNavRegister } from "./NavContext";
+import type { NavItem } from "./NavContext";
+import { useNavRegister } from "./NavContext";
 
 export default function SetNavItems({ depth, items }: { depth: number; items: NavItem[] }) {
   const { register, unregister } = useNavRegister();

@@ -4,7 +4,8 @@ import { gql } from "@apollo/client";
 import { useMutation } from "@apollo/client/react";
 import { Button, Input, Textarea } from "@heroui/react";
 import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import type { FormEvent } from "react";
+import { useState } from "react";
 
 const CREATE_LEAGUE_MUTATION = gql`
   mutation CreateLeague($data: LeagueCreateInput!) {

@@ -4,7 +4,7 @@ import { gql } from "@apollo/client";
 import { useMutation } from "@apollo/client/react";
 import { Button, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@heroui/react";
 import { effectTsResolver } from "@hookform/resolvers/effect-ts";
-import { type CalendarDate } from "@internationalized/date";
+import type { CalendarDate } from "@internationalized/date";
 import { Schema } from "effect";
 import { useState } from "react";
 import { useForm } from "react-hook-form";

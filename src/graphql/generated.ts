@@ -589,6 +589,7 @@ export type Mutation = {
   updateDraftPick: DraftPick;
   deleteDraftPick: DraftPick;
   register: Registration;
+  acceptRegistrations: Array<Player>;
 };
 
 export type MutationCreateUserArgs = {
@@ -710,6 +711,11 @@ export type MutationDeleteDraftPickArgs = {
 
 export type MutationRegisterArgs = {
   data: RegistrationInput;
+};
+
+export type MutationAcceptRegistrationsArgs = {
+  seasonId: Scalars["ID"]["input"];
+  registrationIds: Array<Scalars["ID"]["input"]>;
 };
 
 export type RegistrationInput = {
@@ -1421,6 +1427,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationRegisterArgs, "data">
+  >;
+  acceptRegistrations?: Resolver<
+    Array<ResolversTypes["Player"]>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationAcceptRegistrationsArgs, "seasonId" | "registrationIds">
   >;
 };
 

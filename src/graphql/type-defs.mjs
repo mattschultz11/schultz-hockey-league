@@ -519,6 +519,8 @@ export const typeDefs = /* GraphQL */ `
     deleteDraftPick(id: ID!): DraftPick!
 
     register(data: RegistrationInput!): Registration!
+
+    acceptRegistrations(seasonId: ID!, registrationIds: [ID!]!): [Player!]!
   }
 
   input RegistrationInput {

@@ -38,6 +38,9 @@ export default async function AdminRegistrationsPage({ params }: Props) {
       registrations: {
         orderBy: { createdAt: "asc" },
       },
+      players: {
+        select: { id: true, user: { select: { email: true } } },
+      },
     },
   });
 
@@ -51,7 +54,11 @@ export default async function AdminRegistrationsPage({ params }: Props) {
         <h1 className="mb-2 text-3xl font-semibold text-white">Registrations</h1>
         <p className="text-default-600 text-lg">{season.name}</p>
       </div>
-      <RegistrationsTable registrations={season.registrations} />
+      <RegistrationsTable
+        registrations={season.registrations}
+        acceptedPlayers={season.players}
+        seasonId={season.id}
+      />
     </PageLayout>
   );
 }

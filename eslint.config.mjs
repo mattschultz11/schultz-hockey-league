@@ -27,6 +27,7 @@ const eslintConfig = defineConfig([
       "import/first": "error",
       "import/newline-after-import": "error",
       "import/no-duplicates": "error",
+      "import/consistent-type-specifier-style": ["error", "prefer-top-level"],
     },
   },
   {
@@ -39,6 +40,7 @@ const eslintConfig = defineConfig([
         "error",
         { prefer: "type-imports", fixStyle: "separate-type-imports" },
       ],
+      "@typescript-eslint/no-import-type-side-effects": "error",
     },
   },
   {

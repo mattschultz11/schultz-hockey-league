@@ -1,8 +1,9 @@
 "use client";
 
 import { DatePicker, Input, Select, SelectItem, Textarea } from "@heroui/react";
-import { type ComponentPropsWithoutRef } from "react";
-import { type Control, Controller, type FieldPath, type FieldValues } from "react-hook-form";
+import type { ComponentPropsWithoutRef } from "react";
+import type { Control, FieldPath, FieldValues } from "react-hook-form";
+import { Controller } from "react-hook-form";
 
 // --- FormInput ---
 

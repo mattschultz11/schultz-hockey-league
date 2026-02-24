@@ -261,6 +261,11 @@ export const draftPickUpdateSchema = Schema.Struct({
   playerId: OptionalId,
 });
 
+export const acceptRegistrationsSchema = Schema.Struct({
+  seasonId: Id,
+  registrationIds: Schema.Array(Id).pipe(Schema.minItems(1)),
+});
+
 export const registrationSchema = Schema.Struct({
   seasonId: Id,
   email: Email,
