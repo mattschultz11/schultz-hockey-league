@@ -2,22 +2,44 @@
 
 import { gql } from "@apollo/client";
 import { useMutation } from "@apollo/client/react";
-import {
-  Button,
-  DatePicker,
-  Input,
-  Modal,
-  ModalBody,
-  ModalContent,
-  ModalHeader,
-  Select,
-  SelectItem,
-  Textarea,
-  useDisclosure,
-} from "@heroui/react";
+import { Button, Modal, ModalBody, ModalContent, ModalHeader, useDisclosure } from "@heroui/react";
+import { effectTsResolver } from "@hookform/resolvers/effect-ts";
 import { type CalendarDate } from "@internationalized/date";
-import { type FormEvent, useState } from "react";
+import { Schema } from "effect";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { FaQuestion } from "react-icons/fa6";
+
+import { FormDatePicker, FormInput, FormSelect, FormTextarea } from "@/components/form";
+
+// --- Form Schema ---
+
+const Required = Schema.Trim.pipe(
+  Schema.filter((s) => s.length > 0, { message: () => "Required" }),
+);
+
+const RequiredEmail = Schema.Trim.pipe(
+  Schema.filter((s) => s.length > 0, { message: () => "Required" }),
+  Schema.filter((s) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(s), {
+    message: () => "Invalid email",
+  }),
+);
+
+const registrationFormSchema = Schema.Struct({
+  firstName: Required,
+  lastName: Required,
+  email: RequiredEmail,
+  phone: Required,
+  birthday: Schema.Any.pipe(Schema.filter((v) => v != null, { message: () => "Required" })),
+  position: Required,
+  classification: Schema.String,
+  handedness: Schema.String,
+  gloveHand: Schema.String,
+  rating: Schema.String,
+  referral: Schema.String,
+});
+
+// --- Mutation ---
 
 const REGISTER_MUTATION = gql`
   mutation Register($data: RegistrationInput!) {
@@ -27,11 +49,27 @@ const REGISTER_MUTATION = gql`
   }
 `;
 
+// --- Types ---
+
 type RegistrationFormProps = {
   seasonId: string;
 };
 
-type FormState = "idle" | "loading" | "success" | "error";
+type FormValues = {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  birthday: CalendarDate | null;
+  position: string;
+  classification: string;
+  handedness: string;
+  gloveHand: string;
+  rating: string;
+  referral: string;
+};
+
+// --- Constants ---
 
 const HANDEDNESS_OPTIONS = [
   { value: "LEFT", label: "Left" },
@@ -49,6 +87,11 @@ const POSITION_OPTIONS = [
   { value: "D_F", label: "Defense / Forward" },
   { value: "D", label: "Defense" },
   { value: "G", label: "Goalie" },
+];
+
+const CLASSIFICATION_OPTIONS = [
+  { value: "ROSTER", label: "Full-time" },
+  { value: "SUBSTITUTE", label: "Spare" },
 ];
 
 const RATING_OPTIONS = [
@@ -91,82 +134,80 @@ const RATING_DESCRIPTIONS = [
   },
 ];
 
+const defaultValues: FormValues = {
+  firstName: "",
+  lastName: "",
+  email: "",
+  phone: "",
+  birthday: null,
+  position: "",
+  classification: "",
+  handedness: "",
+  gloveHand: "",
+  rating: "",
+  referral: "",
+};
+
+// --- Component ---
+
 export default function RegistrationForm({ seasonId }: RegistrationFormProps) {
-  const [formState, setFormState] = useState<FormState>("idle");
-  const [errorMessage, setErrorMessage] = useState("");
+  const { control, handleSubmit, formState, reset, watch } = useForm<FormValues>({
+    defaultValues,
+    resolver: effectTsResolver(registrationFormSchema),
+  });
 
-  const [register] = useMutation(REGISTER_MUTATION);
-
-  const [email, setEmail] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [birthday, setBirthday] = useState<CalendarDate | null>(null);
-  const [handedness, setHandedness] = useState("");
-  const [gloveHand, setGloveHand] = useState("");
-  const [position, setPosition] = useState("");
-  const [rating, setRating] = useState("");
-  const [referral, setReferral] = useState("");
-
+  const [registerMutation] = useMutation(REGISTER_MUTATION);
+  const [submitError, setSubmitError] = useState("");
   const ratingGuide = useDisclosure();
+
+  // eslint-disable-next-line react-hooks/incompatible-library
+  const position = watch("position");
   const isGoalie = position === "G";
 
-  async function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    setFormState("loading");
-    setErrorMessage("");
+  async function onSubmit(data: FormValues) {
+    setSubmitError("");
 
     const payload: Record<string, unknown> = {
       seasonId,
-      email,
-      firstName,
-      lastName,
-      phone,
-      birthday: birthday!.toString(),
-      position,
+      email: data.email,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      phone: data.phone,
+      birthday: data.birthday!.toString(),
+      position: data.position,
     };
 
+    if (data.classification) payload.classification = data.classification;
     if (isGoalie) {
-      if (gloveHand) payload.gloveHand = gloveHand;
+      if (data.gloveHand) payload.gloveHand = data.gloveHand;
     } else {
-      if (handedness) payload.handedness = handedness;
+      if (data.handedness) payload.handedness = data.handedness;
     }
-    if (referral) payload.referral = referral;
-    if (rating) {
+    if (data.referral) payload.referral = data.referral;
+    if (data.rating) {
       if (isGoalie) {
-        payload.goalieRating = parseFloat(rating);
+        payload.goalieRating = parseFloat(data.rating);
       } else {
-        payload.playerRating = parseFloat(rating);
+        payload.playerRating = parseFloat(data.rating);
       }
     }
 
     try {
-      await register({ variables: { data: payload } });
-      setFormState("success");
+      await registerMutation({ variables: { data: payload } });
     } catch (err) {
-      setFormState("error");
       const message =
         err instanceof Error ? err.message.replace(/^[^:]+:\s*/, "") : "Registration failed";
-      setErrorMessage(message);
+      setSubmitError(message);
+      throw err;
     }
   }
 
   function handleReset() {
-    setFormState("idle");
-    setErrorMessage("");
-    setEmail("");
-    setFirstName("");
-    setLastName("");
-    setPhone("");
-    setBirthday(null);
-    setHandedness("");
-    setGloveHand("");
-    setPosition("");
-    setRating("");
-    setReferral("");
+    reset();
+    setSubmitError("");
   }
 
-  if (formState === "success") {
+  if (formState.isSubmitSuccessful) {
     return (
       <div className="border-success-200/30 bg-success-100/10 rounded-lg border p-6 text-center">
         <h2 className="text-success mb-2 text-xl font-semibold">Registration Submitted!</h2>
@@ -183,15 +224,15 @@ export default function RegistrationForm({ seasonId }: RegistrationFormProps) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
       <div>
         <h1 className="mb-2 text-xl font-semibold text-white">Register</h1>
         <p className="text-default-800 text-sm">
           Please fill out the form below to register for the season.
         </p>
-        {errorMessage && formState === "error" && (
+        {submitError && (
           <div className="border-danger-200/30 bg-danger-50/10 text-danger rounded-lg border p-4">
-            {errorMessage}
+            {submitError}
           </div>
         )}
       </div>
@@ -200,44 +241,44 @@ export default function RegistrationForm({ seasonId }: RegistrationFormProps) {
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold text-white">Personal Info</h2>
         <div className="grid grid-cols-2 gap-4">
-          <Input
+          <FormInput
+            name="firstName"
+            control={control}
             label="First Name"
             autoComplete="given-name"
             isRequired
-            value={firstName}
-            onValueChange={setFirstName}
           />
-          <Input
+          <FormInput
+            name="lastName"
+            control={control}
             label="Last Name"
             autoComplete="family-name"
             isRequired
-            value={lastName}
-            onValueChange={setLastName}
           />
         </div>
-        <Input
+        <FormInput
+          name="email"
+          control={control}
           label="Email"
           type="email"
           autoComplete="email"
           isRequired
-          value={email}
-          onValueChange={setEmail}
         />
         <div className="grid grid-cols-2 gap-4">
-          <Input
+          <FormInput
+            name="phone"
+            control={control}
             label="Phone"
             type="tel"
             autoComplete="tel"
             isRequired
-            value={phone}
-            onValueChange={setPhone}
           />
-          <DatePicker
+          <FormDatePicker
+            name="birthday"
+            control={control}
             label="Birthday"
             autoComplete="bday"
             isRequired
-            value={birthday}
-            onChange={setBirthday}
           />
         </div>
       </div>
@@ -245,60 +286,54 @@ export default function RegistrationForm({ seasonId }: RegistrationFormProps) {
       {/* Player Preferences */}
       <div className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold text-white">Player Preferences</h2>
-        <Select
-          label="Position"
-          isRequired
-          selectedKeys={position ? [position] : []}
-          onSelectionChange={(keys) => {
-            setPosition([...keys][0]?.toString() ?? "");
-            setRating("");
-          }}
-        >
-          {POSITION_OPTIONS.map((opt) => (
-            <SelectItem key={opt.value}>{opt.label}</SelectItem>
-          ))}
-        </Select>
+        <div className="grid grid-cols-2 gap-4">
+          <FormSelect
+            name="classification"
+            control={control}
+            label="Registration Type"
+            options={CLASSIFICATION_OPTIONS}
+            isRequired
+          />
+          <FormSelect
+            name="position"
+            control={control}
+            label="Position"
+            options={POSITION_OPTIONS}
+            isRequired
+          />
+        </div>
         <div className="grid grid-cols-2 gap-4">
           {isGoalie ? (
-            <Select
+            <FormSelect
+              name="gloveHand"
+              control={control}
               label="Glove Hand"
+              options={GLOVE_HAND_OPTIONS}
               isRequired
-              selectedKeys={gloveHand ? [gloveHand] : []}
-              onSelectionChange={(keys) => setGloveHand([...keys][0]?.toString() ?? "")}
-            >
-              {GLOVE_HAND_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </Select>
+            />
           ) : (
-            <Select
+            <FormSelect
+              name="handedness"
+              control={control}
               label="Handedness"
+              options={HANDEDNESS_OPTIONS}
               isRequired
-              selectedKeys={handedness ? [handedness] : []}
-              onSelectionChange={(keys) => setHandedness([...keys][0]?.toString() ?? "")}
-            >
-              {HANDEDNESS_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </Select>
+            />
           )}
           <div className="flex items-center gap-2">
-            <Select
+            <FormSelect
+              name="rating"
+              control={control}
               className="flex-1"
-              label={isGoalie ? "Goalie Rating (5-1)" : "Player Rating (5-1)"}
-              selectedKeys={rating ? [rating] : []}
-              onSelectionChange={(keys) => setRating([...keys][0]?.toString() ?? "")}
-            >
-              {RATING_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value}>{opt.label}</SelectItem>
-              ))}
-            </Select>
+              label="Skill Rating"
+              options={RATING_OPTIONS}
+            />
             <Button
               isIconOnly
               color="default"
               variant="light"
               aria-label="Rating guide"
-              size="lg"
+              size="md"
               radius="full"
               onPress={ratingGuide.onOpen}
             >
@@ -329,14 +364,14 @@ export default function RegistrationForm({ seasonId }: RegistrationFormProps) {
         </div>
       </div>
 
-      <Textarea
+      <FormTextarea
+        name="referral"
+        control={control}
         label="Referral"
         placeholder="How did you hear about us?"
-        value={referral}
-        onValueChange={setReferral}
       />
 
-      <Button type="submit" color="primary" size="lg" isLoading={formState === "loading"}>
+      <Button type="submit" color="primary" size="lg" isLoading={formState.isSubmitting}>
         Register
       </Button>
     </form>

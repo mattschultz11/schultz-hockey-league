@@ -37,6 +37,13 @@ export const typeDefs = /* GraphQL */ `
     SHORTHANDED
   }
 
+  enum Classification {
+    ROSTER
+    SUBSTITUTE
+    INJURED
+    SUSPENDED
+  }
+
   enum PenaltyCategory {
     MINOR
     MAJOR
@@ -154,6 +161,7 @@ export const typeDefs = /* GraphQL */ `
     userId: ID!
     season: Season!
     seasonId: ID!
+    classification: Classification!
     managedTeam: Team
     team: Team
     teamId: ID
@@ -254,6 +262,7 @@ export const typeDefs = /* GraphQL */ `
     position: Position
     playerRating: Float
     goalieRating: Float
+    classification: Classification!
     referral: String
   }
 
@@ -372,6 +381,7 @@ export const typeDefs = /* GraphQL */ `
   input PlayerCreateInput {
     userId: ID!
     seasonId: ID!
+    classification: Classification
     teamId: ID
     position: Position
     number: Int
@@ -382,6 +392,7 @@ export const typeDefs = /* GraphQL */ `
   }
 
   input PlayerUpdateInput {
+    classification: Classification
     teamId: ID
     position: Position
     number: Int
@@ -521,6 +532,7 @@ export const typeDefs = /* GraphQL */ `
     position: Position!
     playerRating: Float
     goalieRating: Float
+    classification: Classification
     referral: String
   }
 `;

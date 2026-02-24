@@ -21,6 +21,7 @@ export async function registerForSeason(data: unknown, ctx: ServerContext) {
     position: validated.position,
     playerRating: validated.playerRating,
     goalieRating: validated.goalieRating,
+    classification: validated.classification,
     referral: validated.referral,
   });
 

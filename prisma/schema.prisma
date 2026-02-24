@@ -57,22 +57,22 @@ model League {
 }
 
 model Season {
-  id         String      @id @default(uuid())
-  slug       String
-  createdAt  DateTime    @default(now())
-  updatedAt  DateTime    @updatedAt
-  league     League      @relation(fields: [leagueId], references: [id])
-  leagueId   String
-  name       String
-  startDate  DateTime
-  endDate    DateTime
-  sundays    Boolean     @default(false)
-  mondays    Boolean     @default(false)
-  tuesdays   Boolean     @default(false)
-  wednesdays Boolean     @default(false)
-  thursdays  Boolean     @default(false)
-  fridays    Boolean     @default(false)
-  saturdays  Boolean     @default(false)
+  id            String         @id @default(uuid())
+  slug          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  league        League         @relation(fields: [leagueId], references: [id])
+  leagueId      String
+  name          String
+  startDate     DateTime
+  endDate       DateTime
+  sundays       Boolean        @default(false)
+  mondays       Boolean        @default(false)
+  tuesdays      Boolean        @default(false)
+  wednesdays    Boolean        @default(false)
+  thursdays     Boolean        @default(false)
+  fridays       Boolean        @default(false)
+  saturdays     Boolean        @default(false)
   players       Player[]
   teams         Team[]
   games         Game[]
@@ -107,15 +107,16 @@ model Team {
 }
 
 model Player {
-  id                 String     @id @default(uuid())
-  createdAt          DateTime   @default(now())
-  updatedAt          DateTime   @updatedAt
-  user               User       @relation(fields: [userId], references: [id])
+  id                 String         @id @default(uuid())
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  user               User           @relation(fields: [userId], references: [id])
   userId             String
-  season             Season     @relation(fields: [seasonId], references: [id])
+  season             Season         @relation(fields: [seasonId], references: [id])
   seasonId           String
+  classification     Classification @default(ROSTER)
   managedTeam        Team?
-  team               Team?      @relation("TeamPlayers", fields: [teamId], references: [id])
+  team               Team?          @relation("TeamPlayers", fields: [teamId], references: [id])
   teamId             String?
   position           Position?
   number             Int?
@@ -123,11 +124,18 @@ model Player {
   goalieRating       Float?
   lockerRating       Float?
   registrationNumber String?
-  goals              Goal[]     @relation("Scorer")
-  primaryAssists     Goal[]     @relation("PrimaryAssist")
-  secondaryAssists   Goal[]     @relation("SecondaryAssist")
+  goals              Goal[]         @relation("Scorer")
+  primaryAssists     Goal[]         @relation("PrimaryAssist")
+  secondaryAssists   Goal[]         @relation("SecondaryAssist")
   penalties          Penalty[]
   draftPick          DraftPick?
+}
+
+enum Classification {
+  ROSTER
+  SUBSTITUTE
+  INJURED
+  SUSPENDED
 }
 
 enum Position {
@@ -139,25 +147,25 @@ enum Position {
 }
 
 model Game {
-  id         String    @id @default(uuid())
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  season     Season    @relation(fields: [seasonId], references: [id])
-  seasonId   String
-  round      Int
-  date       DateTime
-  time       DateTime
-  location   String
-  homeTeam   Team?     @relation("HomeTeam", fields: [homeTeamId], references: [id])
-  homeTeamId String?
+  id             String    @id @default(uuid())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  season         Season    @relation(fields: [seasonId], references: [id])
+  seasonId       String
+  round          Int
+  date           DateTime
+  time           DateTime
+  location       String
+  homeTeam       Team?     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  homeTeamId     String?
   homeTeamResult Result?
   homeTeamPoints Int?
-  awayTeam   Team?     @relation("AwayTeam", fields: [awayTeamId], references: [id])
-  awayTeamId String?
+  awayTeam       Team?     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  awayTeamId     String?
   awayTeamResult Result?
   awayTeamPoints Int?
-  goals      Goal[]
-  penalties  Penalty[]
+  goals          Goal[]
+  penalties      Penalty[]
 }
 
 enum Result {
@@ -252,22 +260,23 @@ enum PenaltyType {
 }
 
 model Registration {
-  id           String      @id @default(uuid())
-  createdAt    DateTime    @default(now())
-  updatedAt    DateTime    @updatedAt
-  season       Season      @relation(fields: [seasonId], references: [id])
-  seasonId     String
-  email        String
-  firstName    String?
-  lastName     String?
-  phone        String?
-  birthday     DateTime?
-  handedness   Handedness?
-  gloveHand    GloveHand?
-  position     Position?
-  playerRating Float?
-  goalieRating Float?
-  referral     String?
+  id             String         @id @default(uuid())
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+  season         Season         @relation(fields: [seasonId], references: [id])
+  seasonId       String
+  email          String
+  firstName      String?
+  lastName       String?
+  phone          String?
+  birthday       DateTime?
+  handedness     Handedness?
+  gloveHand      GloveHand?
+  position       Position?
+  playerRating   Float?
+  goalieRating   Float?
+  classification Classification @default(ROSTER)
+  referral       String?
 
   @@unique([seasonId, email])
 }

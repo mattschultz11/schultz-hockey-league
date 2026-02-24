@@ -30,6 +30,7 @@ type Registration = {
   gloveHand: string | null;
   playerRating: number | null;
   goalieRating: number | null;
+  classification: string;
   referral: string | null;
   createdAt: Date;
 };
@@ -109,6 +110,7 @@ function RegistrationCard({ reg }: { reg: Registration }) {
               isGoalie ? formatRating(reg.goalieRating ?? 0) : formatRating(reg.playerRating ?? 0)
             }
           />
+          <Field label="Type" value={formatEnum(reg.classification)} />
           {reg.referral && <Field label="Referral" value={reg.referral} span />}
         </div>
 
@@ -192,6 +194,7 @@ export default function RegistrationsTable({ registrations }: RegistrationsTable
               <TableColumn>Player Rating</TableColumn>
               <TableColumn>Glove Hand</TableColumn>
               <TableColumn>Goalie Rating</TableColumn>
+              <TableColumn>Type</TableColumn>
               <TableColumn>Referral</TableColumn>
               <TableColumn>Registered</TableColumn>
             </TableHeader>
@@ -212,6 +215,7 @@ export default function RegistrationsTable({ registrations }: RegistrationsTable
                     <TableCell>{formatRating(reg.playerRating ?? 0)}</TableCell>
                     <TableCell>{formatEnum(reg.gloveHand ?? "")}</TableCell>
                     <TableCell>{formatRating(reg.goalieRating ?? 0)}</TableCell>
+                    <TableCell>{formatEnum(reg.classification)}</TableCell>
                     <TableCell>{reg.referral ?? "-"}</TableCell>
                     <TableCell>{new Date(reg.createdAt).toLocaleDateString()}</TableCell>
                   </TableRow>

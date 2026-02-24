@@ -31,6 +31,7 @@ import type {
 import { generateSlug } from "@/service/models/modelServiceUtils";
 
 import prisma, {
+  Classification,
   GloveHand,
   Handedness,
   PenaltyCategory,
@@ -256,6 +257,7 @@ export function makePlayer(
     Pick<
       PlayerModel,
       | "id"
+      | "classification"
       | "position"
       | "number"
       | "playerRating"
@@ -272,6 +274,7 @@ export function makePlayer(
     id = randUuid(),
     userId = randUuid(),
     seasonId = randUuid(),
+    classification = Classification.ROSTER,
     position = rand([Position.G, Position.D, Position.D_F, Position.F, Position.F_D] as const),
     number = randNumber({ min: 1, max: 99 }),
     playerRating = randNumber({ min: 1, max: 5 }),
@@ -285,6 +288,7 @@ export function makePlayer(
     id,
     userId,
     seasonId,
+    classification,
     teamId,
     position,
     number: number,
@@ -629,6 +633,7 @@ export function makeRegistration(
       | "position"
       | "playerRating"
       | "goalieRating"
+      | "classification"
       | "seasonId"
     >
   > = {},
@@ -646,6 +651,7 @@ export function makeRegistration(
     position = rand([Position.G, Position.D, Position.D_F, Position.F, Position.F_D] as const),
     playerRating = randNumber({ min: 1, max: 5 }),
     goalieRating = null,
+    classification = Classification.ROSTER,
   } = registration;
 
   return {
@@ -661,6 +667,7 @@ export function makeRegistration(
     position,
     playerRating,
     goalieRating,
+    classification,
   };
 }
 

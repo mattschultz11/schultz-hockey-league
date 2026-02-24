@@ -34,7 +34,10 @@ describe("playerService", () => {
 
     const actual = await createPlayer(input, ctx);
 
-    expect(actual).toMatchObject(input);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { id: _id, ...expected } = input;
+    expect(actual).toMatchObject(expected);
+    expect(actual.id).toBeDefined();
   });
 
   it("throws when assigning a player to a team in a different season", async () => {

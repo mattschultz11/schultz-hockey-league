@@ -25,24 +25,24 @@ export function maybeGetPlayerById(id: string | null | undefined, ctx: ServerCon
 }
 
 export async function createPlayer(data: PlayerCreateInput, ctx: ServerContext) {
-  validate(playerCreateSchema, data);
-  const team = await maybeGetTeamById(data.teamId, ctx);
+  const validated = validate(playerCreateSchema, data);
+  const team = await maybeGetTeamById(validated.teamId, ctx);
 
-  validatePlayerTeam(data.seasonId, team);
+  validatePlayerTeam(validated.seasonId, team);
 
-  return ctx.prisma.player.create({ data: cleanInput(data) });
+  return ctx.prisma.player.create({ data: cleanInput(validated) });
 }
 
 export async function updatePlayer(id: string, data: PlayerUpdateInput, ctx: ServerContext) {
-  validate(playerUpdateSchema, data);
+  const validated = validate(playerUpdateSchema, data);
   const player = await getPlayerById(id, ctx);
-  const team = await maybeGetTeamById(data.teamId ?? player.teamId, ctx);
+  const team = await maybeGetTeamById(validated.teamId ?? player.teamId, ctx);
 
   validatePlayerTeam(player.seasonId, team);
 
   return ctx.prisma.player.update({
     where: { id },
-    data: cleanInput(data),
+    data: cleanInput(validated),
   });
 }
 

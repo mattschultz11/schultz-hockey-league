@@ -69,6 +69,8 @@ export default function SeasonInfo() {
               </span>
               <br />
               Goalies: Free to play
+              <br />
+              Spares: Free to play
             </p>
           </div>
         </div>
