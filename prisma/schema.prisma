@@ -64,6 +64,7 @@ model Season {
   league        League         @relation(fields: [leagueId], references: [id])
   leagueId      String
   name          String
+  info          String?
   startDate     DateTime
   endDate       DateTime
   sundays       Boolean        @default(false)

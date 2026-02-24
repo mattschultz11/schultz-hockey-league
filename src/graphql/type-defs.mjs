@@ -116,6 +116,7 @@ export const typeDefs = /* GraphQL */ `
     league: League!
     leagueId: ID!
     name: String!
+    info: String
     startDate: DateTime!
     endDate: DateTime!
     sundays: Boolean!

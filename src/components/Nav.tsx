@@ -24,7 +24,7 @@ import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import { signIn, signOut } from "next-auth/react";
 
-import { type NavItem, useNavItems } from "./NavContext";
+import { useNavItems } from "./NavContext";
 
 type NavProps = {
   session: Session | null;
@@ -33,11 +33,8 @@ type NavProps = {
 export default function Nav(props: NavProps) {
   const { session } = props;
   const pathname = usePathname();
-  const isAdmin = session?.user.role === "ADMIN";
   const contextItems = useNavItems();
-  const menuItems: NavItem[] = isAdmin
-    ? [...contextItems, { label: "Admin", href: "/admin" }]
-    : contextItems;
+  const menuItems = contextItems;
 
   return (
     <Navbar maxWidth="xl" isBordered>

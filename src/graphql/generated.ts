@@ -123,6 +123,7 @@ export type Season = {
   league: League;
   leagueId: Scalars["ID"]["output"];
   name: Scalars["String"]["output"];
+  info?: Maybe<Scalars["String"]["output"]>;
   startDate: Scalars["DateTime"]["output"];
   endDate: Scalars["DateTime"]["output"];
   sundays: Scalars["Boolean"]["output"];
@@ -961,6 +962,7 @@ export type SeasonResolvers<
   league?: Resolver<ResolversTypes["League"], ParentType, ContextType>;
   leagueId?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
   name?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  info?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
   startDate?: Resolver<ResolversTypes["DateTime"], ParentType, ContextType>;
   endDate?: Resolver<ResolversTypes["DateTime"], ParentType, ContextType>;
   sundays?: Resolver<ResolversTypes["Boolean"], ParentType, ContextType>;

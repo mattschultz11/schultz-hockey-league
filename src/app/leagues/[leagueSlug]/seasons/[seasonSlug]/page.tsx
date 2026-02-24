@@ -37,6 +37,7 @@ export default async function SeasonPage({ params }: Props) {
     select: {
       id: true,
       name: true,
+      info: true,
       startDate: true,
       endDate: true,
       sundays: true,
@@ -66,7 +67,7 @@ export default async function SeasonPage({ params }: Props) {
           ]}
         />
         <div className="mx-auto max-w-4xl">
-          <SeasonInfo />
+          {season.info && <SeasonInfo info={season.info} />}
           <RegistrationForm seasonId={season.id} />
         </div>
       </PageLayout>
