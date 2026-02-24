@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 
+import RegistrationsTable from "@/components/RegistrationsTable";
 import { auth } from "@/service/auth/authService";
 import prisma from "@/service/prisma";
-
-import RegistrationsTable from "./RegistrationsTable";
 
 type Props = {
   params: Promise<{ seasonId: string }>;

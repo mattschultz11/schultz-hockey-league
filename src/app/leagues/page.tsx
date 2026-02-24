@@ -1,8 +1,8 @@
+import LeaguesHeader from "@/components/LeaguesHeader";
+import LeaguesList from "@/components/LeaguesList";
+import PageLayout from "@/components/PageLayout";
 import { auth } from "@/service/auth/authService";
 import prisma from "@/service/prisma";
-
-import LeaguesHeader from "./LeaguesHeader";
-import LeaguesList from "./LeaguesList";
 
 export default async function LeaguesPage() {
   const [leagues, session] = await Promise.all([
@@ -16,9 +16,9 @@ export default async function LeaguesPage() {
   const isAdmin = session?.user.role === "ADMIN";
 
   return (
-    <>
+    <PageLayout>
       <LeaguesHeader isAdmin={isAdmin} />
       <LeaguesList leagues={leagues} />
-    </>
+    </PageLayout>
   );
 }

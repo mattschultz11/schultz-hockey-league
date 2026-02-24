@@ -1,4 +1,4 @@
-import SetNavItems from "@/app/SetNavItems";
+import SetNavItems from "@/components/SetNavItems";
 
 export default async function SeasonLayout({
   children,

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 
-import DataTable from "@/app/DataTable";
-import PageBreadcrumbs from "@/app/PageBreadcrumbs";
+import DataTable from "@/components/DataTable";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import prisma from "@/service/prisma";
 
 type Props = {

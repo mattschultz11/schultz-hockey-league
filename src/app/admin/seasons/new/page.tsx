@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 
+import CreateSeasonForm from "@/components/CreateSeasonForm";
 import { auth } from "@/service/auth/authService";
 import prisma from "@/service/prisma";
-
-import CreateSeasonForm from "./CreateSeasonForm";
 
 type Props = {
   searchParams: Promise<{ leagueId?: string }>;

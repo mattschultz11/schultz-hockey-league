@@ -3,7 +3,7 @@
 import { Button } from "@heroui/react";
 import NextLink from "next/link";
 
-import PageBreadcrumbs from "@/app/PageBreadcrumbs";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 
 type SeasonsHeaderProps = {
   league: {
@@ -19,7 +19,12 @@ export default function SeasonsHeader({ league, isAdmin }: SeasonsHeaderProps) {
     <div className="flex items-center justify-between">
       <PageBreadcrumbs items={[{ label: "Leagues", href: "/leagues" }, { label: league.name }]} />
       {isAdmin && (
-        <Button as={NextLink} href={`/admin/seasons/new?leagueId=${league.id}`} color="primary">
+        <Button
+          as={NextLink}
+          href={`/admin/seasons/new?leagueId=${league.id}`}
+          color="primary"
+          size="sm"
+        >
           New Season
         </Button>
       )}

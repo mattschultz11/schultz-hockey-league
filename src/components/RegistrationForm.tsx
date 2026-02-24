@@ -10,7 +10,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { FaQuestion } from "react-icons/fa6";
 
-import { FormDatePicker, FormInput, FormSelect, FormTextarea } from "@/components/form";
+import { FormDatePicker, FormInput, FormSelect, FormTextarea } from "@/components/Form";
 
 // --- Form Schema ---
 
@@ -345,7 +345,7 @@ export default function RegistrationForm({ seasonId }: RegistrationFormProps) {
               scrollBehavior="inside"
             >
               <ModalContent>
-                <ModalHeader>Player Rating Guide</ModalHeader>
+                <ModalHeader>Skill Rating Guide</ModalHeader>
                 <ModalBody className="pb-6">
                   <p className="text-default-600 text-sm">
                     Use half-point ratings if you feel you fit between two categories. League

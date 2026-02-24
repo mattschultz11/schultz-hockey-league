@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 
-import PageBreadcrumbs from "@/app/PageBreadcrumbs";
+import PageBreadcrumbs from "@/components/PageBreadcrumbs";
+import PageLayout from "@/components/PageLayout";
+import RegistrationForm from "@/components/RegistrationForm";
+import SeasonInfo from "@/components/SeasonInfo";
 import prisma from "@/service/prisma";
-
-import RegistrationForm from "./RegistrationForm";
-import SeasonInfo from "./SeasonInfo";
 
 type Props = {
   params: Promise<{ leagueSlug: string; seasonSlug: string }>;
@@ -57,7 +57,7 @@ export default async function SeasonPage({ params }: Props) {
 
   if (!hasStarted) {
     return (
-      <>
+      <PageLayout>
         <PageBreadcrumbs
           items={[
             { label: "Leagues", href: "/leagues" },
@@ -69,14 +69,14 @@ export default async function SeasonPage({ params }: Props) {
           <SeasonInfo />
           <RegistrationForm seasonId={season.id} />
         </div>
-      </>
+      </PageLayout>
     );
   }
 
   const gameDays = DAY_NAMES.filter(([key]) => season[key]).map(([, label]) => label);
 
   return (
-    <>
+    <PageLayout>
       <PageBreadcrumbs
         items={[
           { label: "Leagues", href: "/leagues" },
@@ -91,6 +91,6 @@ export default async function SeasonPage({ params }: Props) {
         </p>
         {gameDays.length > 0 && <p>Game days: {gameDays.join(", ")}</p>}
       </div>
-    </>
+    </PageLayout>
   );
 }

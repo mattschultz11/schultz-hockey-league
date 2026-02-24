@@ -1,10 +1,10 @@
 import { notFound } from "next/navigation";
 
+import PageLayout from "@/components/PageLayout";
+import SeasonsHeader from "@/components/SeasonsHeader";
+import SeasonsList from "@/components/SeasonsList";
 import { auth } from "@/service/auth/authService";
 import prisma from "@/service/prisma";
-
-import SeasonsHeader from "./SeasonsHeader";
-import SeasonsList from "./SeasonsList";
 
 type Props = {
   params: Promise<{ leagueSlug: string }>;
@@ -42,7 +42,7 @@ export default async function SeasonsPage({ params }: Props) {
   }));
 
   return (
-    <>
+    <PageLayout>
       <SeasonsHeader league={league} isAdmin={isAdmin} />
       <SeasonsList
         leagueId={league.id}
@@ -51,6 +51,6 @@ export default async function SeasonsPage({ params }: Props) {
         seasons={seasons}
         isAdmin={isAdmin}
       />
-    </>
+    </PageLayout>
   );
 }

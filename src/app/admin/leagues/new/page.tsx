@@ -1,8 +1,7 @@
 import { redirect } from "next/navigation";
 
+import CreateLeagueForm from "@/components/CreateLeagueForm";
 import { auth } from "@/service/auth/authService";
-
-import CreateLeagueForm from "./CreateLeagueForm";
 
 export default async function AdminCreateLeaguePage() {
   const session = await auth();
