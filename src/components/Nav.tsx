@@ -23,6 +23,7 @@ import { Option } from "effect";
 import { usePathname } from "next/navigation";
 import type { Session } from "next-auth";
 import { signIn, signOut } from "next-auth/react";
+import { useState } from "react";
 
 import { useNavItems } from "./NavContext";
 
@@ -35,10 +36,16 @@ export default function Nav(props: NavProps) {
   const pathname = usePathname();
   const contextItems = useNavItems();
   const menuItems = contextItems;
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <Navbar maxWidth="xl" isBordered>
+    <Navbar maxWidth="xl" isBordered isMenuOpen={isMenuOpen} onMenuOpenChange={setIsMenuOpen}>
       <NavbarContent>
+        <NavbarMenuToggle
+          className="sm:hidden"
+          ria-label={isMenuOpen ? "Close menu" : "Open menu"}
+        />
+
         <Link href="/">
           <NavbarBrand>
             <Image src="/shl-logo.svg" alt="Schultz Hockey League" width={48} height={48} />
@@ -46,7 +53,7 @@ export default function Nav(props: NavProps) {
         </Link>
       </NavbarContent>
 
-      <NavbarContent className="hidden gap-4 sm:flex" justify="end">
+      <NavbarContent className="hidden gap-4 sm:flex" justify="center">
         {menuItems.map((item) => {
           const isActive = pathname.startsWith(item.href);
           return (
@@ -61,21 +68,29 @@ export default function Nav(props: NavProps) {
             </NavbarItem>
           );
         })}
+      </NavbarContent>
+
+      <NavbarContent justify="end">
         <NavAuthButton session={Option.fromNullable(session)} />
       </NavbarContent>
 
-      <NavbarContent className="sm:hidden" justify="end">
-        <NavbarMenuToggle />
-      </NavbarContent>
-
       <NavbarMenu>
-        {menuItems.map((item) => (
-          <NavbarMenuItem key={item.label}>
-            <Link className="w-full" href={item.href} size="lg">
-              {item.label}
-            </Link>
-          </NavbarMenuItem>
-        ))}
+        {menuItems.map((item) => {
+          const isActive = pathname.startsWith(item.href);
+          return (
+            <NavbarMenuItem key={item.label} isActive={isActive}>
+              <Link
+                className="w-full"
+                href={item.href}
+                size="lg"
+                onPress={() => setIsMenuOpen(false)}
+                color={isActive ? "primary" : "foreground"}
+              >
+                {item.label}
+              </Link>
+            </NavbarMenuItem>
+          );
+        })}
       </NavbarMenu>
     </Navbar>
   );

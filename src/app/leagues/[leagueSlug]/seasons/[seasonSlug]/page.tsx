@@ -1,14 +1,8 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import PageLayout from "@/components/PageLayout";
-import RegistrationForm from "@/components/RegistrationForm";
-import SeasonInfo from "@/components/SeasonInfo";
 import prisma from "@/service/prisma";
-
-type Props = {
-  params: Promise<{ leagueSlug: string; seasonSlug: string }>;
-};
 
 const DAY_NAMES = [
   ["sundays", "Sun"],
@@ -19,6 +13,10 @@ const DAY_NAMES = [
   ["fridays", "Fri"],
   ["saturdays", "Sat"],
 ] as const;
+
+type Props = {
+  params: Promise<{ leagueSlug: string; seasonSlug: string }>;
+};
 
 export default async function SeasonPage({ params }: Props) {
   const { leagueSlug, seasonSlug } = await params;
@@ -36,6 +34,7 @@ export default async function SeasonPage({ params }: Props) {
     where: { leagueId_slug: { leagueId: league.id, slug: seasonSlug } },
     select: {
       id: true,
+      slug: true,
       name: true,
       info: true,
       startDate: true,
@@ -57,21 +56,7 @@ export default async function SeasonPage({ params }: Props) {
   const hasStarted = season.startDate <= new Date();
 
   if (!hasStarted) {
-    return (
-      <PageLayout>
-        <PageBreadcrumbs
-          items={[
-            { label: "Leagues", href: "/leagues" },
-            { label: league.name, href: `/leagues/${league.slug}/seasons` },
-            { label: season.name },
-          ]}
-        />
-        <div className="mx-auto max-w-4xl">
-          {season.info && <SeasonInfo info={season.info} />}
-          <RegistrationForm seasonId={season.id} />
-        </div>
-      </PageLayout>
-    );
+    redirect(`/leagues/${league.slug}/seasons/${season.slug}/registration`);
   }
 
   const gameDays = DAY_NAMES.filter(([key]) => season[key]).map(([, label]) => label);

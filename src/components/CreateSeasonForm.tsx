@@ -30,11 +30,13 @@ const DAYS = [
 type DayKey = (typeof DAYS)[number]["key"];
 
 type Props = {
-  leagueId: string;
-  leagueSlug: string;
+  league: {
+    id: string;
+    slug: string;
+  };
 };
 
-export default function CreateSeasonForm({ leagueId, leagueSlug }: Props) {
+export default function CreateSeasonForm({ league }: Props) {
   const router = useRouter();
   const [formState, setFormState] = useState<FormState>("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -69,7 +71,7 @@ export default function CreateSeasonForm({ leagueId, leagueSlug }: Props) {
       await createSeason({
         variables: {
           data: {
-            leagueId,
+            leagueId: league.id,
             name,
             startDate: startDate!.toString(),
             endDate: endDate!.toString(),
@@ -78,7 +80,7 @@ export default function CreateSeasonForm({ leagueId, leagueSlug }: Props) {
         },
       });
       setFormState("success");
-      router.push(`/leagues/${leagueSlug}/seasons`);
+      router.push(`/leagues/${league.slug}/seasons`);
     } catch (err) {
       setFormState("error");
       const message =
