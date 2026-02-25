@@ -2,15 +2,13 @@ import { Option } from "effect";
 
 import type { GoalCreateInput, GoalUpdateInput } from "@/graphql/generated";
 import { NotFoundError } from "@/service/errors";
-import type { Game, Player, Prisma, Team } from "@/service/prisma";
+import type { Lineup, Prisma } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
 import { goalCreateSchema, goalUpdateSchema } from "../validation/schemas";
-import { getGameById } from "./gameService";
-import { cleanInput, validate } from "./modelServiceUtils";
-import { getPlayerById, maybeGetPlayerById } from "./playerService";
-import { getTeamById } from "./teamService";
+import { getLineupEntry } from "./lineupService";
+import { cleanInput, maybeGet, validate } from "./modelServiceUtils";
 
 export function getGoalsBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.goal.findMany({ where: { game: { seasonId } } });
@@ -25,13 +23,15 @@ export async function getGoalById(id: string, ctx: ServerContext) {
 export async function createGoal(data: GoalCreateInput, ctx: ServerContext) {
   validate(goalCreateSchema, data);
   const { gameId, teamId, scorerId, primaryAssistId, secondaryAssistId } = data;
-  const game = await getGameById(gameId, ctx);
-  const team = await getTeamById(teamId, ctx);
-  const scorer = await getPlayerById(scorerId, ctx);
-  const primaryAssistant = await maybeGetPlayerById(primaryAssistId, ctx);
-  const secondaryAssistant = await maybeGetPlayerById(secondaryAssistId, ctx);
 
-  validateGoal(game, team, scorer, primaryAssistant, secondaryAssistant);
+  const scorer = await getLineupEntry(gameId, scorerId, ctx);
+  const primaryAssist = await maybeGet((id) => getLineupEntry(gameId, id, ctx), primaryAssistId);
+  const secondaryAssist = await maybeGet(
+    (id) => getLineupEntry(gameId, id, ctx),
+    secondaryAssistId,
+  );
+
+  validateGoal(teamId, scorer, primaryAssist, secondaryAssist);
 
   return ctx.prisma.goal.create({ data: cleanInput(data) });
 }
@@ -42,18 +42,21 @@ export async function updateGoal(id: string, data: GoalUpdateInput, ctx: ServerC
   assertNonNullableFields(payload, ["period", "time", "strength", "teamId", "scorerId"] as const);
 
   const goal = await getGoalById(id, ctx);
-  const game = await getGameById(goal.gameId, ctx);
-  const { teamId, scorerId, primaryAssistId, secondaryAssistId } = payload;
 
-  const team = await getTeamById(teamId ?? goal.teamId, ctx);
-  const scorer = await getPlayerById(scorerId ?? goal.scorerId, ctx);
-  const primaryAssistant = await maybeGetPlayerById(primaryAssistId ?? goal.primaryAssistId, ctx);
-  const secondaryAssistant = await maybeGetPlayerById(
-    secondaryAssistId ?? goal.secondaryAssistId,
-    ctx,
+  const gameId = goal.gameId;
+  const teamId = payload.teamId ?? goal.teamId;
+  const scorerId = payload.scorerId ?? goal.scorerId;
+  const primaryAssistId = payload.primaryAssistId ?? goal.primaryAssistId;
+  const secondaryAssistId = payload.secondaryAssistId ?? goal.secondaryAssistId;
+
+  const scorer = await getLineupEntry(gameId, scorerId, ctx);
+  const primaryAssistant = await maybeGet((id) => getLineupEntry(gameId, id, ctx), primaryAssistId);
+  const secondaryAssistant = await maybeGet(
+    (id) => getLineupEntry(gameId, id, ctx),
+    secondaryAssistId,
   );
 
-  validateGoal(game, team, scorer, primaryAssistant, secondaryAssistant);
+  validateGoal(teamId, scorer, primaryAssistant, secondaryAssistant);
 
   return ctx.prisma.goal.update({
     where: { id },
@@ -62,25 +65,35 @@ export async function updateGoal(id: string, data: GoalUpdateInput, ctx: ServerC
 }
 
 function validateGoal(
-  game: Game,
-  team: Team,
-  scorer: Player,
-  primaryAssistant: Option.Option<Player>,
-  secondaryAssistant: Option.Option<Player>,
+  teamId: string,
+  scorer: Lineup,
+  primaryAssistant: Option.Option<Lineup>,
+  secondaryAssistant: Option.Option<Lineup>,
 ) {
-  invariant(game.homeTeamId === team.id || game.awayTeamId === team.id, "Team must be in the game");
-  invariant(team.id === scorer.teamId, "Scorer must be on the team");
+  invariant(scorer.teamId === teamId, "Scorer must be in the lineup for this team");
 
   Option.match(primaryAssistant, {
     onSome: (primaryAssistant) => {
-      invariant(primaryAssistant.teamId === team.id, "Primary assistant must be on the team");
-      invariant(primaryAssistant.id !== scorer.id, "Primary assistant cannot be the scorer");
+      invariant(
+        primaryAssistant.teamId === teamId,
+        "Primary assistant must be in the lineup for this team",
+      );
+      invariant(
+        primaryAssistant.playerId !== scorer.playerId,
+        "Primary assistant cannot be the scorer",
+      );
 
       Option.map(secondaryAssistant, (secondaryAssistant) => {
-        invariant(secondaryAssistant.teamId === team.id, "Secondary assistant must be on the team");
-        invariant(secondaryAssistant.id !== scorer.id, "Secondary assistant cannot be the scorer");
         invariant(
-          secondaryAssistant.id !== primaryAssistant?.id,
+          secondaryAssistant.teamId === teamId,
+          "Secondary assistant must be in the lineup for this team",
+        );
+        invariant(
+          secondaryAssistant.playerId !== scorer.playerId,
+          "Secondary assistant cannot be the scorer",
+        );
+        invariant(
+          secondaryAssistant.playerId !== primaryAssistant?.playerId,
           "Secondary assistant cannot be the primary assistant",
         );
       });

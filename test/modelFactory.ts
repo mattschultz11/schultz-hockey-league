@@ -21,6 +21,7 @@ import type {
   Game,
   Goal,
   League,
+  Lineup,
   Penalty,
   Player,
   Registration,
@@ -249,7 +250,15 @@ export async function insertTeam(overrides: Partial<TeamModel> = {}): Promise<Te
 
 export type PlayerModel = Omit<
   Player,
-  "user" | "season" | "team" | "managedTeam" | "goals" | "assists" | "penalties" | "draftPick"
+  | "user"
+  | "season"
+  | "team"
+  | "managedTeam"
+  | "goals"
+  | "assists"
+  | "penalties"
+  | "draftPick"
+  | "lineups"
 >;
 
 export function makePlayer(
@@ -342,7 +351,14 @@ export async function insertPlayer(overrides: Partial<PlayerModel> = {}): Promis
 
 export type GameModel = Omit<
   Game,
-  "season" | "homeTeam" | "awayTeam" | "goals" | "penalties" | "homeTeamGoals" | "awayTeamGoals"
+  | "season"
+  | "homeTeam"
+  | "awayTeam"
+  | "goals"
+  | "penalties"
+  | "homeTeamGoals"
+  | "awayTeamGoals"
+  | "lineups"
 >;
 
 export function makeGame(
@@ -555,6 +571,45 @@ export async function insertPenalty(overrides: Partial<PenaltyModel> = {}): Prom
 
   return await prisma.penalty.create({
     data: penalty,
+  });
+}
+
+export type LineupModel = Omit<Lineup, "game" | "team" | "player">;
+
+export function makeLineup(
+  lineup: Partial<Pick<LineupModel, "gameId" | "teamId" | "playerId">> = {},
+): LineupModel {
+  const { gameId = randUuid(), teamId = randUuid(), playerId = randUuid() } = lineup;
+
+  return {
+    id: randUuid(),
+    gameId,
+    teamId,
+    playerId,
+  };
+}
+
+export async function insertLineup(overrides: Partial<LineupModel> = {}): Promise<LineupModel> {
+  const lineup = makeLineup(overrides);
+  const { gameId, teamId, playerId } = lineup;
+
+  const game = await prisma.game.findUnique({ where: { id: gameId } });
+  if (Predicate.isNullable(game)) {
+    await insertGame({ id: gameId });
+  }
+
+  const team = await prisma.team.findUnique({ where: { id: teamId } });
+  if (Predicate.isNullable(team)) {
+    await insertTeam({ id: teamId });
+  }
+
+  const player = await prisma.player.findUnique({ where: { id: playerId } });
+  if (Predicate.isNullable(player)) {
+    await insertPlayer({ id: playerId });
+  }
+
+  return await prisma.lineup.create({
+    data: lineup,
   });
 }
 

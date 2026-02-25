@@ -1,7 +1,6 @@
 import { Option, ParseResult, pipe, Schema } from "effect";
 
 import { ValidationError } from "@/service/errors";
-import type { ServerContext } from "@/types";
 
 export function cleanInput<T extends Record<string, unknown>>(data: T) {
   return Object.fromEntries(Object.entries(data).filter(([, value]) => value !== undefined)) as T;
@@ -32,15 +31,11 @@ export function validate<A, I>(schema: Schema.Schema<A, I>, data: unknown): A {
   }
 }
 
-export async function maybeGet<T>(
-  get: (id: string, ctx: ServerContext) => Promise<T>,
-  id: string | null | undefined,
-  ctx: ServerContext,
-) {
+export async function maybeGet<R, I>(get: (input: I) => Promise<R>, input: I | null | undefined) {
   const value = await pipe(
-    id,
+    input,
     Option.fromNullable,
-    Option.map((id) => get(id, ctx)),
+    Option.map((input) => get(input)),
     Option.getOrNull,
   );
 

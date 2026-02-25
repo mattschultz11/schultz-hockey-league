@@ -1,14 +1,12 @@
 import type { PenaltyCreateInput, PenaltyUpdateInput } from "@/graphql/generated";
 import { NotFoundError } from "@/service/errors";
-import type { Game, Player, Prisma, Team } from "@/service/prisma";
+import type { Lineup, Prisma } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
 import { penaltyCreateSchema, penaltyUpdateSchema } from "../validation/schemas";
-import { getGameById } from "./gameService";
+import { getLineupEntry } from "./lineupService";
 import { cleanInput, validate } from "./modelServiceUtils";
-import { getPlayerById } from "./playerService";
-import { getTeamById } from "./teamService";
 
 export function getPenaltiesBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.penalty.findMany({ where: { game: { seasonId } } });
@@ -23,11 +21,9 @@ export async function getPenaltyById(id: string, ctx: ServerContext) {
 export async function createPenalty(data: PenaltyCreateInput, ctx: ServerContext) {
   validate(penaltyCreateSchema, data);
   const { gameId, teamId, playerId } = data;
-  const game = await getGameById(gameId, ctx);
-  const team = await getTeamById(teamId, ctx);
-  const player = await getPlayerById(playerId, ctx);
 
-  validatePenalty(game, team, player);
+  const playerLineup = await getLineupEntry(gameId, playerId, ctx);
+  validatePenalty(teamId, playerLineup);
 
   return ctx.prisma.penalty.create({ data: cleanInput(data) });
 }
@@ -46,11 +42,13 @@ export async function updatePenalty(id: string, data: PenaltyUpdateInput, ctx: S
   ] as const);
 
   const penalty = await getPenaltyById(id, ctx);
-  const game = await getGameById(penalty.gameId, ctx);
-  const team = await getTeamById(payload.teamId ?? penalty.teamId, ctx);
-  const player = await getPlayerById(payload.playerId ?? penalty.playerId, ctx);
 
-  validatePenalty(game, team, player);
+  const gameId = penalty.gameId;
+  const teamId = payload.teamId ?? penalty.teamId;
+  const playerId = payload.playerId ?? penalty.playerId;
+
+  const playerLineup = await getLineupEntry(gameId, playerId, ctx);
+  validatePenalty(teamId, playerLineup);
 
   return ctx.prisma.penalty.update({
     where: { id },
@@ -58,9 +56,8 @@ export async function updatePenalty(id: string, data: PenaltyUpdateInput, ctx: S
   });
 }
 
-function validatePenalty(game: Game, team: Team, player: Player) {
-  invariant(game.homeTeamId === team.id || game.awayTeamId === team.id, "Team must be in the game");
-  invariant(team.id === player.teamId, "Player must be on the team");
+function validatePenalty(teamId: string, playerLineup: Lineup) {
+  invariant(playerLineup.teamId === teamId, "Player must be in the lineup for this team");
 }
 
 export function deletePenalty(id: string, ctx: ServerContext) {

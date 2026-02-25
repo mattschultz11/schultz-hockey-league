@@ -103,6 +103,7 @@ model Team {
   goals          Goal[]
   penalties      Penalty[]
   draftPicks     DraftPick[]
+  lineups        Lineup[]
 
   @@unique([seasonId, slug])
 }
@@ -130,6 +131,7 @@ model Player {
   secondaryAssists   Goal[]         @relation("SecondaryAssist")
   penalties          Penalty[]
   draftPick          DraftPick?
+  lineups            Lineup[]
 }
 
 enum Classification {
@@ -167,6 +169,7 @@ model Game {
   awayTeamPoints Int?
   goals          Goal[]
   penalties      Penalty[]
+  lineups        Lineup[]
 }
 
 enum Result {
@@ -215,6 +218,20 @@ model Penalty {
   category  PenaltyCategory @default(MINOR)
   type      PenaltyType
   minutes   Int
+}
+
+model Lineup {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  game      Game     @relation(fields: [gameId], references: [id])
+  gameId    String
+  team      Team     @relation(fields: [teamId], references: [id])
+  teamId    String
+  player    Player   @relation(fields: [playerId], references: [id])
+  playerId  String
+
+  @@unique([gameId, playerId])
 }
 
 enum PenaltyCategory {

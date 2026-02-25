@@ -18,7 +18,7 @@ export async function getUserById(id: string, ctx: ServerContext) {
 }
 
 export function maybeGetUserById(id: string | null | undefined, ctx: ServerContext) {
-  return maybeGet((id) => ctx.prisma.user.findUnique({ where: { id } }), id, ctx);
+  return maybeGet((id) => ctx.prisma.user.findUnique({ where: { id } }), id);
 }
 
 export function createUser(data: UserCreateInput, ctx: ServerContext) {

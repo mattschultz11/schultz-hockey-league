@@ -3,7 +3,8 @@ import type { GraphQLResolveInfo } from "graphql";
 import { GraphQLError } from "graphql";
 
 import type { ResolverFn } from "@/graphql/generated";
-import { type GraphQLContext, resolvers } from "@/graphql/resolvers";
+import type { GraphQLContext } from "@/graphql/resolvers";
+import { resolvers } from "@/graphql/resolvers";
 import {
   assertLeagueAccess,
   assertManagerOfTeam,

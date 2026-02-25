@@ -20,8 +20,12 @@ export async function getPlayerById(id: string, ctx: ServerContext) {
   return player;
 }
 
+export function getPlayersByIds(ids: string[], ctx: ServerContext) {
+  return ctx.prisma.player.findMany({ where: { id: { in: ids } } });
+}
+
 export function maybeGetPlayerById(id: string | null | undefined, ctx: ServerContext) {
-  return maybeGet((id) => ctx.prisma.player.findUnique({ where: { id } }), id, ctx);
+  return maybeGet((id) => ctx.prisma.player.findUnique({ where: { id } }), id);
 }
 
 export async function createPlayer(data: PlayerCreateInput, ctx: ServerContext) {

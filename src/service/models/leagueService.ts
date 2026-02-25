@@ -20,7 +20,7 @@ export async function getLeagueById(id: string, ctx: ServerContext) {
 }
 
 export function maybeGetLeagueById(id: string | null | undefined, ctx: ServerContext) {
-  return maybeGet((id) => ctx.prisma.league.findUnique({ where: { id } }), id, ctx);
+  return maybeGet((id) => ctx.prisma.league.findUnique({ where: { id } }), id);
 }
 
 export async function getLeagueBySlug(slug: string, ctx: ServerContext) {
@@ -30,7 +30,7 @@ export async function getLeagueBySlug(slug: string, ctx: ServerContext) {
 }
 
 export function maybeGetLeagueBySlug(slug: string | null | undefined, ctx: ServerContext) {
-  return maybeGet((slug) => ctx.prisma.league.findUnique({ where: { slug } }), slug, ctx);
+  return maybeGet((slug) => ctx.prisma.league.findUnique({ where: { slug } }), slug);
 }
 
 export async function createLeague(data: LeagueCreateInput, ctx: ServerContext) {

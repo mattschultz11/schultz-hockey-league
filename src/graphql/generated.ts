@@ -6,6 +6,7 @@ import type {
   Game as PrismaGame,
   Goal as PrismaGoal,
   League as PrismaLeague,
+  Lineup as PrismaLineup,
   Penalty as PrismaPenalty,
   Player as PrismaPlayer,
   Registration as PrismaRegistration,
@@ -185,6 +186,7 @@ export type Player = {
   assists: Array<Goal>;
   penalties: Array<Penalty>;
   draftPick?: Maybe<DraftPick>;
+  lineups: Array<Lineup>;
 };
 
 export type Game = {
@@ -208,6 +210,7 @@ export type Game = {
   awayTeamPoints?: Maybe<Scalars["Int"]["output"]>;
   goals: Array<Goal>;
   penalties: Array<Penalty>;
+  lineups: Array<Lineup>;
 };
 
 export type Goal = {
@@ -242,6 +245,17 @@ export type Penalty = {
   category: PenaltyCategory;
   type: PenaltyType;
   minutes: Scalars["Int"]["output"];
+};
+
+export type Lineup = {
+  __typename?: "Lineup";
+  id: Scalars["ID"]["output"];
+  game: Game;
+  gameId: Scalars["ID"]["output"];
+  team: Team;
+  teamId: Scalars["ID"]["output"];
+  player: Player;
+  playerId: Scalars["ID"]["output"];
 };
 
 export type DraftPick = {
@@ -299,6 +313,8 @@ export type Query = {
   goal?: Maybe<Goal>;
   penalties: Array<Penalty>;
   penalty?: Maybe<Penalty>;
+  lineups: Array<Lineup>;
+  gameTeamLineup: Array<Lineup>;
   draftPicks: Array<DraftPick>;
   draftPick?: Maybe<DraftPick>;
   registrations: Array<Registration>;
@@ -359,6 +375,15 @@ export type QueryPenaltiesArgs = {
 
 export type QueryPenaltyArgs = {
   id: Scalars["ID"]["input"];
+};
+
+export type QueryLineupsArgs = {
+  gameId: Scalars["ID"]["input"];
+};
+
+export type QueryGameTeamLineupArgs = {
+  gameId: Scalars["ID"]["input"];
+  teamId: Scalars["ID"]["input"];
 };
 
 export type QueryDraftPicksArgs = {
@@ -542,6 +567,18 @@ export type PenaltyUpdateInput = {
   minutes?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
+export type LineupCreateInput = {
+  gameId: Scalars["ID"]["input"];
+  teamId: Scalars["ID"]["input"];
+  playerId: Scalars["ID"]["input"];
+};
+
+export type SetGameLineupInput = {
+  gameId: Scalars["ID"]["input"];
+  teamId: Scalars["ID"]["input"];
+  playerIds: Array<Scalars["ID"]["input"]>;
+};
+
 export type DraftPickCreateInput = {
   seasonId: Scalars["ID"]["input"];
   overall: Scalars["Int"]["input"];
@@ -585,6 +622,9 @@ export type Mutation = {
   createPenalty: Penalty;
   updatePenalty: Penalty;
   deletePenalty: Penalty;
+  addPlayerToLineup: Lineup;
+  removePlayerFromLineup: Lineup;
+  setGameLineup: Array<Lineup>;
   createDraftPick: DraftPick;
   updateDraftPick: DraftPick;
   deleteDraftPick: DraftPick;
@@ -694,6 +734,18 @@ export type MutationUpdatePenaltyArgs = {
 
 export type MutationDeletePenaltyArgs = {
   id: Scalars["ID"]["input"];
+};
+
+export type MutationAddPlayerToLineupArgs = {
+  data: LineupCreateInput;
+};
+
+export type MutationRemovePlayerFromLineupArgs = {
+  id: Scalars["ID"]["input"];
+};
+
+export type MutationSetGameLineupArgs = {
+  data: SetGameLineupInput;
 };
 
 export type MutationCreateDraftPickArgs = {
@@ -854,6 +906,7 @@ export type ResolversTypes = {
   Game: ResolverTypeWrapper<PrismaGame>;
   Goal: ResolverTypeWrapper<PrismaGoal>;
   Penalty: ResolverTypeWrapper<PrismaPenalty>;
+  Lineup: ResolverTypeWrapper<PrismaLineup>;
   DraftPick: ResolverTypeWrapper<PrismaDraftPick>;
   Registration: ResolverTypeWrapper<PrismaRegistration>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
@@ -873,6 +926,8 @@ export type ResolversTypes = {
   GoalUpdateInput: GoalUpdateInput;
   PenaltyCreateInput: PenaltyCreateInput;
   PenaltyUpdateInput: PenaltyUpdateInput;
+  LineupCreateInput: LineupCreateInput;
+  SetGameLineupInput: SetGameLineupInput;
   DraftPickCreateInput: DraftPickCreateInput;
   DraftPickUpdateInput: DraftPickUpdateInput;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
@@ -895,6 +950,7 @@ export type ResolversParentTypes = {
   Game: PrismaGame;
   Goal: PrismaGoal;
   Penalty: PrismaPenalty;
+  Lineup: PrismaLineup;
   DraftPick: PrismaDraftPick;
   Registration: PrismaRegistration;
   Query: Record<PropertyKey, never>;
@@ -914,6 +970,8 @@ export type ResolversParentTypes = {
   GoalUpdateInput: GoalUpdateInput;
   PenaltyCreateInput: PenaltyCreateInput;
   PenaltyUpdateInput: PenaltyUpdateInput;
+  LineupCreateInput: LineupCreateInput;
+  SetGameLineupInput: SetGameLineupInput;
   DraftPickCreateInput: DraftPickCreateInput;
   DraftPickUpdateInput: DraftPickUpdateInput;
   Mutation: Record<PropertyKey, never>;
@@ -1034,6 +1092,7 @@ export type PlayerResolvers<
   assists?: Resolver<Array<ResolversTypes["Goal"]>, ParentType, ContextType>;
   penalties?: Resolver<Array<ResolversTypes["Penalty"]>, ParentType, ContextType>;
   draftPick?: Resolver<Maybe<ResolversTypes["DraftPick"]>, ParentType, ContextType>;
+  lineups?: Resolver<Array<ResolversTypes["Lineup"]>, ParentType, ContextType>;
 };
 
 export type GameResolvers<
@@ -1059,6 +1118,7 @@ export type GameResolvers<
   awayTeamPoints?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>;
   goals?: Resolver<Array<ResolversTypes["Goal"]>, ParentType, ContextType>;
   penalties?: Resolver<Array<ResolversTypes["Penalty"]>, ParentType, ContextType>;
+  lineups?: Resolver<Array<ResolversTypes["Lineup"]>, ParentType, ContextType>;
 };
 
 export type GoalResolvers<
@@ -1097,6 +1157,19 @@ export type PenaltyResolvers<
   category?: Resolver<ResolversTypes["PenaltyCategory"], ParentType, ContextType>;
   type?: Resolver<ResolversTypes["PenaltyType"], ParentType, ContextType>;
   minutes?: Resolver<ResolversTypes["Int"], ParentType, ContextType>;
+};
+
+export type LineupResolvers<
+  ContextType = ServerContext,
+  ParentType extends ResolversParentTypes["Lineup"] = ResolversParentTypes["Lineup"],
+> = {
+  id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  game?: Resolver<ResolversTypes["Game"], ParentType, ContextType>;
+  gameId?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  team?: Resolver<ResolversTypes["Team"], ParentType, ContextType>;
+  teamId?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  player?: Resolver<ResolversTypes["Player"], ParentType, ContextType>;
+  playerId?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
 };
 
 export type DraftPickResolvers<
@@ -1229,6 +1302,18 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryPenaltyArgs, "id">
+  >;
+  lineups?: Resolver<
+    Array<ResolversTypes["Lineup"]>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryLineupsArgs, "gameId">
+  >;
+  gameTeamLineup?: Resolver<
+    Array<ResolversTypes["Lineup"]>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryGameTeamLineupArgs, "gameId" | "teamId">
   >;
   draftPicks?: Resolver<
     Array<ResolversTypes["DraftPick"]>,
@@ -1404,6 +1489,24 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationDeletePenaltyArgs, "id">
   >;
+  addPlayerToLineup?: Resolver<
+    ResolversTypes["Lineup"],
+    ParentType,
+    ContextType,
+    RequireFields<MutationAddPlayerToLineupArgs, "data">
+  >;
+  removePlayerFromLineup?: Resolver<
+    ResolversTypes["Lineup"],
+    ParentType,
+    ContextType,
+    RequireFields<MutationRemovePlayerFromLineupArgs, "id">
+  >;
+  setGameLineup?: Resolver<
+    Array<ResolversTypes["Lineup"]>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationSetGameLineupArgs, "data">
+  >;
   createDraftPick?: Resolver<
     ResolversTypes["DraftPick"],
     ParentType,
@@ -1446,6 +1549,7 @@ export type Resolvers<ContextType = ServerContext> = {
   Game?: GameResolvers<ContextType>;
   Goal?: GoalResolvers<ContextType>;
   Penalty?: PenaltyResolvers<ContextType>;
+  Lineup?: LineupResolvers<ContextType>;
   DraftPick?: DraftPickResolvers<ContextType>;
   Registration?: RegistrationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;

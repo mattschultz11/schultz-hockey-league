@@ -6,6 +6,7 @@ import * as draftPickService from "@/service/models/draftPickService";
 import * as gameService from "@/service/models/gameService";
 import * as goalService from "@/service/models/goalService";
 import * as leagueService from "@/service/models/leagueService";
+import * as lineupService from "@/service/models/lineupService";
 import * as penaltyService from "@/service/models/penaltyService";
 import * as playerService from "@/service/models/playerService";
 import * as registrationService from "@/service/models/registrationService";
@@ -94,6 +95,10 @@ export const resolvers: Resolvers = {
 
     penalties: (_p, args, ctx) => penaltyService.getPenaltiesBySeason(args.seasonId, ctx),
     penalty: (_p, args, ctx) => penaltyService.getPenaltyById(args.id, ctx),
+
+    lineups: (_p, args, ctx) => lineupService.getLineupsByGame(args.gameId, ctx),
+    gameTeamLineup: (_p, args, ctx) =>
+      lineupService.getLineupsByGameAndTeam(args.gameId, args.teamId, ctx),
 
     draftPicks: (_p, args, ctx) => draftPickService.getDraftPicksBySeason(args.seasonId, ctx),
     draftPick: (_p, args, ctx) => draftPickService.getDraftPickById(args.id, ctx),
@@ -185,6 +190,16 @@ export const resolvers: Resolvers = {
       penaltyService.deletePenalty(args.id, ctx),
     ),
 
+    addPlayerToLineup: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      lineupService.addPlayerToLineup(args.data, ctx),
+    ),
+    removePlayerFromLineup: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      lineupService.removePlayerFromLineup(args.id, ctx),
+    ),
+    setGameLineup: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      lineupService.setGameLineup(args.data, ctx),
+    ),
+
     createDraftPick: withPolicy([PolicyName.MANAGER, PolicyName.SEASON_ACCESS], (_p, args, ctx) =>
       draftPickService.createDraftPick(args.data, ctx),
     ),
@@ -265,6 +280,8 @@ export const resolvers: Resolvers = {
       playerService.getPlayerPenalties(parent.id, ctx),
     draftPick: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       playerService.getPlayerDraftPick(parent.id, ctx),
+    lineups: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
+      lineupService.getLineupsByPlayer(parent.id, ctx),
   },
   Game: {
     season: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
@@ -287,6 +304,8 @@ export const resolvers: Resolvers = {
       gameService.getGameGoals(parent.id, ctx),
     penalties: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       gameService.getGamePenalties(parent.id, ctx),
+    lineups: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
+      lineupService.getLineupsByGame(parent.id, ctx),
   },
   Goal: {
     game: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
@@ -307,6 +326,14 @@ export const resolvers: Resolvers = {
       penaltyService.getPenaltyTeam(parent.id, ctx),
     player: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       penaltyService.getPenaltyPlayer(parent.id, ctx),
+  },
+  Lineup: {
+    game: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
+      lineupService.getLineupGame(parent.id, ctx),
+    team: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
+      lineupService.getLineupTeam(parent.id, ctx),
+    player: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
+      lineupService.getLineupPlayer(parent.id, ctx),
   },
   DraftPick: {
     season: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>

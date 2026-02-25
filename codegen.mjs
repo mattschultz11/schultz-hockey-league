@@ -31,6 +31,7 @@ const schema = makeExecutableSchema({ typeDefs });
           Game: "@/service/prisma#Game as PrismaGame",
           Goal: "@/service/prisma#Goal as PrismaGoal",
           Penalty: "@/service/prisma#Penalty as PrismaPenalty",
+          Lineup: "@/service/prisma#Lineup as PrismaLineup",
           DraftPick: "@/service/prisma#DraftPick as PrismaDraftPick",
           Registration: "@/service/prisma#Registration as PrismaRegistration",
         },

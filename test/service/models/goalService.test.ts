@@ -12,7 +12,14 @@ import { Strength } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
 import type { GameModel, PlayerModel, TeamModel } from "../../modelFactory";
-import { insertGame, insertPlayer, insertSeason, insertTeam, makeGoal } from "../../modelFactory";
+import {
+  insertGame,
+  insertLineup,
+  insertPlayer,
+  insertSeason,
+  insertTeam,
+  makeGoal,
+} from "../../modelFactory";
 import { createCtx } from "../../utils";
 
 describe("goalService", () => {
@@ -29,6 +36,7 @@ describe("goalService", () => {
     team = await insertTeam();
     scorer = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
     game = await insertGame({ seasonId: team.seasonId, homeTeamId: team.id });
+    await insertLineup({ gameId: game.id, teamId: team.id, playerId: scorer.id });
   });
 
   it("can create a goal", async () => {
@@ -39,12 +47,11 @@ describe("goalService", () => {
     expect(actual).toMatchObject(input);
   });
 
-  it("throws when the scorer is not on the scoring team", async () => {
-    const otherTeam = await insertTeam();
-    const otherScorer = await insertPlayer({ seasonId: otherTeam.seasonId, teamId: otherTeam.id });
+  it("throws when the scorer is not in the lineup", async () => {
+    const otherScorer = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
     const input = makeGoal({ gameId: game.id, teamId: team.id, scorerId: otherScorer.id });
 
-    await expect(() => createGoal(input, ctx)).rejects.toThrow("Scorer must be on the team");
+    await expect(() => createGoal(input, ctx)).rejects.toThrow(NotFoundError);
   });
 
   it("throws when the scoring team is not in the game", async () => {
@@ -52,15 +59,11 @@ describe("goalService", () => {
     const otherGame = await insertGame({ seasonId: team.seasonId, homeTeamId: otherTeam.id });
     const input = makeGoal({ gameId: otherGame.id, teamId: team.id, scorerId: scorer.id });
 
-    await expect(() => createGoal(input, ctx)).rejects.toThrow("Team must be in the game");
+    await expect(() => createGoal(input, ctx)).rejects.toThrow(NotFoundError);
   });
 
-  it("throws when the primary assistant is not on the scoring team", async () => {
-    const otherTeam = await insertTeam({ seasonId: team.seasonId });
-    const primaryAssist = await insertPlayer({
-      seasonId: otherTeam.seasonId,
-      teamId: otherTeam.id,
-    });
+  it("throws when the primary assistant is not in the lineup", async () => {
+    const primaryAssist = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
     const input = makeGoal({
       gameId: game.id,
       teamId: team.id,
@@ -68,18 +71,13 @@ describe("goalService", () => {
       primaryAssistId: primaryAssist.id,
     });
 
-    await expect(() => createGoal(input, ctx)).rejects.toThrow(
-      "Primary assistant must be on the team",
-    );
+    await expect(() => createGoal(input, ctx)).rejects.toThrow(NotFoundError);
   });
 
-  it("throws when the secondary assistant is not on the scoring team", async () => {
+  it("throws when the secondary assistant is not in the lineup", async () => {
     const primaryAssist = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
-    const otherTeam = await insertTeam({ seasonId: team.seasonId });
-    const secondaryAssist = await insertPlayer({
-      seasonId: otherTeam.seasonId,
-      teamId: otherTeam.id,
-    });
+    await insertLineup({ gameId: game.id, teamId: team.id, playerId: primaryAssist.id });
+    const secondaryAssist = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
     const input = makeGoal({
       gameId: game.id,
       teamId: team.id,
@@ -88,9 +86,7 @@ describe("goalService", () => {
       secondaryAssistId: secondaryAssist.id,
     });
 
-    await expect(() => createGoal(input, ctx)).rejects.toThrow(
-      "Secondary assistant must be on the team",
-    );
+    await expect(() => createGoal(input, ctx)).rejects.toThrow(NotFoundError);
   });
 
   it("throws when the primary assistant is also the scorer", async () => {
@@ -108,6 +104,7 @@ describe("goalService", () => {
 
   it("throws when the secondary assistant is also the scorer", async () => {
     const primaryAssist = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
+    await insertLineup({ gameId: game.id, teamId: team.id, playerId: primaryAssist.id });
     const input = makeGoal({
       gameId: game.id,
       teamId: team.id,
@@ -123,6 +120,7 @@ describe("goalService", () => {
 
   it("throws when a secondary assist is provided without a primary assist", async () => {
     const secondaryAssist = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
+    await insertLineup({ gameId: game.id, teamId: team.id, playerId: secondaryAssist.id });
     const input = makeGoal({
       gameId: game.id,
       teamId: team.id,
@@ -138,6 +136,7 @@ describe("goalService", () => {
 
   it("throws when primary and secondary assistants are the same player", async () => {
     const assistant = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
+    await insertLineup({ gameId: game.id, teamId: team.id, playerId: assistant.id });
     const input = makeGoal({
       gameId: game.id,
       teamId: team.id,
@@ -159,7 +158,7 @@ describe("goalService", () => {
     const otherTeam = await insertTeam({ seasonId: team.seasonId });
 
     await expect(() => updateGoal(created.id, { teamId: otherTeam.id }, ctx)).rejects.toThrow(
-      "Team must be in the game",
+      "Scorer must be in the lineup for this team",
     );
   });
 
@@ -183,6 +182,11 @@ describe("goalService", () => {
     const seasonTeam = await insertTeam({ seasonId: season.id });
     const seasonScorer = await insertPlayer({ seasonId: season.id, teamId: seasonTeam.id });
     const seasonGame = await insertGame({ seasonId: season.id, homeTeamId: seasonTeam.id });
+    await insertLineup({
+      gameId: seasonGame.id,
+      teamId: seasonTeam.id,
+      playerId: seasonScorer.id,
+    });
 
     await createGoal(
       makeGoal({ gameId: seasonGame.id, teamId: seasonTeam.id, scorerId: seasonScorer.id }),

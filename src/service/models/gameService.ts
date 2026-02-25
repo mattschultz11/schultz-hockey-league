@@ -24,7 +24,7 @@ export async function getGameById(id: string, ctx: ServerContext) {
 }
 
 export function maybeGetGameById(id: string | null | undefined, ctx: ServerContext) {
-  return maybeGet((id) => ctx.prisma.game.findUnique({ where: { id } }), id, ctx);
+  return maybeGet((id) => ctx.prisma.game.findUnique({ where: { id } }), id);
 }
 
 export async function createGame(data: GameCreateInput, ctx: ServerContext) {

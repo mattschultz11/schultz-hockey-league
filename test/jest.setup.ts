@@ -9,6 +9,7 @@ jest.mock("@/service/prisma");
 
 async function clearDatabase() {
   await prisma.draftPick.deleteMany();
+  await prisma.lineup.deleteMany();
   await prisma.penalty.deleteMany();
   await prisma.goal.deleteMany();
   await prisma.game.deleteMany();

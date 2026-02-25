@@ -176,6 +176,7 @@ export const typeDefs = /* GraphQL */ `
     assists: [Goal!]!
     penalties: [Penalty!]!
     draftPick: DraftPick
+    lineups: [Lineup!]!
   }
 
   type Game {
@@ -198,6 +199,7 @@ export const typeDefs = /* GraphQL */ `
     awayTeamPoints: Int
     goals: [Goal!]!
     penalties: [Penalty!]!
+    lineups: [Lineup!]!
   }
 
   type Goal {
@@ -230,6 +232,16 @@ export const typeDefs = /* GraphQL */ `
     category: PenaltyCategory!
     type: PenaltyType!
     minutes: Int!
+  }
+
+  type Lineup {
+    id: ID!
+    game: Game!
+    gameId: ID!
+    team: Team!
+    teamId: ID!
+    player: Player!
+    playerId: ID!
   }
 
   type DraftPick {
@@ -291,6 +303,9 @@ export const typeDefs = /* GraphQL */ `
 
     penalties(seasonId: ID!): [Penalty!]!
     penalty(id: ID!): Penalty
+
+    lineups(gameId: ID!): [Lineup!]!
+    gameTeamLineup(gameId: ID!, teamId: ID!): [Lineup!]!
 
     draftPicks(seasonId: ID!): [DraftPick!]!
     draftPick(id: ID!): DraftPick
@@ -464,6 +479,18 @@ export const typeDefs = /* GraphQL */ `
     minutes: Int
   }
 
+  input LineupCreateInput {
+    gameId: ID!
+    teamId: ID!
+    playerId: ID!
+  }
+
+  input SetGameLineupInput {
+    gameId: ID!
+    teamId: ID!
+    playerIds: [ID!]!
+  }
+
   input DraftPickCreateInput {
     seasonId: ID!
     overall: Int!
@@ -513,6 +540,10 @@ export const typeDefs = /* GraphQL */ `
     createPenalty(data: PenaltyCreateInput!): Penalty!
     updatePenalty(id: ID!, data: PenaltyUpdateInput!): Penalty!
     deletePenalty(id: ID!): Penalty!
+
+    addPlayerToLineup(data: LineupCreateInput!): Lineup!
+    removePlayerFromLineup(id: ID!): Lineup!
+    setGameLineup(data: SetGameLineupInput!): [Lineup!]!
 
     createDraftPick(data: DraftPickCreateInput!): DraftPick!
     updateDraftPick(id: ID!, data: DraftPickUpdateInput!): DraftPick!

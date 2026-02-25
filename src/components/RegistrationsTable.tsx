@@ -369,8 +369,9 @@ export default function RegistrationsTable({
 
       <div className="flex items-center justify-between gap-3">
         <Button
-          color="success"
+          color="secondary"
           size="sm"
+          variant="bordered"
           isLoading={loading}
           onPress={handleAccept}
           disabled={selectedIds.size === 0}

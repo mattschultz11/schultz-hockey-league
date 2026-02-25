@@ -5,7 +5,7 @@ import { createContext, useCallback, useContext, useState } from "react";
 
 export type NavItem = { label: string; href: string };
 
-const DEFAULT_ITEMS: NavItem[] = [{ label: "Leagues", href: "/leagues" }];
+const DEFAULT_ITEMS: NavItem[] = [];
 
 type NavContextValue = {
   items: NavItem[];

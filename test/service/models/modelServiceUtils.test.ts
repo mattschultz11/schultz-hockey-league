@@ -1,9 +1,6 @@
 import { Option } from "effect";
 
 import { cleanInput, generateSlug, maybeGet } from "@/service/models/modelServiceUtils";
-import type { ServerContext } from "@/types";
-
-import { createCtx } from "../../utils";
 
 describe("cleanInput", () => {
   it("removes undefined values", () => {
@@ -67,15 +64,9 @@ describe("generateSlug", () => {
 });
 
 describe("maybeGet", () => {
-  let ctx: ServerContext;
-
-  beforeAll(() => {
-    ctx = createCtx();
-  });
-
   it("returns None for null id", async () => {
     const getter = jest.fn();
-    const result = await maybeGet(getter, null, ctx);
+    const result = await maybeGet(getter, null);
 
     expect(Option.isNone(result)).toBe(true);
     expect(getter).not.toHaveBeenCalled();
@@ -83,7 +74,7 @@ describe("maybeGet", () => {
 
   it("returns None for undefined id", async () => {
     const getter = jest.fn();
-    const result = await maybeGet(getter, undefined, ctx);
+    const result = await maybeGet(getter, undefined);
 
     expect(Option.isNone(result)).toBe(true);
     expect(getter).not.toHaveBeenCalled();
@@ -92,18 +83,18 @@ describe("maybeGet", () => {
   it("returns Some when getter returns a value", async () => {
     const mockValue = { id: "123", name: "Test" };
     const getter = jest.fn().mockResolvedValue(mockValue);
-    const result = await maybeGet(getter, "123", ctx);
+    const result = await maybeGet(getter, "123");
 
     expect(Option.isSome(result)).toBe(true);
     expect(Option.getOrNull(result)).toEqual(mockValue);
-    expect(getter).toHaveBeenCalledWith("123", ctx);
+    expect(getter).toHaveBeenCalledWith("123");
   });
 
   it("returns None when getter returns null", async () => {
     const getter = jest.fn().mockResolvedValue(null);
-    const result = await maybeGet(getter, "123", ctx);
+    const result = await maybeGet(getter, "123");
 
     expect(Option.isNone(result)).toBe(true);
-    expect(getter).toHaveBeenCalledWith("123", ctx);
+    expect(getter).toHaveBeenCalledWith("123");
   });
 });

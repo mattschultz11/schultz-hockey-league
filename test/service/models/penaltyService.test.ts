@@ -14,6 +14,7 @@ import type { ServerContext } from "@/types";
 import type { GameModel, PlayerModel, TeamModel } from "../../modelFactory";
 import {
   insertGame,
+  insertLineup,
   insertPenalty,
   insertPlayer,
   insertSeason,
@@ -36,6 +37,7 @@ describe("penaltyService", () => {
     team = await insertTeam();
     player = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
     game = await insertGame({ homeTeamId: team.id });
+    await insertLineup({ gameId: game.id, teamId: team.id, playerId: player.id });
   });
 
   it("can create a penalty", async () => {
@@ -46,12 +48,11 @@ describe("penaltyService", () => {
     expect(actual).toMatchObject(input);
   });
 
-  it("throws when the penalized player is not on the team", async () => {
-    const otherTeam = await insertTeam({ seasonId: team.seasonId });
-    const otherPlayer = await insertPlayer({ seasonId: otherTeam.seasonId, teamId: otherTeam.id });
+  it("throws when the penalized player is not in the lineup", async () => {
+    const otherPlayer = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
     const input = makePenalty({ gameId: game.id, teamId: team.id, playerId: otherPlayer.id });
 
-    await expect(() => createPenalty(input, ctx)).rejects.toThrow("Player must be on the team");
+    await expect(() => createPenalty(input, ctx)).rejects.toThrow(NotFoundError);
   });
 
   it("throws when the penalized team is not in the game", async () => {
@@ -59,13 +60,12 @@ describe("penaltyService", () => {
     const otherGame = await insertGame({ seasonId: team.seasonId, homeTeamId: otherTeam.id });
     const input = makePenalty({ gameId: otherGame.id, teamId: team.id, playerId: player.id });
 
-    await expect(() => createPenalty(input, ctx)).rejects.toThrow("Team must be in the game");
+    await expect(() => createPenalty(input, ctx)).rejects.toThrow(NotFoundError);
   });
 
-  it("throws when updating a penalty with a player from another team", async () => {
+  it("throws when updating a penalty with a player not in the lineup", async () => {
     const created = await insertPenalty({ gameId: game.id, teamId: team.id, playerId: player.id });
-    const otherTeam = await insertTeam({ seasonId: team.seasonId });
-    const otherPlayer = await insertPlayer({ seasonId: otherTeam.seasonId, teamId: otherTeam.id });
+    const otherPlayer = await insertPlayer({ seasonId: team.seasonId, teamId: team.id });
 
     await expect(() =>
       updatePenalty(
@@ -75,7 +75,7 @@ describe("penaltyService", () => {
         },
         ctx,
       ),
-    ).rejects.toThrow("Player must be on the team");
+    ).rejects.toThrow(NotFoundError);
   });
 
   it("throws when updating a penalty to another team without changing the player", async () => {
@@ -90,7 +90,7 @@ describe("penaltyService", () => {
         },
         ctx,
       ),
-    ).rejects.toThrow("Team must be in the game");
+    ).rejects.toThrow("Player must be in the lineup for this team");
   });
 
   it("can get a penalty by id", async () => {
@@ -113,6 +113,11 @@ describe("penaltyService", () => {
     const seasonTeam = await insertTeam({ seasonId: season.id });
     const seasonPlayer = await insertPlayer({ seasonId: season.id, teamId: seasonTeam.id });
     const seasonGame = await insertGame({ seasonId: season.id, homeTeamId: seasonTeam.id });
+    await insertLineup({
+      gameId: seasonGame.id,
+      teamId: seasonTeam.id,
+      playerId: seasonPlayer.id,
+    });
 
     await createPenalty(
       makePenalty({ gameId: seasonGame.id, teamId: seasonTeam.id, playerId: seasonPlayer.id }),

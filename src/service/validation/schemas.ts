@@ -261,6 +261,18 @@ export const draftPickUpdateSchema = Schema.Struct({
   playerId: OptionalId,
 });
 
+export const lineupCreateSchema = Schema.Struct({
+  gameId: Id,
+  teamId: Id,
+  playerId: Id,
+});
+
+export const setGameLineupSchema = Schema.Struct({
+  gameId: Id,
+  teamId: Id,
+  playerIds: Schema.Array(Id),
+});
+
 export const acceptRegistrationsSchema = Schema.Struct({
   seasonId: Id,
   registrationIds: Schema.Array(Id).pipe(Schema.minItems(1)),
