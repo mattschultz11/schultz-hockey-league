@@ -305,6 +305,7 @@ export default function RegistrationForm({ seasonId }: RegistrationFormProps) {
         <div className="grid grid-cols-2 gap-4">
           {isGoalie ? (
             <FormSelect
+              key="gloveHand"
               name="gloveHand"
               control={control}
               label="Glove Hand"
@@ -313,6 +314,7 @@ export default function RegistrationForm({ seasonId }: RegistrationFormProps) {
             />
           ) : (
             <FormSelect
+              key="handedness"
               name="handedness"
               control={control}
               label="Handedness"
