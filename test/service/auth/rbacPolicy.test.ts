@@ -1,5 +1,6 @@
 import { Option } from "effect";
 
+import { logAuditEntry } from "@/service/audit/auditService";
 import {
   assertLeagueAccess,
   assertManagerOfTeam,
@@ -7,7 +8,7 @@ import {
 } from "@/service/auth/authService";
 import { getPolicy, PolicyName, withPolicy } from "@/service/auth/rbacPolicy";
 import { ConflictError, NotFoundError, ValidationError } from "@/service/errors";
-import { Role } from "@/service/prisma";
+import { AuditAction, Role } from "@/service/prisma";
 
 import { makeUser } from "../../modelFactory";
 import { createCtx } from "../../utils";
@@ -24,6 +25,13 @@ jest.mock("@/service/auth/authService", () => ({
   assertSeasonAccess: jest.fn(),
   assertManagerOfTeam: jest.fn(),
 }));
+
+// Mock audit service to verify withPolicy calls logAuditEntry
+jest.mock("@/service/audit/auditService", () => ({
+  logAuditEntry: jest.fn(),
+}));
+
+const mockLogAuditEntry = logAuditEntry as jest.MockedFunction<typeof logAuditEntry>;
 
 const mockAssertLeagueAccess = assertLeagueAccess as jest.MockedFunction<typeof assertLeagueAccess>;
 const mockAssertSeasonAccess = assertSeasonAccess as jest.MockedFunction<typeof assertSeasonAccess>;
@@ -471,6 +479,108 @@ describe("withPolicy", () => {
         });
         expect(mockResolver).not.toHaveBeenCalled();
       });
+    });
+  });
+
+  describe("post-resolver audit logging", () => {
+    beforeEach(() => {
+      mockLogAuditEntry.mockClear();
+    });
+
+    it("calls logAuditEntry after successful create mutation", async () => {
+      const createdEntity = { id: "new-league-123", name: "Test League" };
+      const mockResolver = jest.fn().mockResolvedValue(createdEntity);
+      const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+      const createInfo = {
+        parentType: { name: "Mutation" },
+        fieldName: "createLeague",
+      } as never;
+
+      const wrappedResolver = withPolicy(PolicyName.ADMIN, mockResolver);
+      await wrappedResolver({}, { data: { name: "Test League" } }, ctx, createInfo);
+
+      expect(mockLogAuditEntry).toHaveBeenCalledTimes(1);
+      expect(mockLogAuditEntry).toHaveBeenCalledWith(ctx, {
+        action: AuditAction.CREATE,
+        entityType: "League",
+        entityId: "new-league-123",
+        metadata: { name: "Test League" },
+        endpoint: "Mutation.createLeague",
+      });
+    });
+
+    it("calls logAuditEntry after successful update mutation", async () => {
+      const updatedEntity = { id: "team-456", name: "Updated Team" };
+      const mockResolver = jest.fn().mockResolvedValue(updatedEntity);
+      const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+      const updateInfo = {
+        parentType: { name: "Mutation" },
+        fieldName: "updateTeam",
+      } as never;
+
+      const wrappedResolver = withPolicy(PolicyName.ADMIN, mockResolver);
+      await wrappedResolver({}, { id: "team-456", data: { name: "Updated" } }, ctx, updateInfo);
+
+      expect(mockLogAuditEntry).toHaveBeenCalledTimes(1);
+      expect(mockLogAuditEntry).toHaveBeenCalledWith(ctx, {
+        action: AuditAction.UPDATE,
+        entityType: "Team",
+        entityId: "team-456",
+        metadata: { name: "Updated" },
+        endpoint: "Mutation.updateTeam",
+      });
+    });
+
+    it("calls logAuditEntry after successful delete mutation", async () => {
+      const deletedEntity = { id: "user-789" };
+      const mockResolver = jest.fn().mockResolvedValue(deletedEntity);
+      const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+      const deleteInfo = {
+        parentType: { name: "Mutation" },
+        fieldName: "deleteUser",
+      } as never;
+
+      const wrappedResolver = withPolicy(PolicyName.ADMIN, mockResolver);
+      await wrappedResolver({}, { id: "user-789" }, ctx, deleteInfo);
+
+      expect(mockLogAuditEntry).toHaveBeenCalledTimes(1);
+      expect(mockLogAuditEntry).toHaveBeenCalledWith(ctx, {
+        action: AuditAction.DELETE,
+        entityType: "User",
+        entityId: "user-789",
+        metadata: {},
+        endpoint: "Mutation.deleteUser",
+      });
+    });
+
+    it("does NOT call logAuditEntry for non-mutation field names", async () => {
+      const mockResolver = jest.fn().mockResolvedValue([]);
+      const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+      const queryInfo = {
+        parentType: { name: "Query" },
+        fieldName: "auditLog",
+      } as never;
+
+      const wrappedResolver = withPolicy(PolicyName.ADMIN, mockResolver);
+      await wrappedResolver({}, {}, ctx, queryInfo);
+
+      expect(mockLogAuditEntry).not.toHaveBeenCalled();
+    });
+
+    it("does NOT call logAuditEntry when resolver throws", async () => {
+      const mockResolver = jest.fn().mockRejectedValue(new ValidationError("bad input"));
+      const ctx = createCtx(makeUser({ role: Role.ADMIN }));
+      const createInfo = {
+        parentType: { name: "Mutation" },
+        fieldName: "createLeague",
+      } as never;
+
+      const wrappedResolver = withPolicy(PolicyName.ADMIN, mockResolver);
+      await expect(wrappedResolver({}, { data: {} }, ctx, createInfo)).rejects.toMatchObject({
+        extensions: { code: "BAD_USER_INPUT" },
+      });
+
+      expect(mockLogAuditEntry).not.toHaveBeenCalled();
     });
   });
 

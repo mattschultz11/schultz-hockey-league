@@ -1,6 +1,8 @@
+import type { JsonValue } from "@prisma/client/runtime/client";
 import type { ValueNode } from "graphql";
 import { GraphQLScalarType, Kind } from "graphql";
 
+import { getAuditLog, logAuditEntry } from "@/service/audit/auditService";
 import { PolicyName, withPolicy } from "@/service/auth/rbacPolicy";
 import * as draftPickService from "@/service/models/draftPickService";
 import * as gameService from "@/service/models/gameService";
@@ -13,9 +15,10 @@ import * as registrationService from "@/service/models/registrationService";
 import * as seasonService from "@/service/models/seasonService";
 import * as teamService from "@/service/models/teamService";
 import * as userService from "@/service/models/userService";
+import { AuditAction } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
-import type { Resolvers } from "./generated";
+import type { AuditLog, Resolvers } from "./generated";
 
 export type GraphQLContext = ServerContext;
 
@@ -106,6 +109,12 @@ export const resolvers: Resolvers = {
     registrations: (_p, args, ctx) =>
       registrationService.getRegistrationsBySeason(args.seasonId, ctx),
     registration: (_p, args, ctx) => registrationService.getRegistrationById(args.id, ctx),
+
+    // Prisma returns metadata as JsonValue; AuditLog.metadata field resolver converts to string
+    auditLog: withPolicy(
+      PolicyName.ADMIN,
+      (_p, args, ctx) => getAuditLog(args, ctx) as Promise<AuditLog[]>,
+    ),
   },
 
   Mutation: {
@@ -210,7 +219,17 @@ export const resolvers: Resolvers = {
       draftPickService.deleteDraftPick(args.id, ctx),
     ),
 
-    register: (_p, args, ctx) => registrationService.registerForSeason(args.data, ctx),
+    register: async (_p, args, ctx) => {
+      const result = await registrationService.registerForSeason(args.data, ctx);
+      logAuditEntry(ctx, {
+        action: AuditAction.CREATE,
+        entityType: "Registration",
+        entityId: result.id,
+        metadata: { seasonId: args.data.seasonId, email: args.data.email },
+        endpoint: "Mutation.register",
+      });
+      return result;
+    },
 
     acceptRegistrations: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       registrationService.acceptRegistrations(args.seasonId, args.registrationIds, ctx),
@@ -342,6 +361,10 @@ export const resolvers: Resolvers = {
       draftPickService.getDraftPickTeam(parent.id, ctx),
     player: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       draftPickService.getDraftPickPlayer(parent.id, ctx),
+  },
+  AuditLog: {
+    metadata: (parent: { metadata?: JsonValue }) =>
+      parent.metadata != null ? JSON.stringify(parent.metadata) : null,
   },
   Registration: {
     season: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>

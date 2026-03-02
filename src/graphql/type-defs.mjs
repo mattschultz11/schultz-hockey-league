@@ -279,6 +279,25 @@ export const typeDefs = /* GraphQL */ `
     referral: String
   }
 
+  enum AuditAction {
+    CREATE
+    UPDATE
+    DELETE
+  }
+
+  type AuditLog {
+    id: ID!
+    timestamp: DateTime!
+    requestId: String!
+    actorId: ID
+    actorRole: Role
+    action: AuditAction!
+    entityType: String!
+    entityId: String!
+    metadata: String
+    endpoint: String!
+  }
+
   type Query {
     users: [User!]!
     user(id: ID!): User
@@ -312,6 +331,14 @@ export const typeDefs = /* GraphQL */ `
 
     registrations(seasonId: ID!): [Registration!]!
     registration(id: ID!): Registration
+
+    auditLog(
+      entityType: String
+      actorId: ID
+      action: AuditAction
+      limit: Int
+      offset: Int
+    ): [AuditLog!]!
   }
 
   input UserCreateInput {

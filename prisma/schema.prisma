@@ -299,6 +299,30 @@ model Registration {
   @@unique([seasonId, email])
 }
 
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+}
+
+model AuditLog {
+  id         String      @id @default(uuid())
+  timestamp  DateTime    @default(now())
+  requestId  String
+  actorId    String?
+  actorRole  Role?
+  action     AuditAction
+  entityType String
+  entityId   String
+  metadata   Json?
+  endpoint   String
+
+  @@index([entityType])
+  @@index([actorId])
+  @@index([action])
+  @@index([timestamp])
+}
+
 model DraftPick {
   id           String   @id @default(uuid())
   createdAt    DateTime @default(now())

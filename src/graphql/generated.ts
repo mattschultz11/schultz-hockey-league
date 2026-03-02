@@ -295,6 +295,22 @@ export type Registration = {
   referral?: Maybe<Scalars["String"]["output"]>;
 };
 
+export type AuditAction = "CREATE" | "UPDATE" | "DELETE";
+
+export type AuditLog = {
+  __typename?: "AuditLog";
+  id: Scalars["ID"]["output"];
+  timestamp: Scalars["DateTime"]["output"];
+  requestId: Scalars["String"]["output"];
+  actorId?: Maybe<Scalars["ID"]["output"]>;
+  actorRole?: Maybe<Role>;
+  action: AuditAction;
+  entityType: Scalars["String"]["output"];
+  entityId: Scalars["String"]["output"];
+  metadata?: Maybe<Scalars["String"]["output"]>;
+  endpoint: Scalars["String"]["output"];
+};
+
 export type Query = {
   __typename?: "Query";
   users: Array<User>;
@@ -319,6 +335,7 @@ export type Query = {
   draftPick?: Maybe<DraftPick>;
   registrations: Array<Registration>;
   registration?: Maybe<Registration>;
+  auditLog: Array<AuditLog>;
 };
 
 export type QueryUserArgs = {
@@ -400,6 +417,14 @@ export type QueryRegistrationsArgs = {
 
 export type QueryRegistrationArgs = {
   id: Scalars["ID"]["input"];
+};
+
+export type QueryAuditLogArgs = {
+  entityType?: InputMaybe<Scalars["String"]["input"]>;
+  actorId?: InputMaybe<Scalars["ID"]["input"]>;
+  action?: InputMaybe<AuditAction>;
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type UserCreateInput = {
@@ -909,6 +934,8 @@ export type ResolversTypes = {
   Lineup: ResolverTypeWrapper<PrismaLineup>;
   DraftPick: ResolverTypeWrapper<PrismaDraftPick>;
   Registration: ResolverTypeWrapper<PrismaRegistration>;
+  AuditAction: AuditAction;
+  AuditLog: ResolverTypeWrapper<AuditLog>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   UserCreateInput: UserCreateInput;
   UserUpdateInput: UserUpdateInput;
@@ -953,6 +980,7 @@ export type ResolversParentTypes = {
   Lineup: PrismaLineup;
   DraftPick: PrismaDraftPick;
   Registration: PrismaRegistration;
+  AuditLog: AuditLog;
   Query: Record<PropertyKey, never>;
   UserCreateInput: UserCreateInput;
   UserUpdateInput: UserUpdateInput;
@@ -1213,6 +1241,22 @@ export type RegistrationResolvers<
   referral?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
 };
 
+export type AuditLogResolvers<
+  ContextType = ServerContext,
+  ParentType extends ResolversParentTypes["AuditLog"] = ResolversParentTypes["AuditLog"],
+> = {
+  id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  timestamp?: Resolver<ResolversTypes["DateTime"], ParentType, ContextType>;
+  requestId?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  actorId?: Resolver<Maybe<ResolversTypes["ID"]>, ParentType, ContextType>;
+  actorRole?: Resolver<Maybe<ResolversTypes["Role"]>, ParentType, ContextType>;
+  action?: Resolver<ResolversTypes["AuditAction"], ParentType, ContextType>;
+  entityType?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  entityId?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  metadata?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
+  endpoint?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+};
+
 export type QueryResolvers<
   ContextType = ServerContext,
   ParentType extends ResolversParentTypes["Query"] = ResolversParentTypes["Query"],
@@ -1338,6 +1382,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryRegistrationArgs, "id">
+  >;
+  auditLog?: Resolver<
+    Array<ResolversTypes["AuditLog"]>,
+    ParentType,
+    ContextType,
+    Partial<QueryAuditLogArgs>
   >;
 };
 
@@ -1552,6 +1602,7 @@ export type Resolvers<ContextType = ServerContext> = {
   Lineup?: LineupResolvers<ContextType>;
   DraftPick?: DraftPickResolvers<ContextType>;
   Registration?: RegistrationResolvers<ContextType>;
+  AuditLog?: AuditLogResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
 };
