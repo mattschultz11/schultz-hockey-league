@@ -43,8 +43,8 @@ development_status:
   1-5-season-registration: done
   epic-1-retrospective: optional
 
-  epic-2: backlog
-  2-1-configure-season-draft-settings: backlog
+  epic-2: in-progress
+  2-1-configure-season-draft-settings: done
   2-2-player-catalog-for-draft-prep: backlog
   2-3-live-draft-board-view: backlog
   2-4-record-picks-with-manager-override: backlog

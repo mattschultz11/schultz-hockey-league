@@ -578,7 +578,23 @@ export const typeDefs = /* GraphQL */ `
 
     register(data: RegistrationInput!): Registration!
 
+    createDraft(data: CreateDraftInput!): [DraftPick!]!
+
     acceptRegistrations(seasonId: ID!, registrationIds: [ID!]!): [Player!]!
+  }
+
+  enum DraftRotation {
+    CYCLICAL
+    SNAKE
+    HYBRID
+  }
+
+  input CreateDraftInput {
+    seasonId: ID!
+    teamIds: [ID!]!
+    rounds: Int!
+    rotation: DraftRotation!
+    snakeStartRound: Int
   }
 
   input RegistrationInput {

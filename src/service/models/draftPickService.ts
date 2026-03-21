@@ -1,18 +1,123 @@
 import { Option, pipe } from "effect";
 
-import type { DraftPickCreateInput, DraftPickUpdateInput } from "@/graphql/generated";
-import { NotFoundError } from "@/service/errors";
+import type {
+  CreateDraftInput,
+  DraftPickCreateInput,
+  DraftPickUpdateInput,
+  DraftRotation,
+} from "@/graphql/generated";
+import { NotFoundError, ValidationError } from "@/service/errors";
 import type { DraftPick, Player, Prisma, Team } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
-import { draftPickCreateSchema, draftPickUpdateSchema } from "../validation/schemas";
+import {
+  createDraftSchema,
+  draftPickCreateSchema,
+  draftPickUpdateSchema,
+} from "../validation/schemas";
 import { cleanInput, validate } from "./modelServiceUtils";
 import { maybeGetPlayerById } from "./playerService";
 import { maybeGetTeamById } from "./teamService";
 
 export function getDraftPicksBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.draftPick.findMany({ where: { seasonId }, orderBy: { overall: "asc" } });
+}
+
+export async function createDraft(data: CreateDraftInput, ctx: ServerContext) {
+  validate(createDraftSchema, data);
+
+  const { seasonId, teamIds, rounds, rotation, snakeStartRound } = data;
+
+  // Validate season exists
+  const season = await ctx.prisma.season.findUnique({ where: { id: seasonId } });
+  if (!season) throw new NotFoundError("Season", seasonId);
+
+  // Validate no duplicate team IDs
+  const uniqueIds = new Set(teamIds);
+  if (uniqueIds.size !== teamIds.length) {
+    throw new ValidationError("Team list contains duplicate team IDs");
+  }
+
+  // Validate all teams belong to this season
+  const teams = await ctx.prisma.team.findMany({
+    where: { seasonId },
+    select: { id: true },
+  });
+  const seasonTeamIds = new Set(teams.map((t) => t.id));
+  for (const teamId of teamIds) {
+    if (!seasonTeamIds.has(teamId)) {
+      throw new ValidationError(`Team ${teamId} does not belong to this season`);
+    }
+  }
+
+  // Validate snakeStartRound rules
+  if (rotation === "HYBRID" && snakeStartRound == null) {
+    throw new ValidationError("snakeStartRound is required for HYBRID rotation");
+  }
+  if (rotation !== "HYBRID" && snakeStartRound != null) {
+    throw new ValidationError("snakeStartRound is only valid for HYBRID rotation");
+  }
+  if (rotation === "HYBRID" && snakeStartRound != null && snakeStartRound > rounds) {
+    throw new ValidationError("snakeStartRound cannot exceed total rounds");
+  }
+
+  // Generate draft picks
+  const picks: Prisma.DraftPickCreateManyInput[] = [];
+  let overall = 1;
+
+  for (let round = 1; round <= rounds; round++) {
+    const order = getTeamOrderForRound(teamIds, round, rotation, snakeStartRound);
+    for (let pickInRound = 0; pickInRound < order.length; pickInRound++) {
+      picks.push({
+        seasonId,
+        overall,
+        round,
+        pick: pickInRound + 1,
+        teamId: order[pickInRound],
+      });
+      overall++;
+    }
+  }
+
+  // Unassign players from teams for existing draft picks, then clear and recreate
+  await ctx.prisma.$transaction([
+    ctx.prisma.player.updateMany({
+      where: { seasonId, teamId: { not: null }, draftPick: { isNot: null } },
+      data: { teamId: null },
+    }),
+    ctx.prisma.draftPick.deleteMany({ where: { seasonId } }),
+    ctx.prisma.draftPick.createMany({ data: picks }),
+  ]);
+
+  return ctx.prisma.draftPick.findMany({
+    where: { seasonId },
+    orderBy: { overall: "asc" },
+  });
+}
+
+function getTeamOrderForRound(
+  teamIds: readonly string[],
+  round: number,
+  rotation: DraftRotation,
+  snakeStartRound: number | null | undefined,
+): string[] {
+  switch (rotation) {
+    case "CYCLICAL":
+      return [...teamIds];
+    case "SNAKE":
+      return round % 2 === 0 ? [...teamIds].reverse() : [...teamIds];
+    case "HYBRID": {
+      // snakeStartRound is guaranteed non-null by validation
+      const snakeStart = snakeStartRound!;
+      if (round < snakeStart) {
+        return [...teamIds]; // cyclical rounds
+      }
+      // Snake rounds: reverse on even rounds relative to snake start
+      const snakeRound = round - snakeStart + 1;
+      return snakeRound % 2 === 0 ? [...teamIds] : [...teamIds].reverse();
+    }
+  }
 }
 
 export async function getDraftPickById(id: string, ctx: ServerContext) {

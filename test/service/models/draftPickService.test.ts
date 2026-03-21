@@ -2,6 +2,7 @@ import { randUuid } from "@ngneat/falso";
 
 import { NotFoundError } from "@/service/errors";
 import {
+  createDraft,
   createDraftPick,
   deleteDraftPick,
   getDraftPickById,
@@ -11,7 +12,7 @@ import {
 import prisma from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
-import type { SeasonModel } from "../../modelFactory";
+import type { SeasonModel, TeamModel } from "../../modelFactory";
 import { insertPlayer, insertSeason, insertTeam, makeDraftPick } from "../../modelFactory";
 import { createCtx } from "../../utils";
 
@@ -219,5 +220,220 @@ describe("draftPickService", () => {
     await deleteDraftPick(draftPick.id, ctx);
 
     await expect(getDraftPickById(draftPick.id, ctx)).rejects.toThrow(NotFoundError);
+  });
+});
+
+describe("createDraft", () => {
+  let ctx: ServerContext;
+  let season: SeasonModel;
+  let teams: TeamModel[];
+
+  beforeAll(async () => {
+    ctx = createCtx();
+  });
+
+  beforeEach(async () => {
+    season = await insertSeason();
+    teams = [
+      await insertTeam({ seasonId: season.id, name: "Team Alpha" }),
+      await insertTeam({ seasonId: season.id, name: "Team Bravo" }),
+      await insertTeam({ seasonId: season.id, name: "Team Charlie" }),
+      await insertTeam({ seasonId: season.id, name: "Team Delta" }),
+    ];
+  });
+
+  it("creates draft picks with CYCLICAL rotation", async () => {
+    const teamIds = teams.map((t) => t.id);
+    const picks = await createDraft(
+      { seasonId: season.id, teamIds, rounds: 3, rotation: "CYCLICAL" },
+      ctx,
+    );
+
+    expect(picks).toHaveLength(12); // 4 teams x 3 rounds
+
+    // Every round has the same order
+    for (let round = 1; round <= 3; round++) {
+      const roundPicks = picks.filter((p) => p.round === round);
+      expect(roundPicks.map((p) => p.teamId)).toEqual(teamIds);
+    }
+
+    // Overall is sequential
+    expect(picks.map((p) => p.overall)).toEqual(Array.from({ length: 12 }, (_, i) => i + 1));
+  });
+
+  it("creates draft picks with SNAKE rotation", async () => {
+    const teamIds = teams.map((t) => t.id);
+    const picks = await createDraft(
+      { seasonId: season.id, teamIds, rounds: 4, rotation: "SNAKE" },
+      ctx,
+    );
+
+    expect(picks).toHaveLength(16); // 4 teams x 4 rounds
+
+    // Round 1: normal order
+    const r1 = picks.filter((p) => p.round === 1).map((p) => p.teamId);
+    expect(r1).toEqual(teamIds);
+
+    // Round 2: reversed
+    const r2 = picks.filter((p) => p.round === 2).map((p) => p.teamId);
+    expect(r2).toEqual([...teamIds].reverse());
+
+    // Round 3: normal again
+    const r3 = picks.filter((p) => p.round === 3).map((p) => p.teamId);
+    expect(r3).toEqual(teamIds);
+
+    // Round 4: reversed again
+    const r4 = picks.filter((p) => p.round === 4).map((p) => p.teamId);
+    expect(r4).toEqual([...teamIds].reverse());
+  });
+
+  it("creates draft picks with HYBRID rotation", async () => {
+    const teamIds = teams.map((t) => t.id);
+    const picks = await createDraft(
+      { seasonId: season.id, teamIds, rounds: 4, rotation: "HYBRID", snakeStartRound: 3 },
+      ctx,
+    );
+
+    expect(picks).toHaveLength(16);
+
+    // Rounds 1-2: cyclical (normal order)
+    const r1 = picks.filter((p) => p.round === 1).map((p) => p.teamId);
+    const r2 = picks.filter((p) => p.round === 2).map((p) => p.teamId);
+    expect(r1).toEqual(teamIds);
+    expect(r2).toEqual(teamIds);
+
+    // Round 3: first snake round — reversed
+    const r3 = picks.filter((p) => p.round === 3).map((p) => p.teamId);
+    expect(r3).toEqual([...teamIds].reverse());
+
+    // Round 4: second snake round — normal
+    const r4 = picks.filter((p) => p.round === 4).map((p) => p.teamId);
+    expect(r4).toEqual(teamIds);
+  });
+
+  it("clears existing draft picks when creating a new draft", async () => {
+    const teamIds = teams.map((t) => t.id);
+
+    // Create first draft
+    await createDraft({ seasonId: season.id, teamIds, rounds: 2, rotation: "CYCLICAL" }, ctx);
+
+    // Create second draft — should replace
+    const picks = await createDraft(
+      { seasonId: season.id, teamIds, rounds: 1, rotation: "CYCLICAL" },
+      ctx,
+    );
+
+    expect(picks).toHaveLength(4); // Only 1 round now
+    const allPicks = await prisma.draftPick.findMany({ where: { seasonId: season.id } });
+    expect(allPicks).toHaveLength(4);
+  });
+
+  it("rejects duplicate team IDs", async () => {
+    await expect(
+      createDraft(
+        {
+          seasonId: season.id,
+          teamIds: [teams[0].id, teams[0].id],
+          rounds: 1,
+          rotation: "CYCLICAL",
+        },
+        ctx,
+      ),
+    ).rejects.toThrow("Team list contains duplicate team IDs");
+  });
+
+  it("rejects team IDs not belonging to the season", async () => {
+    const foreignId = randUuid();
+    await expect(
+      createDraft(
+        { seasonId: season.id, teamIds: [teams[0].id, foreignId], rounds: 1, rotation: "CYCLICAL" },
+        ctx,
+      ),
+    ).rejects.toThrow(`Team ${foreignId} does not belong to this season`);
+  });
+
+  it("throws NotFoundError for non-existent season", async () => {
+    await expect(
+      createDraft(
+        {
+          seasonId: randUuid(),
+          teamIds: [teams[0].id, teams[1].id],
+          rounds: 1,
+          rotation: "CYCLICAL",
+        },
+        ctx,
+      ),
+    ).rejects.toThrow(NotFoundError);
+  });
+
+  it("rejects HYBRID rotation without snakeStartRound", async () => {
+    const teamIds = teams.map((t) => t.id);
+    await expect(
+      createDraft({ seasonId: season.id, teamIds, rounds: 3, rotation: "HYBRID" }, ctx),
+    ).rejects.toThrow("snakeStartRound is required for HYBRID rotation");
+  });
+
+  it("rejects snakeStartRound exceeding total rounds", async () => {
+    const teamIds = teams.map((t) => t.id);
+    await expect(
+      createDraft(
+        { seasonId: season.id, teamIds, rounds: 3, rotation: "HYBRID", snakeStartRound: 5 },
+        ctx,
+      ),
+    ).rejects.toThrow("snakeStartRound cannot exceed total rounds");
+  });
+
+  it("sets correct pick numbers within each round", async () => {
+    const teamIds = teams.map((t) => t.id);
+    const picks = await createDraft(
+      { seasonId: season.id, teamIds, rounds: 2, rotation: "CYCLICAL" },
+      ctx,
+    );
+
+    for (let round = 1; round <= 2; round++) {
+      const roundPicks = picks.filter((p) => p.round === round);
+      expect(roundPicks.map((p) => p.pick)).toEqual([1, 2, 3, 4]);
+    }
+  });
+
+  it("unassigns drafted players from teams when re-creating draft", async () => {
+    const teamIds = teams.map((t) => t.id);
+
+    // Create initial draft
+    await createDraft({ seasonId: season.id, teamIds, rounds: 1, rotation: "CYCLICAL" }, ctx);
+
+    // Simulate a player being drafted: create player and assign to a pick
+    const player = await insertPlayer({ seasonId: season.id, teamId: teams[0].id });
+    const existingPicks = await prisma.draftPick.findMany({ where: { seasonId: season.id } });
+    await prisma.draftPick.update({
+      where: { id: existingPicks[0].id },
+      data: { playerId: player.id },
+    });
+
+    // Re-create draft — player should be unassigned from team
+    await createDraft({ seasonId: season.id, teamIds, rounds: 2, rotation: "CYCLICAL" }, ctx);
+
+    const updatedPlayer = await prisma.player.findUnique({ where: { id: player.id } });
+    expect(updatedPlayer?.teamId).toBeNull();
+  });
+
+  it("rejects snakeStartRound for non-HYBRID rotation", async () => {
+    const teamIds = teams.map((t) => t.id);
+    await expect(
+      createDraft(
+        { seasonId: season.id, teamIds, rounds: 3, rotation: "CYCLICAL", snakeStartRound: 2 },
+        ctx,
+      ),
+    ).rejects.toThrow("snakeStartRound is only valid for HYBRID rotation");
+  });
+
+  it("leaves playerId null on generated picks", async () => {
+    const teamIds = teams.map((t) => t.id);
+    const picks = await createDraft(
+      { seasonId: season.id, teamIds, rounds: 1, rotation: "CYCLICAL" },
+      ctx,
+    );
+
+    expect(picks.every((p) => p.playerId === null)).toBe(true);
   });
 });

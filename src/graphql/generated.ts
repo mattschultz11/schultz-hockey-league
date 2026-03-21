@@ -654,6 +654,7 @@ export type Mutation = {
   updateDraftPick: DraftPick;
   deleteDraftPick: DraftPick;
   register: Registration;
+  createDraft: Array<DraftPick>;
   acceptRegistrations: Array<Player>;
 };
 
@@ -790,9 +791,23 @@ export type MutationRegisterArgs = {
   data: RegistrationInput;
 };
 
+export type MutationCreateDraftArgs = {
+  data: CreateDraftInput;
+};
+
 export type MutationAcceptRegistrationsArgs = {
   seasonId: Scalars["ID"]["input"];
   registrationIds: Array<Scalars["ID"]["input"]>;
+};
+
+export type DraftRotation = "CYCLICAL" | "SNAKE" | "HYBRID";
+
+export type CreateDraftInput = {
+  seasonId: Scalars["ID"]["input"];
+  teamIds: Array<Scalars["ID"]["input"]>;
+  rounds: Scalars["Int"]["input"];
+  rotation: DraftRotation;
+  snakeStartRound?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type RegistrationInput = {
@@ -958,6 +973,8 @@ export type ResolversTypes = {
   DraftPickCreateInput: DraftPickCreateInput;
   DraftPickUpdateInput: DraftPickUpdateInput;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
+  DraftRotation: DraftRotation;
+  CreateDraftInput: CreateDraftInput;
   RegistrationInput: RegistrationInput;
 };
 
@@ -1003,6 +1020,7 @@ export type ResolversParentTypes = {
   DraftPickCreateInput: DraftPickCreateInput;
   DraftPickUpdateInput: DraftPickUpdateInput;
   Mutation: Record<PropertyKey, never>;
+  CreateDraftInput: CreateDraftInput;
   RegistrationInput: RegistrationInput;
 };
 
@@ -1580,6 +1598,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationRegisterArgs, "data">
+  >;
+  createDraft?: Resolver<
+    Array<ResolversTypes["DraftPick"]>,
+    ParentType,
+    ContextType,
+    RequireFields<MutationCreateDraftArgs, "data">
   >;
   acceptRegistrations?: Resolver<
     Array<ResolversTypes["Player"]>,

@@ -278,6 +278,16 @@ export const acceptRegistrationsSchema = Schema.Struct({
   registrationIds: Schema.Array(Id).pipe(Schema.minItems(1)),
 });
 
+const Rounds = Schema.Int.pipe(Schema.between(1, 30));
+
+export const createDraftSchema = Schema.Struct({
+  seasonId: Id,
+  teamIds: Schema.Array(Id).pipe(Schema.minItems(2)),
+  rounds: Rounds,
+  rotation: Schema.Literal("CYCLICAL", "SNAKE", "HYBRID"),
+  snakeStartRound: Schema.optional(Schema.Int.pipe(Schema.greaterThanOrEqualTo(2))),
+});
+
 export const registrationSchema = Schema.Struct({
   seasonId: Id,
   email: Email,

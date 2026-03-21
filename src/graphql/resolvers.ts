@@ -147,7 +147,6 @@ export const resolvers: Resolvers = {
     deleteSeason: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       seasonService.deleteSeason(args.id, ctx),
     ),
-
     createTeam: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       teamService.createTeam(args.data, ctx),
     ),
@@ -209,6 +208,9 @@ export const resolvers: Resolvers = {
       lineupService.setGameLineup(args.data, ctx),
     ),
 
+    createDraft: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      draftPickService.createDraft(args.data, ctx),
+    ),
     createDraftPick: withPolicy([PolicyName.MANAGER, PolicyName.SEASON_ACCESS], (_p, args, ctx) =>
       draftPickService.createDraftPick(args.data, ctx),
     ),
