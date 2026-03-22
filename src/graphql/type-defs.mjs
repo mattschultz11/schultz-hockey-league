@@ -313,6 +313,7 @@ export const typeDefs = /* GraphQL */ `
 
     players(seasonId: ID!): [Player!]!
     player(id: ID!): Player
+    playerCatalog(filter: PlayerCatalogFilter!): [Player!]!
 
     games(seasonId: ID!): [Game!]!
     game(id: ID!): Game
@@ -339,6 +340,18 @@ export const typeDefs = /* GraphQL */ `
       limit: Int
       offset: Int
     ): [AuditLog!]!
+  }
+
+  input PlayerCatalogFilter {
+    seasonId: ID!
+    search: String
+    position: Position
+    available: Boolean
+    classification: Classification
+    minPlayerRating: Float
+    maxPlayerRating: Float
+    minGoalieRating: Float
+    maxGoalieRating: Float
   }
 
   input UserCreateInput {

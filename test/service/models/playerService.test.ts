@@ -5,10 +5,11 @@ import {
   createPlayer,
   deletePlayer,
   getPlayerById,
+  getPlayerCatalog,
   getPlayersBySeason,
   updatePlayer,
 } from "@/service/models/playerService";
-import { Position } from "@/service/prisma";
+import prisma, { Classification, Position } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
 import type { SeasonModel, UserModel } from "../../modelFactory";
@@ -107,5 +108,303 @@ describe("playerService", () => {
     await deletePlayer(player.id, ctx);
 
     await expect(getPlayerById(player.id, ctx)).rejects.toThrow(NotFoundError);
+  });
+
+  describe("getPlayerCatalog", () => {
+    let userAlice: UserModel;
+    let userBob: UserModel;
+    let userCharlie: UserModel;
+
+    beforeEach(async () => {
+      userAlice = await insertUser({ firstName: "Alice", lastName: "Smith" });
+      userBob = await insertUser({ firstName: "Bob", lastName: "Jones" });
+      userCharlie = await insertUser({ firstName: "Charlie", lastName: "Smith" });
+    });
+
+    it("returns all players for a season with no filters", async () => {
+      await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog({ seasonId: season.id }, ctx);
+
+      expect(result).toHaveLength(2);
+    });
+
+    it("filters by name search — first name match", async () => {
+      await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog({ seasonId: season.id, search: "Alice" }, ctx);
+
+      expect(result).toHaveLength(1);
+    });
+
+    it("filters by name search — last name match", async () => {
+      await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userCharlie.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog({ seasonId: season.id, search: "Smith" }, ctx);
+
+      expect(result).toHaveLength(2); // Alice Smith + Charlie Smith
+    });
+
+    it("filters by partial name match", async () => {
+      await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog({ seasonId: season.id, search: "Ali" }, ctx);
+
+      expect(result).toHaveLength(1);
+    });
+
+    it("filters by position", async () => {
+      await createPlayer(
+        makePlayer({
+          userId: userAlice.id,
+          seasonId: season.id,
+          teamId: null,
+          position: Position.G,
+        }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null, position: Position.F }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog({ seasonId: season.id, position: Position.G }, ctx);
+
+      expect(result).toHaveLength(1);
+    });
+
+    it("filters by available=true (no draft pick)", async () => {
+      const playerA = await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+      const playerB = await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+
+      // Give playerA a draft pick
+      await prisma.draftPick.create({
+        data: {
+          seasonId: season.id,
+          overall: 1,
+          round: 1,
+          pick: 1,
+          teamId: null,
+          playerId: playerA.id,
+        },
+      });
+
+      const result = await getPlayerCatalog({ seasonId: season.id, available: true }, ctx);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(playerB.id);
+    });
+
+    it("filters by available=false (has draft pick)", async () => {
+      const playerA = await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+
+      await prisma.draftPick.create({
+        data: {
+          seasonId: season.id,
+          overall: 1,
+          round: 1,
+          pick: 1,
+          teamId: null,
+          playerId: playerA.id,
+        },
+      });
+
+      const result = await getPlayerCatalog({ seasonId: season.id, available: false }, ctx);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(playerA.id);
+    });
+
+    it("combines multiple filters", async () => {
+      const playerA = await createPlayer(
+        makePlayer({
+          userId: userAlice.id,
+          seasonId: season.id,
+          teamId: null,
+          position: Position.D,
+        }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null, position: Position.D }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({
+          userId: userCharlie.id,
+          seasonId: season.id,
+          teamId: null,
+          position: Position.F,
+        }),
+        ctx,
+      );
+
+      // Draft Alice (playerA)
+      await prisma.draftPick.create({
+        data: {
+          seasonId: season.id,
+          overall: 1,
+          round: 1,
+          pick: 1,
+          teamId: null,
+          playerId: playerA.id,
+        },
+      });
+
+      // Search for "Smith" + position D + available=true
+      // Alice Smith: D but drafted → excluded by available=true
+      // Bob Jones: D + available but name doesn't match "Smith"
+      // Charlie Smith: matches "Smith" but position is F → excluded
+      const result = await getPlayerCatalog(
+        { seasonId: season.id, search: "Smith", position: Position.D, available: true },
+        ctx,
+      );
+
+      expect(result).toHaveLength(0);
+    });
+
+    it("returns empty array for season with no players", async () => {
+      const emptySeason = await insertSeason({ leagueId: season.leagueId });
+
+      const result = await getPlayerCatalog({ seasonId: emptySeason.id }, ctx);
+
+      expect(result).toEqual([]);
+    });
+
+    it("filters by classification", async () => {
+      await createPlayer(
+        makePlayer({
+          userId: userAlice.id,
+          seasonId: season.id,
+          teamId: null,
+          classification: Classification.ROSTER,
+        }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({
+          userId: userBob.id,
+          seasonId: season.id,
+          teamId: null,
+          classification: Classification.SUBSTITUTE,
+        }),
+        ctx,
+      );
+
+      const roster = await getPlayerCatalog(
+        { seasonId: season.id, classification: Classification.ROSTER },
+        ctx,
+      );
+      expect(roster).toHaveLength(1);
+
+      const subs = await getPlayerCatalog(
+        { seasonId: season.id, classification: Classification.SUBSTITUTE },
+        ctx,
+      );
+      expect(subs).toHaveLength(1);
+    });
+
+    it("filters by player rating range", async () => {
+      await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null, playerRating: 2.0 }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null, playerRating: 4.0 }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({
+          userId: userCharlie.id,
+          seasonId: season.id,
+          teamId: null,
+          playerRating: 3.0,
+        }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog(
+        { seasonId: season.id, minPlayerRating: 2.5, maxPlayerRating: 4.0 },
+        ctx,
+      );
+
+      expect(result).toHaveLength(2); // Bob (4.0) + Charlie (3.0)
+    });
+
+    it("filters by goalie rating range", async () => {
+      await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null, goalieRating: 1.0 }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null, goalieRating: 3.5 }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog({ seasonId: season.id, minGoalieRating: 3.0 }, ctx);
+
+      expect(result).toHaveLength(1);
+    });
+
+    it("does not return players from other seasons", async () => {
+      const otherSeason = await insertSeason();
+      await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: otherSeason.id, teamId: null }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog({ seasonId: season.id }, ctx);
+
+      expect(result).toHaveLength(1);
+    });
   });
 });

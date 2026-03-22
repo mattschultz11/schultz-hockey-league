@@ -1,8 +1,12 @@
 import { Option } from "effect";
 
-import type { PlayerCreateInput, PlayerUpdateInput } from "@/graphql/generated";
+import type {
+  PlayerCatalogFilter,
+  PlayerCreateInput,
+  PlayerUpdateInput,
+} from "@/graphql/generated";
 import { NotFoundError } from "@/service/errors";
-import type { Team } from "@/service/prisma";
+import type { Prisma, Team } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 import { invariant } from "@/utils/assertionUtils";
 
@@ -12,6 +16,50 @@ import { maybeGetTeamById } from "./teamService";
 
 export function getPlayersBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.player.findMany({ where: { seasonId } });
+}
+
+export function getPlayerCatalog(filter: PlayerCatalogFilter, ctx: ServerContext) {
+  const where: Prisma.PlayerWhereInput = { seasonId: filter.seasonId };
+
+  if (filter.search) {
+    const term = filter.search;
+    where.user = {
+      OR: [{ firstName: { contains: term } }, { lastName: { contains: term } }],
+    };
+  }
+
+  if (filter.position) {
+    where.position = filter.position;
+  }
+
+  if (filter.classification) {
+    where.classification = filter.classification;
+  }
+
+  if (filter.minPlayerRating != null || filter.maxPlayerRating != null) {
+    where.playerRating = {
+      ...(filter.minPlayerRating != null && { gte: filter.minPlayerRating }),
+      ...(filter.maxPlayerRating != null && { lte: filter.maxPlayerRating }),
+    };
+  }
+
+  if (filter.minGoalieRating != null || filter.maxGoalieRating != null) {
+    where.goalieRating = {
+      ...(filter.minGoalieRating != null && { gte: filter.minGoalieRating }),
+      ...(filter.maxGoalieRating != null && { lte: filter.maxGoalieRating }),
+    };
+  }
+
+  if (filter.available === true) {
+    where.draftPick = { is: null };
+  } else if (filter.available === false) {
+    where.draftPick = { isNot: null };
+  }
+
+  return ctx.prisma.player.findMany({
+    where,
+    orderBy: [{ user: { lastName: "asc" } }, { user: { firstName: "asc" } }],
+  });
 }
 
 export async function getPlayerById(id: string, ctx: ServerContext) {

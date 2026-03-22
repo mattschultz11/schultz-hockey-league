@@ -45,7 +45,7 @@ development_status:
 
   epic-2: in-progress
   2-1-configure-season-draft-settings: done
-  2-2-player-catalog-for-draft-prep: backlog
+  2-2-player-catalog-for-draft-prep: done
   2-3-live-draft-board-view: backlog
   2-4-record-picks-with-manager-override: backlog
   2-5-publish-rosters-after-draft: backlog

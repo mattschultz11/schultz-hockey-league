@@ -89,6 +89,7 @@ export const resolvers: Resolvers = {
 
     players: (_p, args, ctx) => playerService.getPlayersBySeason(args.seasonId, ctx),
     player: (_p, args, ctx) => playerService.getPlayerById(args.id, ctx),
+    playerCatalog: (_p, args, ctx) => playerService.getPlayerCatalog(args.filter, ctx),
 
     games: (_p, args, ctx) => gameService.getGamesBySeason(args.seasonId, ctx),
     game: (_p, args, ctx) => gameService.getGameById(args.id, ctx),

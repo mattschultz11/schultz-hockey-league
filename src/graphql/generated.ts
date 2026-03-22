@@ -323,6 +323,7 @@ export type Query = {
   team?: Maybe<Team>;
   players: Array<Player>;
   player?: Maybe<Player>;
+  playerCatalog: Array<Player>;
   games: Array<Game>;
   game?: Maybe<Game>;
   goals: Array<Goal>;
@@ -368,6 +369,10 @@ export type QueryPlayersArgs = {
 
 export type QueryPlayerArgs = {
   id: Scalars["ID"]["input"];
+};
+
+export type QueryPlayerCatalogArgs = {
+  filter: PlayerCatalogFilter;
 };
 
 export type QueryGamesArgs = {
@@ -425,6 +430,18 @@ export type QueryAuditLogArgs = {
   action?: InputMaybe<AuditAction>;
   limit?: InputMaybe<Scalars["Int"]["input"]>;
   offset?: InputMaybe<Scalars["Int"]["input"]>;
+};
+
+export type PlayerCatalogFilter = {
+  seasonId: Scalars["ID"]["input"];
+  search?: InputMaybe<Scalars["String"]["input"]>;
+  position?: InputMaybe<Position>;
+  available?: InputMaybe<Scalars["Boolean"]["input"]>;
+  classification?: InputMaybe<Classification>;
+  minPlayerRating?: InputMaybe<Scalars["Float"]["input"]>;
+  maxPlayerRating?: InputMaybe<Scalars["Float"]["input"]>;
+  minGoalieRating?: InputMaybe<Scalars["Float"]["input"]>;
+  maxGoalieRating?: InputMaybe<Scalars["Float"]["input"]>;
 };
 
 export type UserCreateInput = {
@@ -952,6 +969,7 @@ export type ResolversTypes = {
   AuditAction: AuditAction;
   AuditLog: ResolverTypeWrapper<AuditLog>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
+  PlayerCatalogFilter: PlayerCatalogFilter;
   UserCreateInput: UserCreateInput;
   UserUpdateInput: UserUpdateInput;
   LeagueCreateInput: LeagueCreateInput;
@@ -999,6 +1017,7 @@ export type ResolversParentTypes = {
   Registration: PrismaRegistration;
   AuditLog: AuditLog;
   Query: Record<PropertyKey, never>;
+  PlayerCatalogFilter: PlayerCatalogFilter;
   UserCreateInput: UserCreateInput;
   UserUpdateInput: UserUpdateInput;
   LeagueCreateInput: LeagueCreateInput;
@@ -1328,6 +1347,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryPlayerArgs, "id">
+  >;
+  playerCatalog?: Resolver<
+    Array<ResolversTypes["Player"]>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryPlayerCatalogArgs, "filter">
   >;
   games?: Resolver<
     Array<ResolversTypes["Game"]>,
