@@ -52,7 +52,7 @@ export default async function AdminRegistrationsPage({ params }: Props) {
     <PageLayout>
       <div>
         <h1 className="mb-2 text-3xl font-semibold text-white">Registrations</h1>
-        <p className="text-default-600 text-lg">{season.name}</p>
+        <p className="text-default-500 text-lg">{season.name}</p>
       </div>
       <RegistrationsTable
         registrations={season.registrations}

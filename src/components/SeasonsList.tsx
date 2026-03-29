@@ -3,6 +3,8 @@
 import { Link } from "@heroui/link";
 import { Card, CardBody, CardHeader } from "@heroui/react";
 
+import { formatDate } from "@/utils/stringUtils";
+
 type Season = {
   id: string;
   slug: string;
@@ -33,9 +35,8 @@ export default function SeasonsList({ leagueSlug, seasons }: Props) {
                   <h2 className="text-lg font-semibold">{season.name}</h2>
                 </CardHeader>
                 <CardBody className="pt-0">
-                  <p className="text-default-600 text-sm">
-                    {new Date(season.startDate).toLocaleDateString()} –{" "}
-                    {new Date(season.endDate).toLocaleDateString()}
+                  <p className="text-default-500 text-sm">
+                    {formatDate(season.startDate)} – {formatDate(season.endDate)}
                   </p>
                 </CardBody>
               </Card>

@@ -152,6 +152,7 @@ export const typeDefs = /* GraphQL */ `
     ties: [Game!]!
     points: Int!
     goals: [Goal!]!
+    goalsAgainst: [Goal!]!
     penalties: [Penalty!]!
     draftPicks: [DraftPick!]!
   }
@@ -259,6 +260,13 @@ export const typeDefs = /* GraphQL */ `
     goalieRating: Float
   }
 
+  type DraftBoard {
+    currentPick: DraftPick
+    nextPick: DraftPick
+    draftPicks: [DraftPick!]!
+    availablePlayers: [Player!]!
+  }
+
   type Registration {
     id: ID!
     createdAt: DateTime!
@@ -329,6 +337,7 @@ export const typeDefs = /* GraphQL */ `
 
     draftPicks(seasonId: ID!): [DraftPick!]!
     draftPick(id: ID!): DraftPick
+    draftBoard(seasonId: ID!): DraftBoard!
 
     registrations(seasonId: ID!): [Registration!]!
     registration(id: ID!): Registration

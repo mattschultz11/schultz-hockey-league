@@ -7,19 +7,9 @@ import PageHeader from "./PageHeader";
 
 type Props = {
   season: {
-    info: string | null;
     id: string;
     slug: string;
     name: string;
-    startDate: Date;
-    endDate: Date;
-    sundays: boolean;
-    mondays: boolean;
-    tuesdays: boolean;
-    wednesdays: boolean;
-    thursdays: boolean;
-    fridays: boolean;
-    saturdays: boolean;
   };
   league: {
     id: string;
@@ -29,25 +19,26 @@ type Props = {
   isAdmin?: boolean;
 };
 
-export default function RegistrationHeader({ season, league, isAdmin }: Props) {
+export default function TeamsHeader({ season, league, isAdmin }: Props) {
   return (
     <PageHeader>
       <PageBreadcrumbs
         items={[
           { label: "Leagues", href: "/leagues" },
           { label: league.name, href: `/leagues/${league.slug}/seasons` },
-          { label: season.name },
+          { label: season.name, href: `/leagues/${league.slug}/seasons/${season.slug}` },
+          { label: "Teams" },
         ]}
       />
       {isAdmin && (
         <Button
           as={Link}
-          href={`/admin/leagues/${league.slug}/seasons/${season.slug}/registrations`}
+          href={`/admin/leagues/${league.slug}/seasons/${season.slug}/teams/new`}
           color="primary"
           size="sm"
           className="align-end"
         >
-          Registrations
+          Add Team
         </Button>
       )}
     </PageHeader>

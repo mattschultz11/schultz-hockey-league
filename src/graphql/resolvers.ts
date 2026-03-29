@@ -106,6 +106,7 @@ export const resolvers: Resolvers = {
 
     draftPicks: (_p, args, ctx) => draftPickService.getDraftPicksBySeason(args.seasonId, ctx),
     draftPick: (_p, args, ctx) => draftPickService.getDraftPickById(args.id, ctx),
+    draftBoard: (_p, args, ctx) => draftPickService.getDraftBoard(args.seasonId, ctx),
 
     registrations: (_p, args, ctx) =>
       registrationService.getRegistrationsBySeason(args.seasonId, ctx),
@@ -272,6 +273,8 @@ export const resolvers: Resolvers = {
       teamService.getTeamGames(parent.id, ctx),
     goals: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       teamService.getTeamGoals(parent.id, ctx),
+    goalsAgainst: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
+      teamService.getTeamGoalsAgainst(parent.id, ctx),
     penalties: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       teamService.getTeamPenalties(parent.id, ctx),
     draftPicks: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>

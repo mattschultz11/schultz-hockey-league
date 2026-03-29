@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 
-import DataTable from "@/components/DataTable";
-import PageBreadcrumbs from "@/components/PageBreadcrumbs";
+import DraftHeader from "@/components/DraftHeader";
+import DraftTable from "@/components/DraftTable";
+import PageLayout from "@/components/PageLayout";
+import { auth } from "@/service/auth/authService";
 import prisma from "@/service/prisma";
 
 type Props = {
@@ -11,74 +13,46 @@ type Props = {
 export default async function DraftPage({ params }: Props) {
   const { leagueSlug, seasonSlug } = await params;
 
-  const league = await prisma.league.findUnique({
-    where: { slug: leagueSlug },
-    select: { id: true, name: true, slug: true },
-  });
+  const [league, session] = await Promise.all([
+    prisma.league.findUnique({
+      where: { slug: leagueSlug },
+      select: { id: true, name: true, slug: true },
+    }),
+    auth(),
+  ]);
 
-  if (!league) {
-    notFound();
-  }
+  if (!league) notFound();
 
   const season = await prisma.season.findUnique({
     where: { leagueId_slug: { leagueId: league.id, slug: seasonSlug } },
     select: { id: true, name: true, slug: true },
   });
 
-  if (!season) {
-    notFound();
-  }
+  if (!season) notFound();
 
-  const picks = await prisma.draftPick.findMany({
+  const draftPicks = await prisma.draftPick.findMany({
     where: { seasonId: season.id },
-    select: {
-      id: true,
-      overall: true,
-      round: true,
-      pick: true,
-      team: { select: { name: true } },
-      player: { select: { user: { select: { firstName: true, lastName: true } } } },
-      playerRating: true,
-      goalieRating: true,
-    },
     orderBy: { overall: "asc" },
+    include: {
+      team: { select: { id: true, name: true } },
+      player: {
+        select: {
+          id: true,
+          position: true,
+          playerRating: true,
+          goalieRating: true,
+          user: { select: { id: true, firstName: true, lastName: true } },
+        },
+      },
+    },
   });
 
-  const columns = [
-    { key: "overall", label: "#" },
-    { key: "round", label: "Round" },
-    { key: "pick", label: "Pick" },
-    { key: "team", label: "Team" },
-    { key: "player", label: "Player" },
-    { key: "rating", label: "Rating" },
-  ];
-
-  const rows = picks.map((dp) => ({
-    key: dp.id,
-    overall: dp.overall,
-    round: dp.round,
-    pick: dp.pick,
-    team: dp.team?.name ?? "-",
-    player: [dp.player?.user.firstName, dp.player?.user.lastName].filter(Boolean).join(" ") || "-",
-    rating: dp.playerRating ?? dp.goalieRating ?? "-",
-  }));
+  const isAdmin = session?.user?.role === "ADMIN";
 
   return (
-    <>
-      <PageBreadcrumbs
-        items={[
-          { label: "Leagues", href: "/leagues" },
-          { label: league.name, href: `/leagues/${league.slug}/seasons` },
-          { label: season.name, href: `/leagues/${league.slug}/seasons/${season.slug}` },
-          { label: "Draft" },
-        ]}
-      />
-      <DataTable
-        label="Draft picks"
-        columns={columns}
-        rows={rows}
-        emptyMessage="No draft picks yet"
-      />
-    </>
+    <PageLayout>
+      <DraftHeader season={season} league={league} draftPicks={draftPicks} isAdmin={isAdmin} />
+      <DraftTable draftPicks={draftPicks} />
+    </PageLayout>
   );
 }

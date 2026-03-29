@@ -15,7 +15,6 @@ import {
   ModalContent,
   ModalFooter,
   ModalHeader,
-  Table,
   TableBody,
   TableCell,
   TableColumn,
@@ -27,7 +26,19 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { BsGrid, BsTable } from "react-icons/bs";
 
-import { formatEnum, formatPhoneNumber, formatPosition, formatRating } from "@/utils/stringUtils";
+import type { Position } from "@/graphql/generated";
+import {
+  formatDate,
+  formatEnum,
+  formatName,
+  formatPhoneNumber,
+  formatPosition,
+  formatRating,
+  playerPosition,
+  playerRating,
+} from "@/utils/stringUtils";
+
+import DataTable from "./DataTable";
 
 const ACCEPT_REGISTRATIONS_MUTATION = gql`
   mutation AcceptRegistrations($seasonId: ID!, $registrationIds: [ID!]!) {
@@ -52,7 +63,7 @@ type Registration = {
   lastName: string | null;
   phone: string | null;
   birthday: Date | null;
-  position: string | null;
+  position: Position | null;
   handedness: string | null;
   gloveHand: string | null;
   playerRating: number | null;
@@ -111,7 +122,7 @@ function RegistrationCard({
   onToggle: (id: string) => void;
   onUnaccept: (reg: Registration) => void;
 }) {
-  const name = [reg.firstName, reg.lastName].filter(Boolean).join(" ") || "-";
+  const name = formatName(reg);
   const isGoalie = reg.position === "G";
 
   return (
@@ -147,28 +158,18 @@ function RegistrationCard({
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <Field label="Phone" value={formatPhoneNumber(reg.phone ?? "")} />
-          <Field
-            label="Birthday"
-            value={reg.birthday ? new Date(reg.birthday).toLocaleDateString() : null}
-          />
+          <Field label="Birthday" value={formatDate(reg.birthday)} />
           <Field
             label={isGoalie ? "Glove Hand" : "Handedness"}
             value={formatEnum((isGoalie ? reg.gloveHand : reg.handedness) ?? "")}
           />
-          <Field
-            label={isGoalie ? "Goalie Rating" : "Player Rating"}
-            value={
-              isGoalie ? formatRating(reg.goalieRating ?? 0) : formatRating(reg.playerRating ?? 0)
-            }
-          />
+          <Field label={isGoalie ? "Goalie Rating" : "Player Rating"} value={playerRating(reg)} />
           <Field label="Type" value={formatEnum(reg.classification)} />
           {reg.referral && <Field label="Referral" value={reg.referral} span />}
         </div>
 
         <div className="flex items-center justify-between">
-          <p className="text-default-600 text-xs">
-            Registered {new Date(reg.createdAt).toLocaleDateString()}
-          </p>
+          <p className="text-default-500 text-xs">Registered {formatDate(reg.createdAt)}</p>
 
           {accepted && (
             <Chip
@@ -246,8 +247,8 @@ export default function RegistrationsTable({
           break;
         }
         case "name": {
-          const aName = [a.firstName, a.lastName].filter(Boolean).join(" ");
-          const bName = [b.firstName, b.lastName].filter(Boolean).join(" ");
+          const aName = formatName(a);
+          const bName = formatName(b);
           cmp = aName.localeCompare(bName);
           break;
         }
@@ -344,7 +345,7 @@ export default function RegistrationsTable({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <p className="text-default-600 text-sm">
+        <p className="text-default-500 text-sm">
           {registrations.length} registration{registrations.length !== 1 && "s"}
         </p>
         <ButtonGroup size="sm" variant="solid">
@@ -402,111 +403,105 @@ export default function RegistrationsTable({
           ))}
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <Table
-            aria-label="Season registrations"
-            removeWrapper
-            classNames={{ th: "bg-primary/50 text-default-800" }}
-            sortDescriptor={sortDescriptor}
-            onSortChange={handleSortChange}
-          >
-            <TableHeader>
-              <TableColumn>
-                <Checkbox
-                  isSelected={
-                    selectableRegistrations.length > 0 &&
-                    selectedIds.size === selectableRegistrations.length
-                  }
-                  isIndeterminate={
-                    selectedIds.size > 0 && selectedIds.size < selectableRegistrations.length
-                  }
-                  onValueChange={toggleAll}
-                  isDisabled={selectableRegistrations.length === 0}
-                  aria-label="Select all"
-                />
-              </TableColumn>
-              <TableColumn key="status" allowsSorting>
-                Status
-              </TableColumn>
-              <TableColumn key="name" allowsSorting>
-                Name
-              </TableColumn>
-              <TableColumn key="email" allowsSorting>
-                Email
-              </TableColumn>
-              <TableColumn>Phone</TableColumn>
-              <TableColumn>Birthday</TableColumn>
-              <TableColumn key="position" allowsSorting>
-                Position
-              </TableColumn>
-              <TableColumn>Handedness</TableColumn>
-              <TableColumn key="playerRating" allowsSorting>
-                Player Rating
-              </TableColumn>
-              <TableColumn>Glove Hand</TableColumn>
-              <TableColumn key="goalieRating" allowsSorting>
-                Goalie Rating
-              </TableColumn>
-              <TableColumn key="classification" allowsSorting>
-                Type
-              </TableColumn>
-              <TableColumn>Referral</TableColumn>
-              <TableColumn key="createdAt" allowsSorting>
-                Registered
-              </TableColumn>
-            </TableHeader>
-            <TableBody>
-              {sortedRegistrations.map((reg) => {
-                const name = [reg.firstName, reg.lastName].filter(Boolean).join(" ") || "-";
-                const accepted = acceptedSet.has(reg.email);
+        <DataTable
+          aria-label="Season registrations"
+          sortDescriptor={sortDescriptor}
+          onSortChange={handleSortChange}
+        >
+          <TableHeader>
+            <TableColumn>
+              <Checkbox
+                isSelected={
+                  selectableRegistrations.length > 0 &&
+                  selectedIds.size === selectableRegistrations.length
+                }
+                isIndeterminate={
+                  selectedIds.size > 0 && selectedIds.size < selectableRegistrations.length
+                }
+                onValueChange={toggleAll}
+                isDisabled={selectableRegistrations.length === 0}
+                aria-label="Select all"
+              />
+            </TableColumn>
+            <TableColumn key="status" allowsSorting>
+              Status
+            </TableColumn>
+            <TableColumn key="name" allowsSorting>
+              Name
+            </TableColumn>
+            <TableColumn key="email" allowsSorting>
+              Email
+            </TableColumn>
+            <TableColumn>Phone</TableColumn>
+            <TableColumn>Birthday</TableColumn>
+            <TableColumn key="position" allowsSorting>
+              Position
+            </TableColumn>
+            <TableColumn>Handedness</TableColumn>
+            <TableColumn key="playerRating" allowsSorting>
+              Player Rating
+            </TableColumn>
+            <TableColumn>Glove Hand</TableColumn>
+            <TableColumn key="goalieRating" allowsSorting>
+              Goalie Rating
+            </TableColumn>
+            <TableColumn key="classification" allowsSorting>
+              Type
+            </TableColumn>
+            <TableColumn>Referral</TableColumn>
+            <TableColumn key="createdAt" allowsSorting>
+              Registered
+            </TableColumn>
+          </TableHeader>
+          <TableBody>
+            {sortedRegistrations.map((reg) => {
+              const name = formatName(reg);
+              const accepted = acceptedSet.has(reg.email);
 
-                return (
-                  <TableRow key={reg.id}>
-                    <TableCell>
-                      {accepted ? (
-                        <Checkbox isDisabled isSelected={false} aria-label="Already accepted" />
-                      ) : (
-                        <Checkbox
-                          isSelected={selectedIds.has(reg.id)}
-                          onValueChange={() => toggleSelection(reg.id)}
-                          aria-label={`Select ${name}`}
-                        />
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {accepted && (
-                        <Chip
-                          size="sm"
-                          variant="dot"
-                          color="success"
-                          className="cursor-pointer"
-                          onClick={() => openUnacceptModal(reg)}
-                          tabIndex={-1}
-                        >
-                          Accepted
-                        </Chip>
-                      )}
-                    </TableCell>
-                    <TableCell>{name}</TableCell>
-                    <TableCell>{reg.email}</TableCell>
-                    <TableCell>{formatPhoneNumber(reg.phone ?? "")}</TableCell>
-                    <TableCell>
-                      {reg.birthday ? new Date(reg.birthday).toLocaleDateString() : "-"}
-                    </TableCell>
-                    <TableCell>{formatPosition(reg.position ?? "")}</TableCell>
-                    <TableCell>{formatEnum(reg.handedness ?? "")}</TableCell>
-                    <TableCell>{formatRating(reg.playerRating ?? 0)}</TableCell>
-                    <TableCell>{formatEnum(reg.gloveHand ?? "")}</TableCell>
-                    <TableCell>{formatRating(reg.goalieRating ?? 0)}</TableCell>
-                    <TableCell>{formatEnum(reg.classification)}</TableCell>
-                    <TableCell>{reg.referral ?? "-"}</TableCell>
-                    <TableCell>{new Date(reg.createdAt).toLocaleDateString()}</TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </div>
+              return (
+                <TableRow key={reg.id}>
+                  <TableCell>
+                    {accepted ? (
+                      <Checkbox isDisabled isSelected={false} aria-label="Already accepted" />
+                    ) : (
+                      <Checkbox
+                        isSelected={selectedIds.has(reg.id)}
+                        onValueChange={() => toggleSelection(reg.id)}
+                        aria-label={`Select ${name}`}
+                      />
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {accepted && (
+                      <Chip
+                        size="sm"
+                        variant="dot"
+                        color="success"
+                        className="cursor-pointer"
+                        onClick={() => openUnacceptModal(reg)}
+                        tabIndex={-1}
+                      >
+                        Accepted
+                      </Chip>
+                    )}
+                  </TableCell>
+                  <TableCell>{name}</TableCell>
+                  <TableCell>{reg.email}</TableCell>
+                  <TableCell>{formatPhoneNumber(reg.phone ?? "")}</TableCell>
+                  <TableCell>{formatDate(reg.birthday)}</TableCell>
+                  <TableCell>{playerPosition(reg)}</TableCell>
+                  <TableCell>{formatEnum(reg.handedness)}</TableCell>
+                  <TableCell>{formatRating(reg.playerRating)}</TableCell>
+                  <TableCell>{formatEnum(reg.gloveHand)}</TableCell>
+                  <TableCell>{formatRating(reg.goalieRating)}</TableCell>
+                  <TableCell>{formatEnum(reg.classification)}</TableCell>
+                  <TableCell>{reg.referral ?? ""}</TableCell>
+                  <TableCell>{formatDate(reg.createdAt)}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </DataTable>
       )}
 
       <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
@@ -516,11 +511,8 @@ export default function RegistrationsTable({
             {unacceptTarget && (
               <p>
                 Are you sure you want to remove{" "}
-                <strong>
-                  {[unacceptTarget.firstName, unacceptTarget.lastName].filter(Boolean).join(" ") ||
-                    unacceptTarget.email}
-                </strong>{" "}
-                from the season? This will delete their player record.
+                <strong>{formatName(unacceptTarget) || unacceptTarget.email}</strong> from the
+                season? This will delete their player record.
               </p>
             )}
           </ModalBody>

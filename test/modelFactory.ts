@@ -204,6 +204,7 @@ export type TeamModel = Omit<
   | "ties"
   | "points"
   | "goals"
+  | "goalsAgainst"
   | "penalties"
   | "draftPicks"
 >;

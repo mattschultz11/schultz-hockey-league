@@ -51,9 +51,9 @@ export function getPlayerCatalog(filter: PlayerCatalogFilter, ctx: ServerContext
   }
 
   if (filter.available === true) {
-    where.draftPick = { is: null };
+    where.team = { is: null };
   } else if (filter.available === false) {
-    where.draftPick = { isNot: null };
+    where.team = { isNot: null };
   }
 
   return ctx.prisma.player.findMany({

@@ -27,6 +27,7 @@ export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> =
 export type Incremental<T> =
   | T
   | { [P in keyof T]?: P extends " $fragmentName" | "__typename" ? T[P] : never };
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -161,6 +162,7 @@ export type Team = {
   ties: Array<Game>;
   points: Scalars["Int"]["output"];
   goals: Array<Goal>;
+  goalsAgainst: Array<Goal>;
   penalties: Array<Penalty>;
   draftPicks: Array<DraftPick>;
 };
@@ -274,6 +276,14 @@ export type DraftPick = {
   goalieRating?: Maybe<Scalars["Float"]["output"]>;
 };
 
+export type DraftBoard = {
+  __typename?: "DraftBoard";
+  currentPick?: Maybe<DraftPick>;
+  nextPick?: Maybe<DraftPick>;
+  draftPicks: Array<DraftPick>;
+  availablePlayers: Array<Player>;
+};
+
 export type Registration = {
   __typename?: "Registration";
   id: Scalars["ID"]["output"];
@@ -334,6 +344,7 @@ export type Query = {
   gameTeamLineup: Array<Lineup>;
   draftPicks: Array<DraftPick>;
   draftPick?: Maybe<DraftPick>;
+  draftBoard: DraftBoard;
   registrations: Array<Registration>;
   registration?: Maybe<Registration>;
   auditLog: Array<AuditLog>;
@@ -414,6 +425,10 @@ export type QueryDraftPicksArgs = {
 
 export type QueryDraftPickArgs = {
   id: Scalars["ID"]["input"];
+};
+
+export type QueryDraftBoardArgs = {
+  seasonId: Scalars["ID"]["input"];
 };
 
 export type QueryRegistrationsArgs = {
@@ -965,6 +980,14 @@ export type ResolversTypes = {
   Penalty: ResolverTypeWrapper<PrismaPenalty>;
   Lineup: ResolverTypeWrapper<PrismaLineup>;
   DraftPick: ResolverTypeWrapper<PrismaDraftPick>;
+  DraftBoard: ResolverTypeWrapper<
+    Omit<DraftBoard, "currentPick" | "nextPick" | "draftPicks" | "availablePlayers"> & {
+      currentPick?: Maybe<ResolversTypes["DraftPick"]>;
+      nextPick?: Maybe<ResolversTypes["DraftPick"]>;
+      draftPicks: Array<ResolversTypes["DraftPick"]>;
+      availablePlayers: Array<ResolversTypes["Player"]>;
+    }
+  >;
   Registration: ResolverTypeWrapper<PrismaRegistration>;
   AuditAction: AuditAction;
   AuditLog: ResolverTypeWrapper<AuditLog>;
@@ -1014,6 +1037,12 @@ export type ResolversParentTypes = {
   Penalty: PrismaPenalty;
   Lineup: PrismaLineup;
   DraftPick: PrismaDraftPick;
+  DraftBoard: Omit<DraftBoard, "currentPick" | "nextPick" | "draftPicks" | "availablePlayers"> & {
+    currentPick?: Maybe<ResolversParentTypes["DraftPick"]>;
+    nextPick?: Maybe<ResolversParentTypes["DraftPick"]>;
+    draftPicks: Array<ResolversParentTypes["DraftPick"]>;
+    availablePlayers: Array<ResolversParentTypes["Player"]>;
+  };
   Registration: PrismaRegistration;
   AuditLog: AuditLog;
   Query: Record<PropertyKey, never>;
@@ -1130,6 +1159,7 @@ export type TeamResolvers<
   ties?: Resolver<Array<ResolversTypes["Game"]>, ParentType, ContextType>;
   points?: Resolver<ResolversTypes["Int"], ParentType, ContextType>;
   goals?: Resolver<Array<ResolversTypes["Goal"]>, ParentType, ContextType>;
+  goalsAgainst?: Resolver<Array<ResolversTypes["Goal"]>, ParentType, ContextType>;
   penalties?: Resolver<Array<ResolversTypes["Penalty"]>, ParentType, ContextType>;
   draftPicks?: Resolver<Array<ResolversTypes["DraftPick"]>, ParentType, ContextType>;
 };
@@ -1253,6 +1283,16 @@ export type DraftPickResolvers<
   playerId?: Resolver<Maybe<ResolversTypes["ID"]>, ParentType, ContextType>;
   playerRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
   goalieRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
+};
+
+export type DraftBoardResolvers<
+  ContextType = ServerContext,
+  ParentType extends ResolversParentTypes["DraftBoard"] = ResolversParentTypes["DraftBoard"],
+> = {
+  currentPick?: Resolver<Maybe<ResolversTypes["DraftPick"]>, ParentType, ContextType>;
+  nextPick?: Resolver<Maybe<ResolversTypes["DraftPick"]>, ParentType, ContextType>;
+  draftPicks?: Resolver<Array<ResolversTypes["DraftPick"]>, ParentType, ContextType>;
+  availablePlayers?: Resolver<Array<ResolversTypes["Player"]>, ParentType, ContextType>;
 };
 
 export type RegistrationResolvers<
@@ -1413,6 +1453,12 @@ export type QueryResolvers<
     ParentType,
     ContextType,
     RequireFields<QueryDraftPickArgs, "id">
+  >;
+  draftBoard?: Resolver<
+    ResolversTypes["DraftBoard"],
+    ParentType,
+    ContextType,
+    RequireFields<QueryDraftBoardArgs, "seasonId">
   >;
   registrations?: Resolver<
     Array<ResolversTypes["Registration"]>,
@@ -1650,6 +1696,7 @@ export type Resolvers<ContextType = ServerContext> = {
   Penalty?: PenaltyResolvers<ContextType>;
   Lineup?: LineupResolvers<ContextType>;
   DraftPick?: DraftPickResolvers<ContextType>;
+  DraftBoard?: DraftBoardResolvers<ContextType>;
   Registration?: RegistrationResolvers<ContextType>;
   AuditLog?: AuditLogResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;

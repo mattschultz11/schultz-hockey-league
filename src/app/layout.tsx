@@ -36,11 +36,9 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} dark text-foreground bg-background min-h-screen antialiased`}
       >
         <Providers session={session}>
-          <div id="appContainer" className="relative flex flex-col">
+          <div id="appContainer" className="relative flex min-h-screen flex-col">
             <Nav session={session} />
-            <main className="relative mx-auto min-h-[calc(100vh_-_64px_-_64px)] w-full max-w-7xl grow p-6">
-              {children}
-            </main>
+            <main className="relative mx-auto w-full max-w-7xl grow p-6">{children}</main>
             <Footer />
           </div>
         </Providers>

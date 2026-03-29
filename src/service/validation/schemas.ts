@@ -285,7 +285,7 @@ export const createDraftSchema = Schema.Struct({
   teamIds: Schema.Array(Id).pipe(Schema.minItems(2)),
   rounds: Rounds,
   rotation: Schema.Literal("CYCLICAL", "SNAKE", "HYBRID"),
-  snakeStartRound: Schema.optional(Schema.Int.pipe(Schema.greaterThanOrEqualTo(2))),
+  snakeStartRound: Schema.NullishOr(Schema.Int.pipe(Schema.greaterThanOrEqualTo(2))),
 });
 
 export const registrationSchema = Schema.Struct({

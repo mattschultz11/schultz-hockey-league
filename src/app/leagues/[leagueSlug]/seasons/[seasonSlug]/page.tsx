@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
+import PageHeader from "@/components/PageHeader";
 import PageLayout from "@/components/PageLayout";
 import prisma from "@/service/prisma";
 
@@ -63,14 +64,16 @@ export default async function SeasonPage({ params }: Props) {
 
   return (
     <PageLayout>
-      <PageBreadcrumbs
-        items={[
-          { label: "Leagues", href: "/leagues" },
-          { label: league.name, href: `/leagues/${league.slug}/seasons` },
-          { label: season.name },
-        ]}
-      />
-
+      <PageHeader>
+        <PageBreadcrumbs
+          items={[
+            { label: "Leagues", href: "/leagues" },
+            { label: league.name, href: `/leagues/${league.slug}/seasons` },
+            { label: season.name },
+          ]}
+        />
+      </PageHeader>
+      ß
       <div className="text-default-300 space-y-2">
         <p>
           {season.startDate.toLocaleDateString()} – {season.endDate.toLocaleDateString()}

@@ -28,12 +28,12 @@ export default function LeaguesList({ leagues }: Props) {
                 <CardHeader className="flex-col items-start">
                   <h2 className="text-lg font-semibold">{league.name}</h2>
                   {league.skillLevel && (
-                    <p className="text-default-600 text-sm">{league.skillLevel}</p>
+                    <p className="text-default-500 text-sm">{league.skillLevel}</p>
                   )}
                 </CardHeader>
                 {league.description && (
                   <CardBody className="pt-0">
-                    <p className="text-default-600 text-sm">{league.description}</p>
+                    <p className="text-default-500 text-sm">{league.description}</p>
                   </CardBody>
                 )}
               </Card>

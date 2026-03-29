@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 
-import DataTable from "@/components/DataTable";
-import PageBreadcrumbs from "@/components/PageBreadcrumbs";
+import PageLayout from "@/components/PageLayout";
+import TeamCard from "@/components/TeamCard";
+import TeamsHeader from "@/components/TeamsHeader";
+import { auth } from "@/service/auth/authService";
 import prisma from "@/service/prisma";
 
 type Props = {
@@ -11,10 +13,13 @@ type Props = {
 export default async function TeamsPage({ params }: Props) {
   const { leagueSlug, seasonSlug } = await params;
 
-  const league = await prisma.league.findUnique({
-    where: { slug: leagueSlug },
-    select: { id: true, name: true, slug: true },
-  });
+  const [league, session] = await Promise.all([
+    prisma.league.findUnique({
+      where: { slug: leagueSlug },
+      select: { id: true, name: true, slug: true },
+    }),
+    auth(),
+  ]);
 
   if (!league) {
     notFound();
@@ -34,37 +39,35 @@ export default async function TeamsPage({ params }: Props) {
     select: {
       id: true,
       name: true,
-      manager: { select: { user: { select: { firstName: true, lastName: true } } } },
-      _count: { select: { players: true } },
+      slug: true,
+      logoUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
+      abbreviation: true,
+      players: {
+        select: {
+          id: true,
+          user: { select: { id: true, firstName: true, lastName: true } },
+          position: true,
+          playerRating: true,
+          goalieRating: true,
+          draftPick: { select: { id: true, overall: true, round: true, pick: true } },
+        },
+      },
     },
     orderBy: { name: "asc" },
   });
 
-  const columns = [
-    { key: "name", label: "Name" },
-    { key: "manager", label: "Manager" },
-    { key: "players", label: "Players" },
-  ];
-
-  const rows = teams.map((team) => ({
-    key: team.id,
-    name: team.name,
-    manager:
-      [team.manager?.user.firstName, team.manager?.user.lastName].filter(Boolean).join(" ") || "-",
-    players: team._count.players,
-  }));
+  const isAdmin = session?.user?.role === "ADMIN";
 
   return (
-    <>
-      <PageBreadcrumbs
-        items={[
-          { label: "Leagues", href: "/leagues" },
-          { label: league.name, href: `/leagues/${league.slug}/seasons` },
-          { label: season.name, href: `/leagues/${league.slug}/seasons/${season.slug}` },
-          { label: "Teams" },
-        ]}
-      />
-      <DataTable label="Teams" columns={columns} rows={rows} emptyMessage="No teams yet" />
-    </>
+    <PageLayout>
+      <TeamsHeader season={season} league={league} isAdmin={isAdmin} />
+      <div className="flex flex-wrap justify-center gap-4">
+        {teams.map((team) => (
+          <TeamCard key={team.id} team={team} />
+        ))}
+      </div>
+    </PageLayout>
   );
 }

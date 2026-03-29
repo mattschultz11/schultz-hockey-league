@@ -123,6 +123,17 @@ export async function getTeamGoals(teamId: string, ctx: ServerContext) {
   return goals ?? [];
 }
 
+export function getTeamGoalsAgainst(teamId: string, ctx: ServerContext) {
+  return ctx.prisma.goal.findMany({
+    where: {
+      teamId: { not: teamId },
+      game: {
+        OR: [{ homeTeamId: teamId }, { awayTeamId: teamId }],
+      },
+    },
+  });
+}
+
 export async function getTeamPenalties(teamId: string, ctx: ServerContext) {
   const penalties = await ctx.prisma.team.findUnique({ where: { id: teamId } })?.penalties();
   return penalties ?? [];

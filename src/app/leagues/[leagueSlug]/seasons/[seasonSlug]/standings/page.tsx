@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import PageHeader from "@/components/PageHeader";
 import PageLayout from "@/components/PageLayout";
-import PlayersTable from "@/components/PlayersTable";
+import TeamsTable from "@/components/StandingsTable";
 import prisma from "@/service/prisma";
 
 type Props = {
   params: Promise<{ leagueSlug: string; seasonSlug: string }>;
 };
 
-export default async function PlayersPage({ params }: Props) {
+export default async function StandingsPage({ params }: Props) {
   const { leagueSlug, seasonSlug } = await params;
 
   const league = await prisma.league.findUnique({
@@ -31,28 +31,29 @@ export default async function PlayersPage({ params }: Props) {
     notFound();
   }
 
-  const players = await prisma.player.findMany({
-    where: { seasonId: season.id },
-    select: {
-      id: true,
-      number: true,
-      position: true,
-      playerRating: true,
-      goalieRating: true,
-      user: { select: { firstName: true, lastName: true } },
-      penalties: { select: { id: true, minutes: true } },
-      team: { select: { id: true, slug: true, name: true } },
-      _count: {
-        select: {
-          goals: true,
-          primaryAssists: true,
-          secondaryAssists: true,
-          lineups: true,
-        },
+  const [teams, goals] = await Promise.all([
+    prisma.team.findMany({
+      where: { seasonId: season.id },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logoUrl: true,
+        primaryColor: true,
+        secondaryColor: true,
+        abbreviation: true,
+        awayGames: { select: { id: true, awayTeamResult: true, awayTeamPoints: true } },
+        homeGames: { select: { id: true, homeTeamResult: true, homeTeamPoints: true } },
+        penalties: { select: { minutes: true } },
+        _count: { select: { goals: true } },
       },
-    },
-    orderBy: { user: { lastName: "asc" } },
-  });
+      orderBy: { name: "asc" },
+    }),
+    prisma.goal.findMany({
+      where: { game: { seasonId: season.id } },
+      select: { gameId: true, teamId: true },
+    }),
+  ]);
 
   return (
     <PageLayout>
@@ -62,11 +63,11 @@ export default async function PlayersPage({ params }: Props) {
             { label: "Leagues", href: "/leagues" },
             { label: league.name, href: `/leagues/${league.slug}/seasons` },
             { label: season.name, href: `/leagues/${league.slug}/seasons/${season.slug}` },
-            { label: "Players" },
+            { label: "Standings" },
           ]}
         />
       </PageHeader>
-      <PlayersTable players={players} />
+      <TeamsTable teams={teams} goals={goals} />
     </PageLayout>
   );
 }

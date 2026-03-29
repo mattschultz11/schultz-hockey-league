@@ -15,9 +15,10 @@ export default async function SeasonLayout({
       <SetNavItems
         depth={2}
         items={[
-          { label: "Teams", href: `${base}/teams` },
-          { label: "Players", href: `${base}/players` },
           { label: "Games", href: `${base}/games` },
+          { label: "Standings", href: `${base}/standings` },
+          { label: "Players", href: `${base}/players` },
+          { label: "Teams", href: `${base}/teams` },
           { label: "Draft", href: `${base}/draft` },
         ]}
       />

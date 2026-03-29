@@ -5,6 +5,7 @@ import {
   createDraft,
   createDraftPick,
   deleteDraftPick,
+  getDraftBoard,
   getDraftPickById,
   getDraftPicksBySeason,
   updateDraftPick,
@@ -302,13 +303,13 @@ describe("createDraft", () => {
     expect(r1).toEqual(teamIds);
     expect(r2).toEqual(teamIds);
 
-    // Round 3: first snake round — reversed
+    // Round 3: first snake round — forward (matches SNAKE round 1 convention)
     const r3 = picks.filter((p) => p.round === 3).map((p) => p.teamId);
-    expect(r3).toEqual([...teamIds].reverse());
+    expect(r3).toEqual(teamIds);
 
-    // Round 4: second snake round — normal
+    // Round 4: second snake round — reversed
     const r4 = picks.filter((p) => p.round === 4).map((p) => p.teamId);
-    expect(r4).toEqual(teamIds);
+    expect(r4).toEqual([...teamIds].reverse());
   });
 
   it("clears existing draft picks when creating a new draft", async () => {
@@ -435,5 +436,108 @@ describe("createDraft", () => {
     );
 
     expect(picks.every((p) => p.playerId === null)).toBe(true);
+  });
+});
+
+describe("getDraftBoard", () => {
+  let ctx: ServerContext;
+  let season: SeasonModel;
+  let teams: TeamModel[];
+
+  beforeAll(async () => {
+    ctx = createCtx();
+  });
+
+  beforeEach(async () => {
+    season = await insertSeason();
+    teams = [
+      await insertTeam({ seasonId: season.id, name: "Board Alpha" }),
+      await insertTeam({ seasonId: season.id, name: "Board Bravo" }),
+      await insertTeam({ seasonId: season.id, name: "Board Charlie" }),
+    ];
+  });
+
+  it("returns full board state with current pick and order", async () => {
+    await createDraft(
+      { seasonId: season.id, teamIds: teams.map((t) => t.id), rounds: 2, rotation: "CYCLICAL" },
+      ctx,
+    );
+
+    const board = await getDraftBoard(season.id, ctx);
+
+    expect(board.currentPick).not.toBeNull();
+    expect(board.currentPick!.overall).toBe(1);
+    expect(board.draftPicks).toHaveLength(6); // 3 teams x 2 rounds, all unfilled
+  });
+
+  it("currentPick is the first unfilled pick", async () => {
+    await createDraft(
+      { seasonId: season.id, teamIds: teams.map((t) => t.id), rounds: 1, rotation: "CYCLICAL" },
+      ctx,
+    );
+
+    // Fill the first pick
+    const picks = await prisma.draftPick.findMany({
+      where: { seasonId: season.id },
+      orderBy: { overall: "asc" },
+    });
+    const player = await insertPlayer({ seasonId: season.id, teamId: teams[0].id });
+    await prisma.draftPick.update({
+      where: { id: picks[0].id },
+      data: { playerId: player.id },
+    });
+
+    const board = await getDraftBoard(season.id, ctx);
+
+    expect(board.currentPick!.overall).toBe(2);
+    expect(board.draftPicks).toHaveLength(2); // 2 remaining unfilled
+  });
+
+  it("availablePlayers excludes players on teams", async () => {
+    await createDraft(
+      { seasonId: season.id, teamIds: teams.map((t) => t.id), rounds: 1, rotation: "CYCLICAL" },
+      ctx,
+    );
+
+    const player1 = await insertPlayer({ seasonId: season.id, teamId: teams[0].id });
+    const player2 = await insertPlayer({ seasonId: season.id, teamId: null });
+
+    const board = await getDraftBoard(season.id, ctx);
+
+    const availableIds = board.availablePlayers.map((p) => p.id);
+    expect(availableIds).toContain(player2.id);
+    expect(availableIds).not.toContain(player1.id);
+  });
+
+  it("returns null currentPick when all picks are filled", async () => {
+    await createDraft(
+      { seasonId: season.id, teamIds: teams.map((t) => t.id), rounds: 1, rotation: "CYCLICAL" },
+      ctx,
+    );
+
+    const picks = await prisma.draftPick.findMany({
+      where: { seasonId: season.id },
+      orderBy: { overall: "asc" },
+    });
+
+    for (let i = 0; i < picks.length; i++) {
+      const player = await insertPlayer({ seasonId: season.id });
+      await prisma.draftPick.update({
+        where: { id: picks[i].id },
+        data: { playerId: player.id },
+      });
+    }
+
+    const board = await getDraftBoard(season.id, ctx);
+
+    expect(board.currentPick).toBeNull();
+  });
+
+  it("returns null currentPick and empty arrays when no draft exists", async () => {
+    const board = await getDraftBoard(season.id, ctx);
+
+    expect(board.currentPick).toBeNull();
+    expect(board.draftPicks).toHaveLength(0);
+    expect(board.availablePlayers).toHaveLength(0);
   });
 });

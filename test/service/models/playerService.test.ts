@@ -205,9 +205,10 @@ describe("playerService", () => {
       expect(result).toHaveLength(1);
     });
 
-    it("filters by available=true (no draft pick)", async () => {
-      const playerA = await createPlayer(
-        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null }),
+    it("filters by available=true (no team)", async () => {
+      const team = await insertTeam({ seasonId: season.id, name: "Filter Team" });
+      await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: team.id }),
         ctx,
       );
       const playerB = await createPlayer(
@@ -215,44 +216,22 @@ describe("playerService", () => {
         ctx,
       );
 
-      // Give playerA a draft pick
-      await prisma.draftPick.create({
-        data: {
-          seasonId: season.id,
-          overall: 1,
-          round: 1,
-          pick: 1,
-          teamId: null,
-          playerId: playerA.id,
-        },
-      });
-
       const result = await getPlayerCatalog({ seasonId: season.id, available: true }, ctx);
 
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(playerB.id);
     });
 
-    it("filters by available=false (has draft pick)", async () => {
+    it("filters by available=false (has team)", async () => {
+      const team = await insertTeam({ seasonId: season.id, name: "Filter Team 2" });
       const playerA = await createPlayer(
-        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: null }),
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: team.id }),
         ctx,
       );
       await createPlayer(
         makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null }),
         ctx,
       );
-
-      await prisma.draftPick.create({
-        data: {
-          seasonId: season.id,
-          overall: 1,
-          round: 1,
-          pick: 1,
-          teamId: null,
-          playerId: playerA.id,
-        },
-      });
 
       const result = await getPlayerCatalog({ seasonId: season.id, available: false }, ctx);
 
@@ -284,20 +263,12 @@ describe("playerService", () => {
         ctx,
       );
 
-      // Draft Alice (playerA)
-      await prisma.draftPick.create({
-        data: {
-          seasonId: season.id,
-          overall: 1,
-          round: 1,
-          pick: 1,
-          teamId: null,
-          playerId: playerA.id,
-        },
-      });
+      // Assign Alice to a team (not available)
+      const team = await insertTeam({ seasonId: season.id, name: "Combine Team" });
+      await prisma.player.update({ where: { id: playerA.id }, data: { teamId: team.id } });
 
       // Search for "Smith" + position D + available=true
-      // Alice Smith: D but drafted → excluded by available=true
+      // Alice Smith: D but has team → excluded by available=true
       // Bob Jones: D + available but name doesn't match "Smith"
       // Charlie Smith: matches "Smith" but position is F → excluded
       const result = await getPlayerCatalog(

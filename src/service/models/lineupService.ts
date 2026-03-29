@@ -70,10 +70,10 @@ export async function setGameLineup(data: SetGameLineupInput, ctx: ServerContext
 
   return ctx.prisma.$transaction(async (tx) => {
     await tx.lineup.deleteMany({ where: { gameId, teamId } });
-    const lineups = await Promise.all(
-      playerIds.map((playerId) => tx.lineup.create({ data: { gameId, teamId, playerId } })),
-    );
-    return lineups;
+    await tx.lineup.createMany({
+      data: playerIds.map((playerId) => ({ gameId, teamId, playerId })),
+    });
+    return tx.lineup.findMany({ where: { gameId, teamId } });
   });
 }
 

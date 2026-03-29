@@ -9,55 +9,71 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 
-import { FormInput, FormTextarea } from "@/components/Form";
+import { FormInput } from "@/components/Form";
 
 const Required = Schema.Trim.pipe(
   Schema.filter((s) => s.length > 0, { message: () => "Required" }),
 );
 
-const leagueFormSchema = Schema.Struct({
+const teamFormSchema = Schema.Struct({
   name: Required,
-  description: Schema.String,
-  skillLevel: Schema.String,
+  abbreviation: Schema.String,
 });
 
-const CREATE_LEAGUE_MUTATION = gql`
-  mutation CreateLeague($data: LeagueCreateInput!) {
-    createLeague(data: $data) {
+const CREATE_TEAM_MUTATION = gql`
+  mutation CreateTeam($data: TeamCreateInput!) {
+    createTeam(data: $data) {
       id
     }
   }
 `;
 
-type FormValues = {
-  name: string;
-  description: string;
-  skillLevel: string;
+type Props = {
+  league: {
+    id: string;
+    slug: string;
+    name: string;
+  };
+  season: {
+    id: string;
+    slug: string;
+    name: string;
+  };
 };
 
-export default function CreateLeagueForm() {
+type FormValues = {
+  name: string;
+  abbreviation: string;
+};
+
+export default function CreateTeamForm({ league, season }: Props) {
   const router = useRouter();
   const [submitError, setSubmitError] = useState("");
-  const [createLeague] = useMutation(CREATE_LEAGUE_MUTATION);
+  const [createTeam] = useMutation(CREATE_TEAM_MUTATION);
+  const returnPath = `/leagues/${league.slug}/seasons/${season.slug}/teams`;
 
   const { control, handleSubmit, formState } = useForm<FormValues>({
-    defaultValues: { name: "", description: "", skillLevel: "" },
-    resolver: effectTsResolver(leagueFormSchema),
+    defaultValues: { name: "", abbreviation: "" },
+    resolver: effectTsResolver(teamFormSchema),
   });
 
   async function onSubmit(data: FormValues) {
     setSubmitError("");
 
-    const payload: Record<string, unknown> = { name: data.name };
-    if (data.description) payload.description = data.description;
-    if (data.skillLevel) payload.skillLevel = data.skillLevel;
-
     try {
-      await createLeague({ variables: { data: payload } });
-      router.push("/leagues");
+      await createTeam({
+        variables: {
+          data: {
+            seasonId: season.id,
+            name: data.name,
+            abbreviation: data.abbreviation || undefined,
+          },
+        },
+      });
+      router.push(returnPath);
     } catch (err) {
       const message =
-        err instanceof Error ? err.message.replace(/^[^:]+:\s*/, "") : "Failed to create league";
+        err instanceof Error ? err.message.replace(/^[^:]+:\s*/, "") : "Failed to create team";
       setSubmitError(message);
     }
   }
@@ -70,12 +86,11 @@ export default function CreateLeagueForm() {
         </div>
       )}
 
-      <FormInput name="name" control={control} label="Name" isRequired />
-      <FormTextarea name="description" control={control} label="Description" />
-      <FormInput name="skillLevel" control={control} label="Skill Level" />
+      <FormInput name="name" control={control} label="Team Name" isRequired />
+      <FormInput name="abbreviation" control={control} label="Abbreviation" />
 
       <Button type="submit" color="primary" size="lg" isLoading={formState.isSubmitting}>
-        Create League
+        Create Team
       </Button>
     </form>
   );

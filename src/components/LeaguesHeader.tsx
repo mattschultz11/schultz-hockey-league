@@ -4,6 +4,7 @@ import { Button } from "@heroui/react";
 import NextLink from "next/link";
 
 import PageBreadcrumbs from "./PageBreadcrumbs";
+import PageHeader from "./PageHeader";
 
 type Props = {
   isAdmin: boolean;
@@ -11,13 +12,13 @@ type Props = {
 
 export default function LeaguesHeader({ isAdmin }: Props) {
   return (
-    <div className="flex items-center justify-between">
+    <PageHeader>
       <PageBreadcrumbs items={[{ label: "Leagues" }]} />
       {isAdmin && (
         <Button as={NextLink} href="/admin/leagues/new" color="primary" size="sm">
           New League
         </Button>
       )}
-    </div>
+    </PageHeader>
   );
 }
