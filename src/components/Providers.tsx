@@ -1,7 +1,7 @@
 "use client";
 
 import { ApolloProvider } from "@apollo/client/react";
-import { HeroUIProvider } from "@heroui/react";
+import { HeroUIProvider, ToastProvider } from "@heroui/react";
 import { useRouter } from "next/navigation";
 import type { Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
@@ -24,6 +24,7 @@ export default function Providers({
     <SessionProvider session={session}>
       <ApolloProvider client={client}>
         <HeroUIProvider navigate={router.push}>
+          <ToastProvider />
           <NavProvider>{children}</NavProvider>
         </HeroUIProvider>
       </ApolloProvider>

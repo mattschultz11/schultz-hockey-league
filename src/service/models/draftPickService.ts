@@ -19,21 +19,20 @@ import {
 } from "../validation/schemas";
 import { cleanInput, validate } from "./modelServiceUtils";
 import { getPlayerCatalog, maybeGetPlayerById } from "./playerService";
-import { maybeGetTeamById } from "./teamService";
+import { getSeasonById } from "./seasonService";
+import { getTeamsByIds, getTeamsBySeason, maybeGetTeamById } from "./teamService";
 
 export function getDraftPicksBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.draftPick.findMany({ where: { seasonId }, orderBy: { overall: "asc" } });
 }
 
 export async function getDraftBoard(seasonId: string, ctx: ServerContext) {
-  const draftPicks = await ctx.prisma.draftPick.findMany({
-    where: { seasonId },
-    orderBy: { overall: "asc" },
-  });
+  const draftPicks = await getDraftPicksBySeason(seasonId, ctx);
 
   const remainingPicks = draftPicks.filter((p) => p.playerId === null);
   const currentPick = remainingPicks[0] ?? null;
   const nextPick = remainingPicks[1] ?? null;
+  const teams = await getTeamsBySeason(seasonId, ctx);
 
   const availablePlayers = await getPlayerCatalog({ seasonId, available: true }, ctx);
 
@@ -42,6 +41,7 @@ export async function getDraftBoard(seasonId: string, ctx: ServerContext) {
     nextPick,
     draftPicks,
     availablePlayers,
+    teams,
   };
 }
 
@@ -51,8 +51,7 @@ export async function createDraft(data: CreateDraftInput, ctx: ServerContext) {
   const { seasonId, teamIds, rounds, rotation, snakeStartRound } = data;
 
   // Validate season exists
-  const season = await ctx.prisma.season.findUnique({ where: { id: seasonId } });
-  if (!season) throw new NotFoundError("Season", seasonId);
+  await getSeasonById(seasonId, ctx);
 
   // Validate no duplicate team IDs
   const uniqueIds = new Set(teamIds);
@@ -61,14 +60,10 @@ export async function createDraft(data: CreateDraftInput, ctx: ServerContext) {
   }
 
   // Validate all teams belong to this season
-  const teams = await ctx.prisma.team.findMany({
-    where: { seasonId },
-    select: { id: true },
-  });
-  const seasonTeamIds = new Set(teams.map((t) => t.id));
-  for (const teamId of teamIds) {
-    if (!seasonTeamIds.has(teamId)) {
-      throw new ValidationError(`Team ${teamId} does not belong to this season`);
+  const teams = await getTeamsByIds(teamIds, ctx);
+  for (const team of teams) {
+    if (team.seasonId !== seasonId) {
+      throw new ValidationError(`Team ${team.id} does not belong to this season`);
     }
   }
 
@@ -111,10 +106,7 @@ export async function createDraft(data: CreateDraftInput, ctx: ServerContext) {
     ctx.prisma.draftPick.createMany({ data: picks }),
   ]);
 
-  return ctx.prisma.draftPick.findMany({
-    where: { seasonId },
-    orderBy: { overall: "asc" },
-  });
+  return getDraftPicksBySeason(seasonId, ctx);
 }
 
 function getTeamOrderForRound(
@@ -187,6 +179,28 @@ export async function createDraftPick(data: DraftPickCreateInput, ctx: ServerCon
   return result;
 }
 
+export async function recordPick(teamId: string, playerId: string, ctx: ServerContext) {
+  // Find the current pick (first unfilled for this team)
+  const teamCurrentPick = await ctx.prisma.draftPick.findFirst({
+    where: { teamId, playerId: null },
+    orderBy: { overall: "asc" },
+  });
+  if (!teamCurrentPick) {
+    throw new ValidationError("No picks remaining for this team");
+  }
+
+  // Validate the team is on the clock (current pick across the whole season)
+  const seasonCurrentPick = await ctx.prisma.draftPick.findFirst({
+    where: { seasonId: teamCurrentPick.seasonId, playerId: null },
+    orderBy: { overall: "asc" },
+  });
+  if (!seasonCurrentPick || seasonCurrentPick.teamId !== teamId) {
+    throw new ValidationError("It is not this team's turn to pick");
+  }
+
+  return updateDraftPick(teamCurrentPick.id, { playerId }, ctx);
+}
+
 export async function updateDraftPick(id: string, data: DraftPickUpdateInput, ctx: ServerContext) {
   validate(draftPickUpdateSchema, data);
   const payload = cleanInput(data);
@@ -199,6 +213,16 @@ export async function updateDraftPick(id: string, data: DraftPickUpdateInput, ct
   const team = await maybeGetTeamById(teamId, ctx);
 
   validateDraftPick(draftPick.seasonId, player, team);
+
+  // Check if the player is already assigned to another draft pick in this season
+  if (playerId != null) {
+    const existing = await ctx.prisma.draftPick.findFirst({
+      where: { playerId, seasonId: draftPick.seasonId, NOT: { id } },
+    });
+    if (existing) {
+      throw new ValidationError("Player unavailable");
+    }
+  }
 
   const transaction = await ctx.prisma.$transaction([
     ctx.prisma.draftPick.update({
@@ -299,15 +323,13 @@ export function deleteDraftPick(id: string, ctx: ServerContext) {
 }
 
 export async function getDraftPickSeason(draftPickId: string, ctx: ServerContext) {
-  const season = await ctx.prisma.draftPick.findUnique({ where: { id: draftPickId } })?.season();
-  if (!season) throw new NotFoundError("DraftPick", draftPickId);
-  return season;
+  return (await ctx.prisma.draftPick.findUnique({ where: { id: draftPickId } }).season())!;
 }
 
 export async function getDraftPickTeam(draftPickId: string, ctx: ServerContext) {
-  return (await ctx.prisma.draftPick.findUnique({ where: { id: draftPickId } })?.team()) ?? null;
+  return await ctx.prisma.draftPick.findUnique({ where: { id: draftPickId } })?.team();
 }
 
 export async function getDraftPickPlayer(draftPickId: string, ctx: ServerContext) {
-  return (await ctx.prisma.draftPick.findUnique({ where: { id: draftPickId } })?.player()) ?? null;
+  return await ctx.prisma.draftPick.findUnique({ where: { id: draftPickId } })?.player();
 }

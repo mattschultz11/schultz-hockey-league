@@ -21,8 +21,19 @@ export async function getTeamById(id: string, ctx: ServerContext) {
   return team;
 }
 
+export async function getTeamsByIds(ids: string[], ctx: ServerContext) {
+  const teams = await ctx.prisma.team.findMany({ where: { id: { in: ids } } });
+  if (teams.length !== ids.length) {
+    throw new NotFoundError(
+      "Team",
+      ids.filter((id) => !teams.some((team) => team.id === id)).join(", "),
+    );
+  }
+  return teams;
+}
+
 export function maybeGetTeamById(id: string | null | undefined, ctx: ServerContext) {
-  return maybeGet((id) => ctx.prisma.team.findUnique({ where: { id } }), id);
+  return maybeGet((id) => getTeamById(id, ctx), id);
 }
 
 export async function getTeamBySlug(seasonId: string, slug: string, ctx: ServerContext) {

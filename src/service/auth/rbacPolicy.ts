@@ -66,6 +66,12 @@ export function getPolicy(name: PolicyNameType): PolicyConfig {
   return policyRegistry[name];
 }
 
+const scopeFieldMap: Record<NonNullable<PolicyConfig["requiresScope"]>, string> = {
+  team: "teamId",
+  league: "leagueId",
+  season: "seasonId",
+};
+
 /**
  * Type for GraphQL resolver functions.
  */
@@ -106,11 +112,6 @@ export function withPolicy<TResult, TParent, TArgs extends object>(
 
         // Then, check scope if required
         if (config.requiresScope) {
-          const scopeFieldMap: Record<NonNullable<PolicyConfig["requiresScope"]>, string> = {
-            team: "teamId",
-            league: "leagueId",
-            season: "seasonId",
-          };
           const requiredField = scopeFieldMap[config.requiresScope];
 
           // Look up scope ID: top-level args first, then args.data (mutation pattern)
@@ -191,7 +192,11 @@ export function parseAuditAction(fieldName: string): AuditAction | null {
   ) {
     return AuditAction.CREATE;
   }
-  if (fieldName.startsWith("update") || fieldName.startsWith("accept")) {
+  if (
+    fieldName.startsWith("update") ||
+    fieldName.startsWith("accept") ||
+    fieldName.startsWith("record")
+  ) {
     return AuditAction.UPDATE;
   }
   if (fieldName.startsWith("delete") || fieldName.startsWith("remove")) {

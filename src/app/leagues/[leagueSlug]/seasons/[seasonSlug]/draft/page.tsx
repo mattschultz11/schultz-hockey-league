@@ -30,29 +30,40 @@ export default async function DraftPage({ params }: Props) {
 
   if (!season) notFound();
 
-  const draftPicks = await prisma.draftPick.findMany({
-    where: { seasonId: season.id },
-    orderBy: { overall: "asc" },
-    include: {
-      team: { select: { id: true, name: true } },
-      player: {
-        select: {
-          id: true,
-          position: true,
-          playerRating: true,
-          goalieRating: true,
-          user: { select: { id: true, firstName: true, lastName: true } },
-        },
+  const playerSelect = {
+    id: true,
+    position: true,
+    playerRating: true,
+    goalieRating: true,
+    user: { select: { id: true, firstName: true, lastName: true } },
+  } as const;
+
+  const [draftPicks, teams, players] = await Promise.all([
+    prisma.draftPick.findMany({
+      where: { seasonId: season.id },
+      orderBy: { overall: "asc" },
+      include: {
+        team: { select: { id: true, name: true } },
+        player: { select: playerSelect },
       },
-    },
-  });
+    }),
+    prisma.team.findMany({
+      where: { seasonId: season.id },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
+    }),
+    prisma.player.findMany({
+      where: { seasonId: season.id, teamId: null },
+      select: playerSelect,
+    }),
+  ]);
 
   const isAdmin = session?.user?.role === "ADMIN";
 
   return (
     <PageLayout>
       <DraftHeader season={season} league={league} draftPicks={draftPicks} isAdmin={isAdmin} />
-      <DraftTable draftPicks={draftPicks} />
+      <DraftTable draftPicks={draftPicks} isAdmin={isAdmin} teams={teams} players={players} />
     </PageLayout>
   );
 }

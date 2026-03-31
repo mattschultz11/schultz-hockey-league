@@ -264,6 +264,7 @@ export const typeDefs = /* GraphQL */ `
     currentPick: DraftPick
     nextPick: DraftPick
     draftPicks: [DraftPick!]!
+    teams: [Team!]!
     availablePlayers: [Player!]!
   }
 
@@ -597,6 +598,7 @@ export const typeDefs = /* GraphQL */ `
     createDraftPick(data: DraftPickCreateInput!): DraftPick!
     updateDraftPick(id: ID!, data: DraftPickUpdateInput!): DraftPick!
     deleteDraftPick(id: ID!): DraftPick!
+    recordPick(teamId: ID!, playerId: ID!): DraftPick!
 
     register(data: RegistrationInput!): Registration!
 

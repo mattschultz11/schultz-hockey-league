@@ -65,19 +65,13 @@ export function deletePenalty(id: string, ctx: ServerContext) {
 }
 
 export async function getPenaltyGame(penaltyId: string, ctx: ServerContext) {
-  const game = await ctx.prisma.penalty.findUnique({ where: { id: penaltyId } })?.game();
-  if (!game) throw new NotFoundError("Penalty", penaltyId);
-  return game;
+  return (await ctx.prisma.penalty.findUnique({ where: { id: penaltyId } })?.game())!;
 }
 
 export async function getPenaltyTeam(penaltyId: string, ctx: ServerContext) {
-  const team = await ctx.prisma.penalty.findUnique({ where: { id: penaltyId } })?.team();
-  if (!team) throw new NotFoundError("Penalty", penaltyId);
-  return team;
+  return (await ctx.prisma.penalty.findUnique({ where: { id: penaltyId } })?.team())!;
 }
 
 export async function getPenaltyPlayer(penaltyId: string, ctx: ServerContext) {
-  const player = await ctx.prisma.penalty.findUnique({ where: { id: penaltyId } })?.player();
-  if (!player) throw new NotFoundError("Penalty", penaltyId);
-  return player;
+  return (await ctx.prisma.penalty.findUnique({ where: { id: penaltyId } })?.player())!;
 }

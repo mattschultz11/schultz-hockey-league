@@ -7,8 +7,8 @@ import type { ServerContext } from "@/types";
 import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
 import { goalCreateSchema, goalUpdateSchema } from "../validation/schemas";
-import { getLineupEntry } from "./lineupService";
-import { cleanInput, maybeGet, validate } from "./modelServiceUtils";
+import { getLineupEntry, maybeGetLineupEntry } from "./lineupService";
+import { cleanInput, validate } from "./modelServiceUtils";
 
 export function getGoalsBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.goal.findMany({ where: { game: { seasonId } } });
@@ -25,11 +25,8 @@ export async function createGoal(data: GoalCreateInput, ctx: ServerContext) {
   const { gameId, teamId, scorerId, primaryAssistId, secondaryAssistId } = data;
 
   const scorer = await getLineupEntry(gameId, scorerId, ctx);
-  const primaryAssist = await maybeGet((id) => getLineupEntry(gameId, id, ctx), primaryAssistId);
-  const secondaryAssist = await maybeGet(
-    (id) => getLineupEntry(gameId, id, ctx),
-    secondaryAssistId,
-  );
+  const primaryAssist = await maybeGetLineupEntry(gameId, primaryAssistId, ctx);
+  const secondaryAssist = await maybeGetLineupEntry(gameId, secondaryAssistId, ctx);
 
   validateGoal(teamId, scorer, primaryAssist, secondaryAssist);
 
@@ -50,11 +47,8 @@ export async function updateGoal(id: string, data: GoalUpdateInput, ctx: ServerC
   const secondaryAssistId = payload.secondaryAssistId ?? goal.secondaryAssistId;
 
   const scorer = await getLineupEntry(gameId, scorerId, ctx);
-  const primaryAssistant = await maybeGet((id) => getLineupEntry(gameId, id, ctx), primaryAssistId);
-  const secondaryAssistant = await maybeGet(
-    (id) => getLineupEntry(gameId, id, ctx),
-    secondaryAssistId,
-  );
+  const primaryAssistant = await maybeGetLineupEntry(gameId, primaryAssistId, ctx);
+  const secondaryAssistant = await maybeGetLineupEntry(gameId, secondaryAssistId, ctx);
 
   validateGoal(teamId, scorer, primaryAssistant, secondaryAssistant);
 
@@ -106,32 +100,26 @@ function validateGoal(
   });
 }
 
-export function deleteGoal(id: string, ctx: ServerContext) {
-  return ctx.prisma.goal.delete({ where: { id } });
+export async function deleteGoal(id: string, ctx: ServerContext) {
+  return await ctx.prisma.goal.delete({ where: { id } });
 }
 
 export async function getGoalGame(goalId: string, ctx: ServerContext) {
-  const game = await ctx.prisma.goal.findUnique({ where: { id: goalId } })?.game();
-  if (!game) throw new NotFoundError("Goal", goalId);
-  return game;
+  return (await ctx.prisma.goal.findUnique({ where: { id: goalId } })?.game())!;
 }
 
 export async function getGoalTeam(goalId: string, ctx: ServerContext) {
-  const team = await ctx.prisma.goal.findUnique({ where: { id: goalId } })?.team();
-  if (!team) throw new NotFoundError("Goal", goalId);
-  return team;
+  return (await ctx.prisma.goal.findUnique({ where: { id: goalId } })?.team())!;
 }
 
 export async function getGoalScorer(goalId: string, ctx: ServerContext) {
-  const scorer = await ctx.prisma.goal.findUnique({ where: { id: goalId } })?.scorer();
-  if (!scorer) throw new NotFoundError("Goal", goalId);
-  return scorer;
+  return (await ctx.prisma.goal.findUnique({ where: { id: goalId } })?.scorer())!;
 }
 
 export async function getGoalPrimaryAssist(goalId: string, ctx: ServerContext) {
-  return (await ctx.prisma.goal.findUnique({ where: { id: goalId } })?.primaryAssist()) ?? null;
+  return await ctx.prisma.goal.findUnique({ where: { id: goalId } })?.primaryAssist();
 }
 
 export async function getGoalSecondaryAssist(goalId: string, ctx: ServerContext) {
-  return (await ctx.prisma.goal.findUnique({ where: { id: goalId } })?.secondaryAssist()) ?? null;
+  return await ctx.prisma.goal.findUnique({ where: { id: goalId } })?.secondaryAssist();
 }

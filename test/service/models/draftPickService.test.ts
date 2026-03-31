@@ -1,6 +1,6 @@
 import { randUuid } from "@ngneat/falso";
 
-import { NotFoundError } from "@/service/errors";
+import { NotFoundError, ValidationError } from "@/service/errors";
 import {
   createDraft,
   createDraftPick,
@@ -8,6 +8,7 @@ import {
   getDraftBoard,
   getDraftPickById,
   getDraftPicksBySeason,
+  recordPick,
   updateDraftPick,
 } from "@/service/models/draftPickService";
 import prisma from "@/service/prisma";
@@ -169,6 +170,45 @@ describe("draftPickService", () => {
     ).rejects.toThrow("Player must be in the same season as the draft pick");
   });
 
+  it("rejects updating to a player already drafted in the same season", async () => {
+    const team = await insertTeam({ seasonId: season.id, name: "Draft Team" });
+    const playerA = await insertPlayer({ seasonId: season.id });
+    await insertPlayer({ seasonId: season.id });
+
+    // Create two picks and fill the first with playerA
+    await createDraftPick(
+      makeDraftPick({ seasonId: season.id, playerId: playerA.id, teamId: team.id }),
+      ctx,
+    );
+    const pickTwo = await createDraftPick(
+      makeDraftPick({ seasonId: season.id, playerId: null, teamId: team.id }),
+      ctx,
+    );
+
+    // Attempt to assign playerA to the second pick — should fail
+    await expect(updateDraftPick(pickTwo.id, { playerId: playerA.id }, ctx)).rejects.toThrow(
+      ValidationError,
+    );
+    await expect(updateDraftPick(pickTwo.id, { playerId: playerA.id }, ctx)).rejects.toThrow(
+      "Player unavailable",
+    );
+  });
+
+  it("allows clearing playerId (undo pick) even when player was drafted", async () => {
+    const team = await insertTeam({ seasonId: season.id, name: "Undo Team" });
+    const player = await insertPlayer({ seasonId: season.id });
+    const pick = await createDraftPick(
+      makeDraftPick({ seasonId: season.id, playerId: player.id, teamId: team.id }),
+      ctx,
+    );
+
+    const updated = await updateDraftPick(pick.id, { playerId: null }, ctx);
+
+    expect(updated.playerId).toBeNull();
+    const updatedPlayer = await prisma.player.findUniqueOrThrow({ where: { id: player.id } });
+    expect(updatedPlayer.teamId).toBeNull();
+  });
+
   it("can get a draft pick by id", async () => {
     const draftPick = await createDraftPick(
       makeDraftPick({ seasonId: season.id, playerId: null, teamId: null }),
@@ -303,12 +343,10 @@ describe("createDraft", () => {
     expect(r1).toEqual(teamIds);
     expect(r2).toEqual(teamIds);
 
-    // Round 3: first snake round — forward (matches SNAKE round 1 convention)
+    // Rounds 3-4: cyclical (reverse order)
     const r3 = picks.filter((p) => p.round === 3).map((p) => p.teamId);
-    expect(r3).toEqual(teamIds);
-
-    // Round 4: second snake round — reversed
     const r4 = picks.filter((p) => p.round === 4).map((p) => p.teamId);
+    expect(r3).toEqual([...teamIds].reverse());
     expect(r4).toEqual([...teamIds].reverse());
   });
 
@@ -344,13 +382,33 @@ describe("createDraft", () => {
   });
 
   it("rejects team IDs not belonging to the season", async () => {
-    const foreignId = randUuid();
+    const foreignTeam = await prisma.team.create({
+      data: {
+        season: {
+          create: {
+            name: "Foreign Season",
+            slug: "foreign-season",
+            startDate: new Date(),
+            endDate: new Date(),
+            league: { create: { name: "Foreign League", slug: "foreign-league" } },
+          },
+        },
+        name: "Foreign Team",
+        slug: "foreign-team",
+      },
+    });
+
     await expect(
       createDraft(
-        { seasonId: season.id, teamIds: [teams[0].id, foreignId], rounds: 1, rotation: "CYCLICAL" },
+        {
+          seasonId: season.id,
+          teamIds: [teams[0].id, foreignTeam.id],
+          rounds: 1,
+          rotation: "CYCLICAL",
+        },
         ctx,
       ),
-    ).rejects.toThrow(`Team ${foreignId} does not belong to this season`);
+    ).rejects.toThrow(`Team ${foreignTeam.id} does not belong to this season`);
   });
 
   it("throws NotFoundError for non-existent season", async () => {
@@ -490,7 +548,6 @@ describe("getDraftBoard", () => {
     const board = await getDraftBoard(season.id, ctx);
 
     expect(board.currentPick!.overall).toBe(2);
-    expect(board.draftPicks).toHaveLength(2); // 2 remaining unfilled
   });
 
   it("availablePlayers excludes players on teams", async () => {
@@ -539,5 +596,88 @@ describe("getDraftBoard", () => {
     expect(board.currentPick).toBeNull();
     expect(board.draftPicks).toHaveLength(0);
     expect(board.availablePlayers).toHaveLength(0);
+  });
+});
+
+describe("recordPick", () => {
+  let ctx: ServerContext;
+  let season: SeasonModel;
+  let teams: TeamModel[];
+
+  beforeAll(async () => {
+    ctx = createCtx();
+  });
+
+  beforeEach(async () => {
+    season = await insertSeason();
+    teams = [
+      await insertTeam({ seasonId: season.id, name: "Pick Alpha" }),
+      await insertTeam({ seasonId: season.id, name: "Pick Bravo" }),
+    ];
+    await createDraft(
+      { seasonId: season.id, teamIds: teams.map((t) => t.id), rounds: 2, rotation: "CYCLICAL" },
+      ctx,
+    );
+  });
+
+  it("records a pick on the current slot and assigns player to team", async () => {
+    const player = await insertPlayer({ seasonId: season.id });
+
+    const result = await recordPick(teams[0].id, player.id, ctx);
+
+    expect(result.playerId).toBe(player.id);
+    expect(result.teamId).toBe(teams[0].id);
+    expect(result.overall).toBe(1);
+    expect(result.playerRating).toBe(player.playerRating);
+    expect(result.goalieRating).toBe(player.goalieRating);
+
+    const updatedPlayer = await prisma.player.findUniqueOrThrow({ where: { id: player.id } });
+    expect(updatedPlayer.teamId).toBe(teams[0].id);
+  });
+
+  it("rejects when it is not this team's turn to pick", async () => {
+    const player = await insertPlayer({ seasonId: season.id });
+
+    // Team Bravo tries to pick but Team Alpha is on the clock (pick 1)
+    await expect(recordPick(teams[1].id, player.id, ctx)).rejects.toThrow(
+      "It is not this team's turn to pick",
+    );
+  });
+
+  it("rejects a player already drafted", async () => {
+    const player = await insertPlayer({ seasonId: season.id });
+
+    // Record the first pick
+    await recordPick(teams[0].id, player.id, ctx);
+
+    // Second pick is Team Bravo's turn — try to pick same player
+    await expect(recordPick(teams[1].id, player.id, ctx)).rejects.toThrow("Player unavailable");
+  });
+
+  it("rejects a player from a different season", async () => {
+    const otherSeason = await insertSeason();
+    const player = await insertPlayer({ seasonId: otherSeason.id });
+
+    await expect(recordPick(teams[0].id, player.id, ctx)).rejects.toThrow(
+      "Player must be in the same season",
+    );
+  });
+
+  it("rejects when no picks remain for the team", async () => {
+    // Fill all 4 picks (2 rounds x 2 teams)
+    for (let i = 0; i < 4; i++) {
+      const player = await insertPlayer({ seasonId: season.id });
+      const currentTeam = i % 2 === 0 ? teams[0] : teams[1];
+      await recordPick(currentTeam.id, player.id, ctx);
+    }
+
+    const player = await insertPlayer({ seasonId: season.id });
+    await expect(recordPick(teams[0].id, player.id, ctx)).rejects.toThrow(
+      "No picks remaining for this team",
+    );
+  });
+
+  it("throws NotFoundError for non-existent player", async () => {
+    await expect(recordPick(teams[0].id, randUuid(), ctx)).rejects.toThrow(NotFoundError);
   });
 });

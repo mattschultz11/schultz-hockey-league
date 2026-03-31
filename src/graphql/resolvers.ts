@@ -219,6 +219,9 @@ export const resolvers: Resolvers = {
     updateDraftPick: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       draftPickService.updateDraftPick(args.id, args.data, ctx),
     ),
+    recordPick: withPolicy(PolicyName.MANAGER_OF_TEAM, (_p, args, ctx) =>
+      draftPickService.recordPick(args.teamId, args.playerId, ctx),
+    ),
     deleteDraftPick: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       draftPickService.deleteDraftPick(args.id, ctx),
     ),

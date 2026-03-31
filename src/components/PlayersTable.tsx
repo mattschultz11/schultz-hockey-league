@@ -72,11 +72,11 @@ export default function PlayersTable({ players }: PlayersTableProps) {
       rating: playerRating(player),
       position: playerPosition(player),
       games: player._count.lineups,
-      goals: player._count.goals,
-      assists: player._count.primaryAssists + player._count.secondaryAssists,
-      points: player._count.goals + player._count.primaryAssists + player._count.secondaryAssists,
-      ppg: ppg,
-      pim: pim,
+      goals,
+      assists,
+      points,
+      ppg,
+      pim,
     };
   });
 

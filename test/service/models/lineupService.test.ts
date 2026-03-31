@@ -5,6 +5,7 @@ import {
   addPlayerToLineup,
   getLineupById,
   getLineupsByGame,
+  getLineupsByGameAndTeam,
   removePlayerFromLineup,
   setGameLineup,
 } from "@/service/models/lineupService";
@@ -131,9 +132,7 @@ describe("lineupService", () => {
       ctx,
     );
 
-    const awayLineups = await ctx.prisma.lineup.findMany({
-      where: { gameId: gameWithBothTeams.id, teamId: awayTeam.id },
-    });
+    const awayLineups = await getLineupsByGameAndTeam(gameWithBothTeams.id, awayTeam.id, ctx);
     expect(awayLineups).toHaveLength(1);
     expect(awayLineups[0].playerId).toBe(awayPlayer.id);
   });

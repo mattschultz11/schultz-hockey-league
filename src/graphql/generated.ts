@@ -281,6 +281,7 @@ export type DraftBoard = {
   currentPick?: Maybe<DraftPick>;
   nextPick?: Maybe<DraftPick>;
   draftPicks: Array<DraftPick>;
+  teams: Array<Team>;
   availablePlayers: Array<Player>;
 };
 
@@ -685,6 +686,7 @@ export type Mutation = {
   createDraftPick: DraftPick;
   updateDraftPick: DraftPick;
   deleteDraftPick: DraftPick;
+  recordPick: DraftPick;
   register: Registration;
   createDraft: Array<DraftPick>;
   acceptRegistrations: Array<Player>;
@@ -817,6 +819,11 @@ export type MutationUpdateDraftPickArgs = {
 
 export type MutationDeleteDraftPickArgs = {
   id: Scalars["ID"]["input"];
+};
+
+export type MutationRecordPickArgs = {
+  teamId: Scalars["ID"]["input"];
+  playerId: Scalars["ID"]["input"];
 };
 
 export type MutationRegisterArgs = {
@@ -981,10 +988,11 @@ export type ResolversTypes = {
   Lineup: ResolverTypeWrapper<PrismaLineup>;
   DraftPick: ResolverTypeWrapper<PrismaDraftPick>;
   DraftBoard: ResolverTypeWrapper<
-    Omit<DraftBoard, "currentPick" | "nextPick" | "draftPicks" | "availablePlayers"> & {
+    Omit<DraftBoard, "currentPick" | "nextPick" | "draftPicks" | "teams" | "availablePlayers"> & {
       currentPick?: Maybe<ResolversTypes["DraftPick"]>;
       nextPick?: Maybe<ResolversTypes["DraftPick"]>;
       draftPicks: Array<ResolversTypes["DraftPick"]>;
+      teams: Array<ResolversTypes["Team"]>;
       availablePlayers: Array<ResolversTypes["Player"]>;
     }
   >;
@@ -1037,10 +1045,14 @@ export type ResolversParentTypes = {
   Penalty: PrismaPenalty;
   Lineup: PrismaLineup;
   DraftPick: PrismaDraftPick;
-  DraftBoard: Omit<DraftBoard, "currentPick" | "nextPick" | "draftPicks" | "availablePlayers"> & {
+  DraftBoard: Omit<
+    DraftBoard,
+    "currentPick" | "nextPick" | "draftPicks" | "teams" | "availablePlayers"
+  > & {
     currentPick?: Maybe<ResolversParentTypes["DraftPick"]>;
     nextPick?: Maybe<ResolversParentTypes["DraftPick"]>;
     draftPicks: Array<ResolversParentTypes["DraftPick"]>;
+    teams: Array<ResolversParentTypes["Team"]>;
     availablePlayers: Array<ResolversParentTypes["Player"]>;
   };
   Registration: PrismaRegistration;
@@ -1292,6 +1304,7 @@ export type DraftBoardResolvers<
   currentPick?: Resolver<Maybe<ResolversTypes["DraftPick"]>, ParentType, ContextType>;
   nextPick?: Resolver<Maybe<ResolversTypes["DraftPick"]>, ParentType, ContextType>;
   draftPicks?: Resolver<Array<ResolversTypes["DraftPick"]>, ParentType, ContextType>;
+  teams?: Resolver<Array<ResolversTypes["Team"]>, ParentType, ContextType>;
   availablePlayers?: Resolver<Array<ResolversTypes["Player"]>, ParentType, ContextType>;
 };
 
@@ -1663,6 +1676,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationDeleteDraftPickArgs, "id">
+  >;
+  recordPick?: Resolver<
+    ResolversTypes["DraftPick"],
+    ParentType,
+    ContextType,
+    RequireFields<MutationRecordPickArgs, "teamId" | "playerId">
   >;
   register?: Resolver<
     ResolversTypes["Registration"],

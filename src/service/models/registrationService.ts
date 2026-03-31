@@ -49,15 +49,20 @@ export async function getRegistrationsBySeason(seasonId: string, ctx: ServerCont
 }
 
 export async function getRegistrationById(id: string, ctx: ServerContext) {
-  return ctx.prisma.registration.findUnique({ where: { id } });
+  const registration = await ctx.prisma.registration.findUnique({ where: { id } });
+  if (!registration) throw new NotFoundError("Registration", id);
+  return registration;
 }
 
-export async function getRegistrationSeason(registrationId: string, ctx: ServerContext) {
-  const season = await ctx.prisma.registration
-    .findUnique({ where: { id: registrationId } })
-    .season();
-  if (!season) throw new NotFoundError("Registration", registrationId);
-  return season;
+export async function getRegistrationsByIds(ids: string[], ctx: ServerContext) {
+  const registrations = await ctx.prisma.registration.findMany({ where: { id: { in: ids } } });
+  if (registrations.length !== ids.length) {
+    throw new NotFoundError(
+      "Registration",
+      ids.filter((id) => !registrations.some((registration) => registration.id === id)).join(", "),
+    );
+  }
+  return registrations;
 }
 
 export async function acceptRegistrations(
@@ -65,23 +70,15 @@ export async function acceptRegistrations(
   registrationIds: string[],
   ctx: ServerContext,
 ) {
-  const validated = validate(acceptRegistrationsSchema, { seasonId, registrationIds });
+  validate(acceptRegistrationsSchema, { seasonId, registrationIds });
 
   // Verify season exists
-  await getSeasonById(validated.seasonId, ctx);
+  await getSeasonById(seasonId, ctx);
 
   // Fetch all registrations and verify they belong to this season
-  const registrations = await ctx.prisma.registration.findMany({
-    where: { id: { in: [...validated.registrationIds] } },
-  });
+  const registrations = await getRegistrationsByIds(registrationIds, ctx);
 
-  if (registrations.length !== validated.registrationIds.length) {
-    const foundIds = new Set(registrations.map((r) => r.id));
-    const missing = validated.registrationIds.filter((id) => !foundIds.has(id));
-    throw new NotFoundError("Registration", missing.join(", "));
-  }
-
-  const wrongSeason = registrations.filter((r) => r.seasonId !== validated.seasonId);
+  const wrongSeason = registrations.filter((r) => r.seasonId !== seasonId);
   if (wrongSeason.length > 0) {
     throw new ValidationError(
       `Registrations do not belong to this season: ${wrongSeason.map((r) => r.id).join(", ")}`,
@@ -117,7 +114,7 @@ export async function acceptRegistrations(
 
       // Find existing Player for this user+season
       const existingPlayer = await tx.player.findFirst({
-        where: { userId: user.id, seasonId: validated.seasonId },
+        where: { userId: user.id, seasonId },
       });
 
       const playerData = {
@@ -137,7 +134,7 @@ export async function acceptRegistrations(
         const created = await tx.player.create({
           data: {
             userId: user.id,
-            seasonId: validated.seasonId,
+            seasonId,
             ...playerData,
           },
         });
@@ -147,4 +144,8 @@ export async function acceptRegistrations(
 
     return players;
   });
+}
+
+export async function getRegistrationSeason(registrationId: string, ctx: ServerContext) {
+  return (await ctx.prisma.registration.findUnique({ where: { id: registrationId } }).season())!;
 }

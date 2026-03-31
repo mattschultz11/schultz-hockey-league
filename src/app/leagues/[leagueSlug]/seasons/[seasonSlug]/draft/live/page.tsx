@@ -14,7 +14,7 @@ type Props = {
 export default async function LiveDraftPage({ params }: Props) {
   const { leagueSlug, seasonSlug } = await params;
 
-  const [league] = await Promise.all([
+  const [league, session] = await Promise.all([
     prisma.league.findUnique({
       where: { slug: leagueSlug },
       select: { id: true, name: true, slug: true },
@@ -32,6 +32,7 @@ export default async function LiveDraftPage({ params }: Props) {
   if (!season) notFound();
 
   const basePath = `/leagues/${league.slug}/seasons/${season.slug}`;
+  const isAdmin = session?.user?.role === "ADMIN";
 
   return (
     <PageLayout>
@@ -46,7 +47,7 @@ export default async function LiveDraftPage({ params }: Props) {
           ]}
         />
       </PageHeader>
-      <DraftBoard seasonId={season.id} />
+      <DraftBoard seasonId={season.id} isAdmin={isAdmin} />
     </PageLayout>
   );
 }

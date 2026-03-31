@@ -6,7 +6,7 @@ import { invariant } from "@/utils/assertionUtils";
 import type { Game, Player, Team } from "../prisma";
 import { lineupCreateSchema, setGameLineupSchema } from "../validation/schemas";
 import { getGameById } from "./gameService";
-import { validate } from "./modelServiceUtils";
+import { maybeGet, validate } from "./modelServiceUtils";
 import { getPlayerById, getPlayersByIds } from "./playerService";
 import { getTeamById } from "./teamService";
 
@@ -26,6 +26,22 @@ export async function getLineupById(id: string, ctx: ServerContext) {
   const lineup = await ctx.prisma.lineup.findUnique({ where: { id } });
   if (!lineup) throw new NotFoundError("Lineup", id);
   return lineup;
+}
+
+export async function getLineupEntry(gameId: string, playerId: string, ctx: ServerContext) {
+  const lineup = await ctx.prisma.lineup.findUnique({
+    where: { gameId_playerId: { gameId, playerId } },
+  });
+  if (!lineup) throw new NotFoundError("Lineup", `${gameId}/${playerId}`);
+  return lineup;
+}
+
+export function maybeGetLineupEntry(
+  gameId: string,
+  playerId: string | null | undefined,
+  ctx: ServerContext,
+) {
+  return maybeGet((playerId) => getLineupEntry(gameId, playerId, ctx), playerId);
 }
 
 export async function addPlayerToLineup(data: LineupCreateInput, ctx: ServerContext) {
@@ -64,17 +80,27 @@ export async function setGameLineup(data: SetGameLineupInput, ctx: ServerContext
   const game = await getGameById(gameId, ctx);
   const team = await getTeamById(teamId, ctx);
   const players = await getPlayersByIds(playerIds, ctx);
-  invariant(players.length === playerIds.length, "One or more players not found");
 
   validateLineup(game, team, players);
 
-  return ctx.prisma.$transaction(async (tx) => {
-    await tx.lineup.deleteMany({ where: { gameId, teamId } });
-    await tx.lineup.createMany({
-      data: playerIds.map((playerId) => ({ gameId, teamId, playerId })),
+  try {
+    return ctx.prisma.$transaction(async (tx) => {
+      await tx.lineup.deleteMany({ where: { gameId, teamId } });
+      await tx.lineup.createMany({
+        data: playerIds.map((playerId) => ({ gameId, teamId, playerId })),
+      });
+      return tx.lineup.findMany({ where: { gameId, teamId } });
     });
-    return tx.lineup.findMany({ where: { gameId, teamId } });
-  });
+  } catch (error) {
+    if (
+      error instanceof Error &&
+      error.name === "PrismaClientKnownRequestError" &&
+      (error as unknown as { code: string }).code === "P2002"
+    ) {
+      throw new ConflictError("Player is already in a lineup for this game");
+    }
+    throw error;
+  }
 }
 
 function validateLineupEntry(game: Game, team: Team, player: Player) {
@@ -91,30 +117,16 @@ function validateLineup(game: Game, team: Team, players: Player[]) {
   }
 }
 
-export async function getLineupEntry(gameId: string, playerId: string, ctx: ServerContext) {
-  const lineup = await ctx.prisma.lineup.findUnique({
-    where: { gameId_playerId: { gameId, playerId } },
-  });
-  if (!lineup) throw new NotFoundError("Lineup", `${gameId}/${playerId}`);
-  return lineup;
-}
-
 // Field resolvers (batching via findUnique().relation())
 
 export async function getLineupGame(lineupId: string, ctx: ServerContext) {
-  const game = await ctx.prisma.lineup.findUnique({ where: { id: lineupId } })?.game();
-  if (!game) throw new NotFoundError("Lineup", lineupId);
-  return game;
+  return (await ctx.prisma.lineup.findUnique({ where: { id: lineupId } }).game())!;
 }
 
 export async function getLineupTeam(lineupId: string, ctx: ServerContext) {
-  const team = await ctx.prisma.lineup.findUnique({ where: { id: lineupId } })?.team();
-  if (!team) throw new NotFoundError("Lineup", lineupId);
-  return team;
+  return (await ctx.prisma.lineup.findUnique({ where: { id: lineupId } }).team())!;
 }
 
 export async function getLineupPlayer(lineupId: string, ctx: ServerContext) {
-  const player = await ctx.prisma.lineup.findUnique({ where: { id: lineupId } })?.player();
-  if (!player) throw new NotFoundError("Lineup", lineupId);
-  return player;
+  return (await ctx.prisma.lineup.findUnique({ where: { id: lineupId } }).player())!;
 }

@@ -24,7 +24,7 @@ export async function getGameById(id: string, ctx: ServerContext) {
 }
 
 export function maybeGetGameById(id: string | null | undefined, ctx: ServerContext) {
-  return maybeGet((id) => ctx.prisma.game.findUnique({ where: { id } }), id);
+  return maybeGet((id) => getGameById(id, ctx), id);
 }
 
 export async function createGame(data: GameCreateInput, ctx: ServerContext) {
@@ -110,20 +110,26 @@ export async function getGamePenalties(gameId: string, ctx: ServerContext) {
   return penalties ?? [];
 }
 
-export function getGameHomeTeamGoals(
+export async function getGameHomeTeamGoals(
   gameId: string,
   homeTeamId: string | null,
   ctx: ServerContext,
 ) {
   if (!homeTeamId) return [];
-  return ctx.prisma.goal.findMany({ where: { gameId, teamId: homeTeamId } });
+  const goals = await ctx.prisma.game
+    .findUnique({ where: { id: gameId } })
+    ?.goals({ where: { teamId: homeTeamId } });
+  return goals ?? [];
 }
 
-export function getGameAwayTeamGoals(
+export async function getGameAwayTeamGoals(
   gameId: string,
   awayTeamId: string | null,
   ctx: ServerContext,
 ) {
   if (!awayTeamId) return [];
-  return ctx.prisma.goal.findMany({ where: { gameId, teamId: awayTeamId } });
+  const goals = await ctx.prisma.game
+    .findUnique({ where: { id: gameId } })
+    ?.goals({ where: { teamId: awayTeamId } });
+  return goals ?? [];
 }
