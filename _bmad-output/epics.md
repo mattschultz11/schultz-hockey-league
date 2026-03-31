@@ -1044,6 +1044,41 @@ So that I can see my team's key information at a glance.
 
 ---
 
+### Story 6.4: Email Integration (Mailgun + ImprovMX)
+
+As a **league admin**,
+I want to send bulk, formatted emails to players from the app using my custom domain,
+So that I can communicate league announcements, draft updates, and scheduling info professionally.
+
+**Acceptance Criteria:**
+
+**Given** the app has Mailgun credentials configured
+**When** the email service is initialized
+**Then** it connects to the Mailgun API using `mailgun.js`
+**And** it is configured to send from `noreply@<MAILGUN_DOMAIN>`
+
+**Given** a valid recipient email and HTML content
+**When** the admin triggers an email send
+**Then** the email is delivered via Mailgun API with HTML body and plain-text fallback
+**And** the send is audit-logged
+
+**Given** an admin selects recipients (all players, a team, or custom selection)
+**When** the admin composes and sends a bulk email
+**Then** the app uses Mailgun batch sending with recipient variables (up to 1,000 per API call)
+**And** each recipient only sees their own address in the `To:` field
+
+**Given** bulk emails have been sent
+**When** an admin views the email history
+**Then** they see a list with date, subject, recipient count, and status
+
+**Given** the domain is configured
+**When** DNS records are set up per documentation
+**Then** ImprovMX handles inbound forwarding (support@domain -> Gmail)
+**And** Mailgun handles outbound sending (noreply@domain -> recipients)
+**And** SPF record combines both: `v=spf1 include:mailgun.org include:spf.improvmx.com ~all`
+
+---
+
 ## Summary
 
 Epic breakdown complete with 6 epics and 26 stories:

@@ -74,7 +74,9 @@ development_status:
   5-4-upload-stats-via-csv-json: backlog
   epic-5-retrospective: optional
 
-  epic-6: backlog
+  epic-6: in-progress
   6-1-export-rosters-and-schedules: backlog
-  6-2-league-team-overview-dashboards: backlog
+  6-2-league-overview-dashboard: backlog
+  6-3team-overview-dashboard: backlog
+  6-4-email-integration: ready-for-dev
   epic-6-retrospective: optional
