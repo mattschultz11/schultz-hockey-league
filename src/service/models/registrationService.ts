@@ -1,6 +1,8 @@
 import { NotFoundError, ValidationError } from "@/service/errors";
+import { AuditAction } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
+import { logAuditEntry } from "../audit/auditService";
 import { acceptRegistrationsSchema, registrationSchema } from "../validation/schemas";
 import { cleanInput, validate } from "./modelServiceUtils";
 import { getSeasonById } from "./seasonService";
@@ -25,7 +27,7 @@ export async function registerForSeason(data: unknown, ctx: ServerContext) {
     referral: validated.referral,
   });
 
-  return ctx.prisma.registration.upsert({
+  const result = await ctx.prisma.registration.upsert({
     where: {
       seasonId_email: {
         seasonId: validated.seasonId,
@@ -39,6 +41,16 @@ export async function registerForSeason(data: unknown, ctx: ServerContext) {
     },
     update: fields,
   });
+
+  logAuditEntry(ctx, {
+    action: AuditAction.CREATE,
+    entityType: "Registration",
+    entityId: result.id,
+    metadata: { seasonId: validated.seasonId, email: validated.email },
+    endpoint: "Mutation.register",
+  });
+
+  return result;
 }
 
 export async function getRegistrationsBySeason(seasonId: string, ctx: ServerContext) {

@@ -362,6 +362,103 @@ describe("playerService", () => {
       expect(result).toHaveLength(1);
     });
 
+    it("filters by multiple positions", async () => {
+      await createPlayer(
+        makePlayer({
+          userId: userAlice.id,
+          seasonId: season.id,
+          teamId: null,
+          position: Position.G,
+        }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: null, position: Position.F }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({
+          userId: userCharlie.id,
+          seasonId: season.id,
+          teamId: null,
+          position: Position.D,
+        }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog(
+        { seasonId: season.id, positions: [Position.G, Position.D] },
+        ctx,
+      );
+
+      expect(result).toHaveLength(2);
+    });
+
+    it("filters by multiple classifications", async () => {
+      await createPlayer(
+        makePlayer({
+          userId: userAlice.id,
+          seasonId: season.id,
+          teamId: null,
+          classification: Classification.ROSTER,
+        }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({
+          userId: userBob.id,
+          seasonId: season.id,
+          teamId: null,
+          classification: Classification.SUBSTITUTE,
+        }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({
+          userId: userCharlie.id,
+          seasonId: season.id,
+          teamId: null,
+          classification: Classification.INJURED,
+        }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog(
+        {
+          seasonId: season.id,
+          classifications: [Classification.ROSTER, Classification.SUBSTITUTE],
+        },
+        ctx,
+      );
+
+      expect(result).toHaveLength(2);
+    });
+
+    it("filters by multiple teamIds", async () => {
+      const teamA = await insertTeam({ seasonId: season.id, name: "Team A" });
+      const teamB = await insertTeam({ seasonId: season.id, name: "Team B" });
+      const teamC = await insertTeam({ seasonId: season.id, name: "Team C" });
+      await createPlayer(
+        makePlayer({ userId: userAlice.id, seasonId: season.id, teamId: teamA.id }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userBob.id, seasonId: season.id, teamId: teamB.id }),
+        ctx,
+      );
+      await createPlayer(
+        makePlayer({ userId: userCharlie.id, seasonId: season.id, teamId: teamC.id }),
+        ctx,
+      );
+
+      const result = await getPlayerCatalog(
+        { seasonId: season.id, teamIds: [teamA.id, teamC.id] },
+        ctx,
+      );
+
+      expect(result).toHaveLength(2);
+    });
+
     it("does not return players from other seasons", async () => {
       const otherSeason = await insertSeason();
       await createPlayer(

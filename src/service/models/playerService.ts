@@ -28,12 +28,20 @@ export function getPlayerCatalog(filter: PlayerCatalogFilter, ctx: ServerContext
     };
   }
 
-  if (filter.position) {
+  if (filter.positions && filter.positions.length > 0) {
+    where.position = { in: filter.positions };
+  } else if (filter.position) {
     where.position = filter.position;
   }
 
-  if (filter.classification) {
+  if (filter.classifications && filter.classifications.length > 0) {
+    where.classification = { in: filter.classifications };
+  } else if (filter.classification) {
     where.classification = filter.classification;
+  }
+
+  if (filter.teamIds && filter.teamIds.length > 0) {
+    where.teamId = { in: filter.teamIds };
   }
 
   if (filter.minPlayerRating != null || filter.maxPlayerRating != null) {

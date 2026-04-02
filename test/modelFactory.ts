@@ -742,3 +742,90 @@ export async function insertRegistration(
     data: registration,
   });
 }
+
+export type EmailSendModel = {
+  id: string;
+  subject: string;
+  htmlBody: string;
+  textBody: string | null;
+  recipientCount: number;
+  status: string;
+  sentById: string;
+};
+
+export function makeEmailSend(
+  overrides: Partial<
+    Pick<
+      EmailSendModel,
+      "subject" | "htmlBody" | "textBody" | "recipientCount" | "status" | "sentById"
+    >
+  > = {},
+): EmailSendModel {
+  const {
+    subject = randSentence(),
+    htmlBody = `<p>${randSentence()}</p>`,
+    textBody = randSentence(),
+    recipientCount = randNumber({ min: 1, max: 50 }),
+    status = "sent",
+    sentById = randUuid(),
+  } = overrides;
+
+  return {
+    id: randUuid(),
+    subject,
+    htmlBody,
+    textBody,
+    recipientCount,
+    status,
+    sentById,
+  };
+}
+
+export async function insertEmailSend(
+  overrides: Partial<EmailSendModel> = {},
+): Promise<EmailSendModel & { createdAt: Date; sentAt: Date }> {
+  const sentById = overrides.sentById ?? (await insertUser()).id;
+  const emailSend = makeEmailSend({ ...overrides, sentById });
+
+  return await prisma.emailSend.create({
+    data: emailSend,
+  });
+}
+
+export type EmailRecipientModel = {
+  id: string;
+  emailSendId: string;
+  address: string;
+  name: string | null;
+  status: string;
+};
+
+export function makeEmailRecipient(
+  overrides: Partial<Pick<EmailRecipientModel, "address" | "name" | "status" | "emailSendId">> = {},
+): EmailRecipientModel {
+  const {
+    emailSendId = randUuid(),
+    address = randEmail(),
+    name = `${randFirstName()} ${randLastName()}`,
+    status = "queued",
+  } = overrides;
+
+  return {
+    id: randUuid(),
+    emailSendId,
+    address,
+    name,
+    status,
+  };
+}
+
+export async function insertEmailRecipient(
+  emailSendId: string,
+  overrides: Partial<EmailRecipientModel> = {},
+): Promise<EmailRecipientModel & { createdAt: Date }> {
+  const recipient = makeEmailRecipient({ ...overrides, emailSendId });
+
+  return await prisma.emailRecipient.create({
+    data: recipient,
+  });
+}

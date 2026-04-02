@@ -288,6 +288,14 @@ export const createDraftSchema = Schema.Struct({
   snakeStartRound: Schema.NullishOr(Schema.Int.pipe(Schema.greaterThanOrEqualTo(2))),
 });
 
+export const sendBulkEmailSchema = Schema.Struct({
+  seasonId: Id,
+  recipientEmails: Schema.Array(Email).pipe(Schema.minItems(1)),
+  subject: Schema.Trim.pipe(Schema.minLength(1)),
+  html: Schema.Trim.pipe(Schema.minLength(1)),
+  text: Schema.optional(Schema.Trim),
+});
+
 export const registrationSchema = Schema.Struct({
   seasonId: Id,
   email: Email,

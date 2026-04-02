@@ -3,6 +3,8 @@ import type { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } f
 
 import type {
   DraftPick as PrismaDraftPick,
+  EmailRecipient as PrismaEmailRecipient,
+  EmailSend as PrismaEmailSend,
   Game as PrismaGame,
   Goal as PrismaGoal,
   League as PrismaLeague,
@@ -349,6 +351,8 @@ export type Query = {
   registrations: Array<Registration>;
   registration?: Maybe<Registration>;
   auditLog: Array<AuditLog>;
+  emailHistory: Array<EmailSend>;
+  emailSend?: Maybe<EmailSend>;
 };
 
 export type QueryUserArgs = {
@@ -448,12 +452,24 @@ export type QueryAuditLogArgs = {
   offset?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
+export type QueryEmailHistoryArgs = {
+  limit?: InputMaybe<Scalars["Int"]["input"]>;
+  offset?: InputMaybe<Scalars["Int"]["input"]>;
+};
+
+export type QueryEmailSendArgs = {
+  id: Scalars["ID"]["input"];
+};
+
 export type PlayerCatalogFilter = {
   seasonId: Scalars["ID"]["input"];
   search?: InputMaybe<Scalars["String"]["input"]>;
   position?: InputMaybe<Position>;
+  positions?: InputMaybe<Array<Position>>;
   available?: InputMaybe<Scalars["Boolean"]["input"]>;
   classification?: InputMaybe<Classification>;
+  classifications?: InputMaybe<Array<Classification>>;
+  teamIds?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   minPlayerRating?: InputMaybe<Scalars["Float"]["input"]>;
   maxPlayerRating?: InputMaybe<Scalars["Float"]["input"]>;
   minGoalieRating?: InputMaybe<Scalars["Float"]["input"]>;
@@ -690,6 +706,7 @@ export type Mutation = {
   register: Registration;
   createDraft: Array<DraftPick>;
   acceptRegistrations: Array<Player>;
+  sendBulkEmail: SendBulkEmailResult;
 };
 
 export type MutationCreateUserArgs = {
@@ -839,6 +856,10 @@ export type MutationAcceptRegistrationsArgs = {
   registrationIds: Array<Scalars["ID"]["input"]>;
 };
 
+export type MutationSendBulkEmailArgs = {
+  data: SendBulkEmailInput;
+};
+
 export type DraftRotation = "CYCLICAL" | "SNAKE" | "HYBRID";
 
 export type CreateDraftInput = {
@@ -847,6 +868,50 @@ export type CreateDraftInput = {
   rounds: Scalars["Int"]["input"];
   rotation: DraftRotation;
   snakeStartRound?: InputMaybe<Scalars["Int"]["input"]>;
+};
+
+export type EmailSend = {
+  __typename?: "EmailSend";
+  id: Scalars["ID"]["output"];
+  createdAt: Scalars["DateTime"]["output"];
+  subject: Scalars["String"]["output"];
+  htmlBody: Scalars["String"]["output"];
+  textBody?: Maybe<Scalars["String"]["output"]>;
+  recipientCount: Scalars["Int"]["output"];
+  status: Scalars["String"]["output"];
+  sentAt: Scalars["DateTime"]["output"];
+  sentById: Scalars["ID"]["output"];
+  recipients: Array<EmailRecipient>;
+};
+
+export type EmailRecipient = {
+  __typename?: "EmailRecipient";
+  id: Scalars["ID"]["output"];
+  emailSendId: Scalars["ID"]["output"];
+  address: Scalars["String"]["output"];
+  name?: Maybe<Scalars["String"]["output"]>;
+  status: Scalars["String"]["output"];
+};
+
+export type SendBulkEmailResult = {
+  __typename?: "SendBulkEmailResult";
+  emailSend: EmailSend;
+  totalSent: Scalars["Int"]["output"];
+  failures: Array<EmailFailure>;
+};
+
+export type EmailFailure = {
+  __typename?: "EmailFailure";
+  email: Scalars["String"]["output"];
+  error: Scalars["String"]["output"];
+};
+
+export type SendBulkEmailInput = {
+  seasonId: Scalars["ID"]["input"];
+  recipientEmails: Array<Scalars["String"]["input"]>;
+  subject: Scalars["String"]["input"];
+  html: Scalars["String"]["input"];
+  text?: InputMaybe<Scalars["String"]["input"]>;
 };
 
 export type RegistrationInput = {
@@ -1024,6 +1089,13 @@ export type ResolversTypes = {
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
   DraftRotation: DraftRotation;
   CreateDraftInput: CreateDraftInput;
+  EmailSend: ResolverTypeWrapper<PrismaEmailSend>;
+  EmailRecipient: ResolverTypeWrapper<PrismaEmailRecipient>;
+  SendBulkEmailResult: ResolverTypeWrapper<
+    Omit<SendBulkEmailResult, "emailSend"> & { emailSend: ResolversTypes["EmailSend"] }
+  >;
+  EmailFailure: ResolverTypeWrapper<EmailFailure>;
+  SendBulkEmailInput: SendBulkEmailInput;
   RegistrationInput: RegistrationInput;
 };
 
@@ -1081,6 +1153,13 @@ export type ResolversParentTypes = {
   DraftPickUpdateInput: DraftPickUpdateInput;
   Mutation: Record<PropertyKey, never>;
   CreateDraftInput: CreateDraftInput;
+  EmailSend: PrismaEmailSend;
+  EmailRecipient: PrismaEmailRecipient;
+  SendBulkEmailResult: Omit<SendBulkEmailResult, "emailSend"> & {
+    emailSend: ResolversParentTypes["EmailSend"];
+  };
+  EmailFailure: EmailFailure;
+  SendBulkEmailInput: SendBulkEmailInput;
   RegistrationInput: RegistrationInput;
 };
 
@@ -1491,6 +1570,18 @@ export type QueryResolvers<
     ContextType,
     Partial<QueryAuditLogArgs>
   >;
+  emailHistory?: Resolver<
+    Array<ResolversTypes["EmailSend"]>,
+    ParentType,
+    ContextType,
+    Partial<QueryEmailHistoryArgs>
+  >;
+  emailSend?: Resolver<
+    Maybe<ResolversTypes["EmailSend"]>,
+    ParentType,
+    ContextType,
+    RequireFields<QueryEmailSendArgs, "id">
+  >;
 };
 
 export type MutationResolvers<
@@ -1701,6 +1792,58 @@ export type MutationResolvers<
     ContextType,
     RequireFields<MutationAcceptRegistrationsArgs, "seasonId" | "registrationIds">
   >;
+  sendBulkEmail?: Resolver<
+    ResolversTypes["SendBulkEmailResult"],
+    ParentType,
+    ContextType,
+    RequireFields<MutationSendBulkEmailArgs, "data">
+  >;
+};
+
+export type EmailSendResolvers<
+  ContextType = ServerContext,
+  ParentType extends ResolversParentTypes["EmailSend"] = ResolversParentTypes["EmailSend"],
+> = {
+  id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  createdAt?: Resolver<ResolversTypes["DateTime"], ParentType, ContextType>;
+  subject?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  htmlBody?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  textBody?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
+  recipientCount?: Resolver<ResolversTypes["Int"], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  sentAt?: Resolver<ResolversTypes["DateTime"], ParentType, ContextType>;
+  sentById?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  recipients?: Resolver<Array<ResolversTypes["EmailRecipient"]>, ParentType, ContextType>;
+};
+
+export type EmailRecipientResolvers<
+  ContextType = ServerContext,
+  ParentType extends
+    ResolversParentTypes["EmailRecipient"] = ResolversParentTypes["EmailRecipient"],
+> = {
+  id?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  emailSendId?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  address?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  name?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
+  status?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+};
+
+export type SendBulkEmailResultResolvers<
+  ContextType = ServerContext,
+  ParentType extends
+    ResolversParentTypes["SendBulkEmailResult"] = ResolversParentTypes["SendBulkEmailResult"],
+> = {
+  emailSend?: Resolver<ResolversTypes["EmailSend"], ParentType, ContextType>;
+  totalSent?: Resolver<ResolversTypes["Int"], ParentType, ContextType>;
+  failures?: Resolver<Array<ResolversTypes["EmailFailure"]>, ParentType, ContextType>;
+};
+
+export type EmailFailureResolvers<
+  ContextType = ServerContext,
+  ParentType extends ResolversParentTypes["EmailFailure"] = ResolversParentTypes["EmailFailure"],
+> = {
+  email?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
+  error?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
 };
 
 export type Resolvers<ContextType = ServerContext> = {
@@ -1720,4 +1863,8 @@ export type Resolvers<ContextType = ServerContext> = {
   AuditLog?: AuditLogResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
   Mutation?: MutationResolvers<ContextType>;
+  EmailSend?: EmailSendResolvers<ContextType>;
+  EmailRecipient?: EmailRecipientResolvers<ContextType>;
+  SendBulkEmailResult?: SendBulkEmailResultResolvers<ContextType>;
+  EmailFailure?: EmailFailureResolvers<ContextType>;
 };

@@ -27,6 +27,7 @@ model User {
   archivedAt DateTime?
   role       Role        @default(PLAYER)
   seasons    Player[]
+  emailSends EmailSend[]
 }
 
 enum Role {
@@ -340,4 +341,28 @@ model DraftPick {
   playerRating Float?
   /// Snapshot of the goalie's rating at the time of the draft
   goalieRating Float?
+}
+
+model EmailSend {
+  id             String           @id @default(uuid())
+  createdAt      DateTime         @default(now())
+  subject        String
+  htmlBody       String
+  textBody       String?
+  recipientCount Int
+  status         String           @default("sent")
+  sentAt         DateTime         @default(now())
+  sentBy         User             @relation(fields: [sentById], references: [id])
+  sentById       String
+  recipients     EmailRecipient[]
+}
+
+model EmailRecipient {
+  id          String    @id @default(uuid())
+  createdAt   DateTime  @default(now())
+  emailSend   EmailSend @relation(fields: [emailSendId], references: [id])
+  emailSendId String
+  address     String
+  name        String?
+  status      String    @default("queued")
 }

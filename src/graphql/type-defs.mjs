@@ -350,14 +350,20 @@ export const typeDefs = /* GraphQL */ `
       limit: Int
       offset: Int
     ): [AuditLog!]!
+
+    emailHistory(limit: Int, offset: Int): [EmailSend!]!
+    emailSend(id: ID!): EmailSend
   }
 
   input PlayerCatalogFilter {
     seasonId: ID!
     search: String
     position: Position
+    positions: [Position!]
     available: Boolean
     classification: Classification
+    classifications: [Classification!]
+    teamIds: [ID!]
     minPlayerRating: Float
     maxPlayerRating: Float
     minGoalieRating: Float
@@ -605,6 +611,8 @@ export const typeDefs = /* GraphQL */ `
     createDraft(data: CreateDraftInput!): [DraftPick!]!
 
     acceptRegistrations(seasonId: ID!, registrationIds: [ID!]!): [Player!]!
+
+    sendBulkEmail(data: SendBulkEmailInput!): SendBulkEmailResult!
   }
 
   enum DraftRotation {
@@ -619,6 +627,46 @@ export const typeDefs = /* GraphQL */ `
     rounds: Int!
     rotation: DraftRotation!
     snakeStartRound: Int
+  }
+
+  type EmailSend {
+    id: ID!
+    createdAt: DateTime!
+    subject: String!
+    htmlBody: String!
+    textBody: String
+    recipientCount: Int!
+    status: String!
+    sentAt: DateTime!
+    sentById: ID!
+    recipients: [EmailRecipient!]!
+  }
+
+  type EmailRecipient {
+    id: ID!
+    emailSendId: ID!
+    address: String!
+    name: String
+    status: String!
+  }
+
+  type SendBulkEmailResult {
+    emailSend: EmailSend!
+    totalSent: Int!
+    failures: [EmailFailure!]!
+  }
+
+  type EmailFailure {
+    email: String!
+    error: String!
+  }
+
+  input SendBulkEmailInput {
+    seasonId: ID!
+    recipientEmails: [String!]!
+    subject: String!
+    html: String!
+    text: String
   }
 
   input RegistrationInput {

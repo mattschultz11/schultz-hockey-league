@@ -1,21 +1,25 @@
 import type { JsonValue } from "@prisma/client/runtime/client";
+import { Option } from "effect";
 import type { ValueNode } from "graphql";
 import { GraphQLScalarType, Kind } from "graphql";
 
-import { getAuditLog, logAuditEntry } from "@/service/audit/auditService";
+import { getAuditLog } from "@/service/audit/auditService";
 import { PolicyName, withPolicy } from "@/service/auth/rbacPolicy";
+import * as emailService from "@/service/email/emailService";
 import * as draftPickService from "@/service/models/draftPickService";
+import * as emailSendService from "@/service/models/emailSendService";
 import * as gameService from "@/service/models/gameService";
 import * as goalService from "@/service/models/goalService";
 import * as leagueService from "@/service/models/leagueService";
 import * as lineupService from "@/service/models/lineupService";
+import { validate } from "@/service/models/modelServiceUtils";
 import * as penaltyService from "@/service/models/penaltyService";
 import * as playerService from "@/service/models/playerService";
 import * as registrationService from "@/service/models/registrationService";
 import * as seasonService from "@/service/models/seasonService";
 import * as teamService from "@/service/models/teamService";
 import * as userService from "@/service/models/userService";
-import { AuditAction } from "@/service/prisma";
+import { sendBulkEmailSchema } from "@/service/validation/schemas";
 import type { ServerContext } from "@/types";
 
 import type { AuditLog, Resolvers } from "./generated";
@@ -116,6 +120,13 @@ export const resolvers: Resolvers = {
     auditLog: withPolicy(
       PolicyName.ADMIN,
       (_p, args, ctx) => getAuditLog(args, ctx) as Promise<AuditLog[]>,
+    ),
+
+    emailHistory: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      emailSendService.getEmailSends(ctx, { limit: args.limit, offset: args.offset }),
+    ),
+    emailSend: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+      emailSendService.getEmailSendById(args.id, ctx),
     ),
   },
 
@@ -226,21 +237,27 @@ export const resolvers: Resolvers = {
       draftPickService.deleteDraftPick(args.id, ctx),
     ),
 
-    register: async (_p, args, ctx) => {
-      const result = await registrationService.registerForSeason(args.data, ctx);
-      logAuditEntry(ctx, {
-        action: AuditAction.CREATE,
-        entityType: "Registration",
-        entityId: result.id,
-        metadata: { seasonId: args.data.seasonId, email: args.data.email },
-        endpoint: "Mutation.register",
-      });
-      return result;
-    },
-
+    register: async (_p, args, ctx) => registrationService.registerForSeason(args.data, ctx),
     acceptRegistrations: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       registrationService.acceptRegistrations(args.seasonId, args.registrationIds, ctx),
     ),
+
+    sendBulkEmail: withPolicy(PolicyName.ADMIN, async (_p, args, ctx) => {
+      validate(sendBulkEmailSchema, args.data);
+      const { seasonId, recipientEmails, subject, html, text: rawText } = args.data;
+
+      return emailService.sendBulkTemplatedEmail(
+        {
+          seasonId,
+          recipientEmails,
+          subject,
+          html,
+          text: rawText ?? undefined,
+          sentById: Option.getOrThrow(ctx.user).id,
+        },
+        ctx,
+      );
+    }),
   },
 
   User: {
@@ -370,6 +387,10 @@ export const resolvers: Resolvers = {
       draftPickService.getDraftPickTeam(parent.id, ctx),
     player: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
       draftPickService.getDraftPickPlayer(parent.id, ctx),
+  },
+  EmailSend: {
+    recipients: (parent: { id: string }, _args: unknown, ctx: GraphQLContext) =>
+      emailSendService.getEmailSendRecipients(parent.id, ctx),
   },
   AuditLog: {
     metadata: (parent: { metadata?: JsonValue }) =>

@@ -34,6 +34,8 @@ const schema = makeExecutableSchema({ typeDefs });
           Lineup: "@/service/prisma#Lineup as PrismaLineup",
           DraftPick: "@/service/prisma#DraftPick as PrismaDraftPick",
           Registration: "@/service/prisma#Registration as PrismaRegistration",
+          EmailSend: "@/service/prisma#EmailSend as PrismaEmailSend",
+          EmailRecipient: "@/service/prisma#EmailRecipient as PrismaEmailRecipient",
         },
       },
       plugins: [{ typescript: {} }, { typescriptResolvers: {} }],
