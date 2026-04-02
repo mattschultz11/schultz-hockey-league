@@ -134,6 +134,8 @@ type SendBulkEmailResult = {
 // --- Template Variables Reference ---
 
 const TEMPLATE_VARS = [
+  "baseUrl",
+  "player.id",
   "player.user.firstName",
   "player.user.lastName",
   "player.user.email",

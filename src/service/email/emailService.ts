@@ -42,7 +42,7 @@ export async function sendEmail(params: SendEmailParams): Promise<SendEmailResul
   try {
     assertConfigured();
     const result = await getClient().messages.create(MAILGUN_DOMAIN, {
-      from: `League <noreply@${MAILGUN_DOMAIN}>`,
+      from: `Schultz Hockey League <noreply@${MAILGUN_DOMAIN}>`,
       to,
       subject,
       html,
@@ -77,7 +77,7 @@ export async function sendBulkEmail(params: SendBulkEmailParams): Promise<SendBu
     try {
       assertConfigured();
       await getClient().messages.create(MAILGUN_DOMAIN, {
-        from: `League <noreply@${MAILGUN_DOMAIN}>`,
+        from: `Schultz Hockey League <noreply@${MAILGUN_DOMAIN}>`,
         to,
         subject,
         html,
@@ -132,8 +132,10 @@ export async function sendBulkTemplatedEmail(
   });
 
   // Build per-recipient personalized content via template rendering
+  const baseUrl = process.env.NEXTAUTH_URL ?? "http://localhost:3000";
   const recipients = players.map((p) => {
     const templateData = {
+      baseUrl,
       player: {
         id: p.id,
         number: p.number,

@@ -1,0 +1,161 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SHL -Season Confirmation</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f5;
+      font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+    "
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="background-color: #f4f4f5; padding: 40px 20px"
+    >
+      <tr>
+        <td align="center">
+          <table
+            role="presentation"
+            width="600"
+            cellpadding="0"
+            cellspacing="0"
+            style="background-color: #ffffff; border-radius: 8px; overflow: hidden"
+          >
+            <!-- Header -->
+            <tr>
+              <td style="background-color: #18181b; padding: 24px 32px; text-align: center">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700">
+                  {{player.season.league.name}}
+                </h1>
+              </td>
+            </tr>
+            <!-- Body -->
+            <tr>
+              <td style="padding: 32px">
+                <p style="margin: 0 0 16px; font-size: 16px; color: #27272a">
+                  Hi {{player.user.firstName}},
+                </p>
+                <p style="margin: 0 0 24px; font-size: 16px; color: #27272a">
+                  We're gearing up for <strong>{{player.season.name}}</strong>! Please let us know
+                  if you'll be joining us this season.
+                </p>
+                <!-- Button -->
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="margin: 0 auto 24px"
+                >
+                  <tr>
+                    <td>
+                      <a
+                        href="{{baseUrl}}/leagues/{{player.season.league.slug}}/seasons/{{player.season.slug}}/players/{{player.id}}/confirmation"
+                        style="
+                          display: inline-block;
+                          padding: 14px 32px;
+                          background-color: #3b82f6;
+                          color: #ffffff;
+                          text-decoration: none;
+                          font-size: 16px;
+                          font-weight: 600;
+                          border-radius: 8px;
+                        "
+                      >
+                        Respond Now
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+                <!-- Notes -->
+                <p style="margin: 0 0 12px; font-size: 16px; font-weight: 600; color: #27272a">
+                  A few notes:
+                </p>
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  width="100%"
+                  style="margin: 0 0 24px"
+                >
+                  <tr>
+                    <td
+                      style="padding: 0 0 10px; font-size: 15px; color: #27272a; line-height: 1.5"
+                      valign="top"
+                      width="20"
+                    >
+                      &bull;
+                    </td>
+                    <td
+                      style="padding: 0 0 10px; font-size: 15px; color: #27272a; line-height: 1.5"
+                    >
+                      The first skate will take place on April 19th at 3pm at Arctic Edge in Canton
+                      &mdash; this will be a rate skate to determine your rating prior to the draft
+                    </td>
+                  </tr>
+                  <tr>
+                    <td
+                      style="padding: 0 0 10px; font-size: 15px; color: #27272a; line-height: 1.5"
+                      valign="top"
+                    >
+                      &bull;
+                    </td>
+                    <td
+                      style="padding: 0 0 10px; font-size: 15px; color: #27272a; line-height: 1.5"
+                    >
+                      All players must be paid in full prior to the first skate
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="font-size: 15px; color: #27272a; line-height: 1.5" valign="top">
+                      &bull;
+                    </td>
+                    <td style="font-size: 15px; color: #27272a; line-height: 1.5">
+                      The league fee is $180 and can be paid via
+                      <a
+                        href="https://venmo.com/SchultzHockeyLeague"
+                        style="color: #3b82f6; text-decoration: none"
+                        >Venmo @SchultzHockeyLeague</a
+                      >
+                      or cash prior to the first skate
+                    </td>
+                  </tr>
+                </table>
+                <p style="margin: 0; font-size: 14px; color: #71717a">
+                  Questions? Contact us at
+                  <a
+                    href="mailto:support@schultzhockey.com"
+                    style="color: #3b82f6; text-decoration: none"
+                    >support@schultzhockey.com</a
+                  >
+                </p>
+              </td>
+            </tr>
+            <!-- Footer -->
+            <tr>
+              <td
+                style="
+                  padding: 16px 32px;
+                  background-color: #fafafa;
+                  border-top: 1px solid #e4e4e7;
+                  text-align: center;
+                "
+              >
+                <p style="margin: 0; font-size: 12px; color: #a1a1aa">
+                  {{player.season.league.name}} — {{player.season.name}}
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

@@ -186,6 +186,7 @@ export type Player = {
   goalieRating?: Maybe<Scalars["Float"]["output"]>;
   lockerRating?: Maybe<Scalars["Float"]["output"]>;
   registrationNumber?: Maybe<Scalars["String"]["output"]>;
+  confirmed?: Maybe<Scalars["Boolean"]["output"]>;
   goals: Array<Goal>;
   assists: Array<Goal>;
   penalties: Array<Penalty>;
@@ -707,6 +708,7 @@ export type Mutation = {
   createDraft: Array<DraftPick>;
   acceptRegistrations: Array<Player>;
   sendBulkEmail: SendBulkEmailResult;
+  confirmPlayer: Player;
 };
 
 export type MutationCreateUserArgs = {
@@ -858,6 +860,11 @@ export type MutationAcceptRegistrationsArgs = {
 
 export type MutationSendBulkEmailArgs = {
   data: SendBulkEmailInput;
+};
+
+export type MutationConfirmPlayerArgs = {
+  id: Scalars["ID"]["input"];
+  confirmed: Scalars["Boolean"]["input"];
 };
 
 export type DraftRotation = "CYCLICAL" | "SNAKE" | "HYBRID";
@@ -1274,6 +1281,7 @@ export type PlayerResolvers<
   goalieRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
   lockerRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
   registrationNumber?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
+  confirmed?: Resolver<Maybe<ResolversTypes["Boolean"]>, ParentType, ContextType>;
   goals?: Resolver<Array<ResolversTypes["Goal"]>, ParentType, ContextType>;
   assists?: Resolver<Array<ResolversTypes["Goal"]>, ParentType, ContextType>;
   penalties?: Resolver<Array<ResolversTypes["Penalty"]>, ParentType, ContextType>;
@@ -1797,6 +1805,12 @@ export type MutationResolvers<
     ParentType,
     ContextType,
     RequireFields<MutationSendBulkEmailArgs, "data">
+  >;
+  confirmPlayer?: Resolver<
+    ResolversTypes["Player"],
+    ParentType,
+    ContextType,
+    RequireFields<MutationConfirmPlayerArgs, "id" | "confirmed">
   >;
 };
 

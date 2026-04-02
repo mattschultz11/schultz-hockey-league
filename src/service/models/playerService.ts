@@ -119,6 +119,14 @@ function validatePlayerTeam(seasonId: string, team: Option.Option<Team>) {
   );
 }
 
+export async function confirmPlayer(id: string, confirmed: boolean, ctx: ServerContext) {
+  await getPlayerById(id, ctx);
+  return ctx.prisma.player.update({
+    where: { id },
+    data: { confirmed },
+  });
+}
+
 export function deletePlayer(id: string, ctx: ServerContext) {
   return ctx.prisma.player.delete({ where: { id } });
 }

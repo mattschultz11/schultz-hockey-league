@@ -173,6 +173,7 @@ export const typeDefs = /* GraphQL */ `
     goalieRating: Float
     lockerRating: Float
     registrationNumber: String
+    confirmed: Boolean
     goals: [Goal!]!
     assists: [Goal!]!
     penalties: [Penalty!]!
@@ -613,6 +614,8 @@ export const typeDefs = /* GraphQL */ `
     acceptRegistrations(seasonId: ID!, registrationIds: [ID!]!): [Player!]!
 
     sendBulkEmail(data: SendBulkEmailInput!): SendBulkEmailResult!
+
+    confirmPlayer(id: ID!, confirmed: Boolean!): Player!
   }
 
   enum DraftRotation {

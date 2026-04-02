@@ -242,6 +242,8 @@ export const resolvers: Resolvers = {
       registrationService.acceptRegistrations(args.seasonId, args.registrationIds, ctx),
     ),
 
+    confirmPlayer: (_p, args, ctx) => playerService.confirmPlayer(args.id, args.confirmed, ctx),
+
     sendBulkEmail: withPolicy(PolicyName.ADMIN, async (_p, args, ctx) => {
       validate(sendBulkEmailSchema, args.data);
       const { seasonId, recipientEmails, subject, html, text: rawText } = args.data;

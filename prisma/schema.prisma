@@ -127,6 +127,7 @@ model Player {
   goalieRating       Float?
   lockerRating       Float?
   registrationNumber String?
+  confirmed          Boolean?
   goals              Goal[]         @relation("Scorer")
   primaryAssists     Goal[]         @relation("PrimaryAssist")
   secondaryAssists   Goal[]         @relation("SecondaryAssist")
