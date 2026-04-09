@@ -28,14 +28,15 @@ import { BsGrid, BsTable } from "react-icons/bs";
 
 import type { Position } from "@/graphql/generated";
 import {
+  formatAge,
   formatDate,
   formatEnum,
   formatName,
   formatPhoneNumber,
   formatPosition,
-  formatRating,
+  formatPositionRating,
   playerPosition,
-  playerRating,
+  positionRating,
 } from "@/utils/stringUtils";
 
 import DataTable from "./DataTable";
@@ -158,12 +159,15 @@ function RegistrationCard({
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
           <Field label="Phone" value={formatPhoneNumber(reg.phone ?? "")} />
-          <Field label="Birthday" value={formatDate(reg.birthday)} />
+          <Field label="Age" value={formatAge(reg.birthday)} />
           <Field
             label={isGoalie ? "Glove Hand" : "Handedness"}
             value={formatEnum((isGoalie ? reg.gloveHand : reg.handedness) ?? "")}
           />
-          <Field label={isGoalie ? "Goalie Rating" : "Player Rating"} value={playerRating(reg)} />
+          <Field
+            label={isGoalie ? "Goalie Rating" : "Player Rating"}
+            value={formatPositionRating(reg)}
+          />
           <Field label="Type" value={formatEnum(reg.classification)} />
           {reg.referral && <Field label="Referral" value={reg.referral} span />}
         </div>
@@ -258,11 +262,8 @@ export default function RegistrationsTable({
         case "position":
           cmp = (a.position ?? "").localeCompare(b.position ?? "");
           break;
-        case "playerRating":
-          cmp = (a.playerRating ?? 0) - (b.playerRating ?? 0);
-          break;
-        case "goalieRating":
-          cmp = (a.goalieRating ?? 0) - (b.goalieRating ?? 0);
+        case "rating":
+          cmp = (positionRating(a) ?? 0) - (positionRating(b) ?? 0);
           break;
         case "classification":
           cmp = a.classification.localeCompare(b.classification);
@@ -433,17 +434,12 @@ export default function RegistrationsTable({
               Email
             </TableColumn>
             <TableColumn>Phone</TableColumn>
-            <TableColumn>Birthday</TableColumn>
+            <TableColumn>Age</TableColumn>
             <TableColumn key="position" allowsSorting>
               Position
             </TableColumn>
-            <TableColumn>Handedness</TableColumn>
-            <TableColumn key="playerRating" allowsSorting>
-              Player Rating
-            </TableColumn>
-            <TableColumn>Glove Hand</TableColumn>
-            <TableColumn key="goalieRating" allowsSorting>
-              Goalie Rating
+            <TableColumn key="rating" allowsSorting>
+              Rating
             </TableColumn>
             <TableColumn key="classification" allowsSorting>
               Type
@@ -488,12 +484,9 @@ export default function RegistrationsTable({
                   <TableCell>{name}</TableCell>
                   <TableCell>{reg.email}</TableCell>
                   <TableCell>{formatPhoneNumber(reg.phone ?? "")}</TableCell>
-                  <TableCell>{formatDate(reg.birthday)}</TableCell>
+                  <TableCell>{formatAge(reg.birthday)}</TableCell>
                   <TableCell>{playerPosition(reg)}</TableCell>
-                  <TableCell>{formatEnum(reg.handedness)}</TableCell>
-                  <TableCell>{formatRating(reg.playerRating)}</TableCell>
-                  <TableCell>{formatEnum(reg.gloveHand)}</TableCell>
-                  <TableCell>{formatRating(reg.goalieRating)}</TableCell>
+                  <TableCell>{formatPositionRating(reg)}</TableCell>
                   <TableCell>{formatEnum(reg.classification)}</TableCell>
                   <TableCell>{reg.referral ?? ""}</TableCell>
                   <TableCell>{formatDate(reg.createdAt)}</TableCell>

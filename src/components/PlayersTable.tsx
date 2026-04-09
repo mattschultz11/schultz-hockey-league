@@ -4,10 +4,10 @@ import { TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@herou
 
 import type { Position } from "@/graphql/generated";
 import {
+  formatPositionRating,
   playerName,
   playerNumber,
   playerPosition,
-  playerRating,
   teamName,
 } from "@/utils/stringUtils";
 
@@ -69,7 +69,7 @@ export default function PlayersTable({ players }: PlayersTableProps) {
       name: playerName(player),
       team: teamName(player.team),
       number: playerNumber(player),
-      rating: playerRating(player),
+      rating: formatPositionRating(player),
       position: playerPosition(player),
       games: player._count.lineups,
       goals,

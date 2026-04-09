@@ -5,6 +5,18 @@ function formatDate(date?: Date | string | null) {
   return new Date(date).toLocaleDateString();
 }
 
+function formatAge(date?: Date | string | null) {
+  if (!date) return "-";
+  const birthDate = new Date(date);
+  const today = new Date();
+  let age = today.getFullYear() - birthDate.getFullYear();
+  const m = today.getMonth() - birthDate.getMonth();
+  if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+    age--;
+  }
+  return age;
+}
+
 function formatDateTime(dateTime?: Date | null) {
   if (!dateTime) return "-";
   return new Date(dateTime).toLocaleDateString() + " " + new Date(dateTime).toLocaleTimeString();
@@ -72,7 +84,11 @@ type PlayerWithRating = {
   goalieRating: number | null;
 };
 
-function playerRating(player?: PlayerWithRating | null) {
+function positionRating(player?: PlayerWithRating | null) {
+  return player?.position === "G" ? player?.goalieRating : player?.playerRating;
+}
+
+function formatPositionRating(player?: PlayerWithRating | null) {
   if (!player) return "-";
   if (!player.playerRating && !player.goalieRating) return "-";
   if (player.position === "G") return formatRating(player.goalieRating);
@@ -105,16 +121,18 @@ function teamName(team?: TeamWithName | null) {
 }
 
 export {
+  formatAge,
   formatDate,
   formatDateTime,
   formatEnum,
   formatName,
   formatPhoneNumber,
   formatPosition,
+  formatPositionRating,
   formatRating,
   playerName,
   playerNumber,
   playerPosition,
-  playerRating,
+  positionRating,
   teamName,
 };

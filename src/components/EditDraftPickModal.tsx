@@ -17,7 +17,7 @@ import {
 import { useState } from "react";
 
 import type { Position } from "@/graphql/generated";
-import { playerName, playerPosition, playerRating } from "@/utils/stringUtils";
+import { formatPositionRating, playerName, playerPosition } from "@/utils/stringUtils";
 
 const UPDATE_DRAFT_PICK_MUTATION = gql`
   mutation UpdateDraftPick($id: ID!, $data: DraftPickUpdateInput!) {
@@ -137,7 +137,7 @@ export default function EditDraftPickModal({
                 <div className="flex items-center justify-between gap-2">
                   <span>{playerName(p)}</span>
                   <span className="text-default-400 text-xs">
-                    {playerPosition(p)} {playerRating(p)}
+                    {playerPosition(p)} {formatPositionRating(p)}
                   </span>
                 </div>
               </SelectItem>

@@ -3,7 +3,7 @@
 import { TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 
 import type { Position } from "@/graphql/generated";
-import { playerName, playerPosition, playerRating } from "@/utils/stringUtils";
+import { formatPositionRating, playerName, playerPosition } from "@/utils/stringUtils";
 
 import DataTable from "./DataTable";
 
@@ -46,7 +46,7 @@ export default function TeamTable({ team }: TeamTableProps) {
         id: player.id,
         name: playerName(player),
         position: playerPosition(player),
-        rating: playerRating(player),
+        rating: formatPositionRating(player),
         pick: player.draftPick?.round ?? 0,
       };
     })

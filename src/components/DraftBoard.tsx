@@ -26,9 +26,9 @@ import { MdLockReset } from "react-icons/md";
 import type { Position } from "@/graphql/generated";
 import {
   formatName,
+  formatPositionRating,
   playerName,
   playerPosition,
-  playerRating,
   teamName,
 } from "@/utils/stringUtils";
 
@@ -370,7 +370,7 @@ function AvailablePlayersCard({
               <TableRow key={p.id}>
                 <TableCell>{playerName(p)}</TableCell>
                 <TableCell>{playerPosition(p)}</TableCell>
-                <TableCell>{playerRating(p)}</TableCell>
+                <TableCell>{formatPositionRating(p)}</TableCell>
                 <TableCell className="p-1">
                   {canPick && selectedPlayer?.id === p.id && (
                     <Button

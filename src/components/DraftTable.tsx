@@ -4,7 +4,7 @@ import { TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@herou
 import { useState } from "react";
 
 import type { Position } from "@/graphql/generated";
-import { playerName, playerPosition, playerRating, teamName } from "@/utils/stringUtils";
+import { formatPositionRating, playerName, playerPosition, teamName } from "@/utils/stringUtils";
 
 import DataTable from "./DataTable";
 import EditDraftPickModal from "./EditDraftPickModal";
@@ -58,7 +58,7 @@ export default function DraftTable({ draftPicks, isAdmin, teams, players }: Prop
     pick: pick.pick,
     team: teamName(pick.team),
     player: playerName(pick.player),
-    rating: playerRating(pick.player),
+    rating: formatPositionRating(pick.player),
     position: playerPosition(pick.player),
   }));
 

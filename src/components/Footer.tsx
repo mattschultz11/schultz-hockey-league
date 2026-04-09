@@ -1,5 +1,6 @@
 import { Link } from "@heroui/link";
-import { BiLogoFacebook, BiLogoGithub, BiLogoInstagramAlt } from "react-icons/bi";
+import { BiLogoFacebook, BiLogoInstagramAlt } from "react-icons/bi";
+import { MdEmail } from "react-icons/md";
 
 export default function Footer() {
   return (
@@ -21,7 +22,7 @@ export default function Footer() {
           </Link>
           <Link
             aria-label="Facebook"
-            href="https://facebook.com/schultzhockeyleague"
+            href="https://www.facebook.com/groups/1337188571749789"
             target="_blank"
             rel="noopener noreferrer"
             className="opacity-70 hover:opacity-100"
@@ -30,14 +31,14 @@ export default function Footer() {
             <BiLogoFacebook size={28} />
           </Link>
           <Link
-            aria-label="Github"
-            href="https://github.com/mattschultz11/schultz-hockey-league"
+            aria-label="Email"
+            href="mailto:support@schultzhockey.com"
             target="_blank"
             rel="noopener noreferrer"
             className="opacity-70 hover:opacity-100"
             color="foreground"
           >
-            <BiLogoGithub size={28} />
+            <MdEmail size={28} />
           </Link>
         </div>
       </div>
