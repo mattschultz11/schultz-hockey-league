@@ -20,7 +20,7 @@ type Props = {
   seasonName: string;
 };
 
-export default function ConfirmationForm({ playerId, firstName, seasonName }: Props) {
+export default function ConfirmationForm({ playerId, firstName }: Props) {
   const [submitted, setSubmitted] = useState<boolean | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,22 +40,22 @@ export default function ConfirmationForm({ playerId, firstName, seasonName }: Pr
     return (
       <p className="text-lg">
         {submitted
-          ? `Thanks ${firstName}! You're confirmed for ${seasonName}.`
-          : `Got it, ${firstName}. You've declined ${seasonName}.`}
+          ? `Thanks ${firstName}! You're confirmed for the rate skate.`
+          : `Got it, ${firstName}. You're unable to attend the rate skate. See you the following week for the first regular season game!`}
       </p>
     );
   }
 
   return (
     <div className="space-y-4">
-      <p className="text-default-400 text-lg">{firstName}, are you playing this season?</p>
+      <p className="text-default-600 text-lg">{firstName}, are you attending the rate skate?</p>
       {error && <p className="text-danger text-sm">{error}</p>}
       <div className="flex justify-center gap-4">
         <Button color="success" size="lg" isLoading={loading} onPress={() => handleConfirm(true)}>
-          Yes, I&apos;m in!
+          <b className="text-default-50">Yes, I&apos;m in!</b>
         </Button>
         <Button color="danger" size="lg" isLoading={loading} onPress={() => handleConfirm(false)}>
-          No, count me out
+          <b>No, count me out</b>
         </Button>
       </div>
     </div>
