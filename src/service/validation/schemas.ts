@@ -30,7 +30,8 @@ const RoleEnum = Schema.Literal("PLAYER", "MANAGER", "ADMIN");
 const HandednessEnum = Schema.Literal("LEFT", "RIGHT");
 const GloveHandEnum = Schema.Literal("LEFT", "RIGHT");
 const PositionEnum = Schema.Literal("G", "D", "D_F", "F", "F_D");
-const ClassificationEnum = Schema.Literal("ROSTER", "SUBSTITUTE", "INJURED", "SUSPENDED");
+const ClassificationEnum = Schema.Literal("ROSTER", "SUBSTITUTE");
+const StatusEnum = Schema.Literal("ACTIVE", "INJURED", "SUSPENDED");
 const StrengthEnum = Schema.Literal("EVEN", "POWERPLAY", "SHORTHANDED");
 const PenaltyCategoryEnum = Schema.Literal(
   "MINOR",
@@ -163,6 +164,7 @@ export const playerCreateSchema = Schema.Struct({
   userId: Id,
   seasonId: Id,
   classification: Schema.optional(ClassificationEnum),
+  status: Schema.optional(StatusEnum),
   teamId: OptionalId,
   position: Schema.NullishOr(PositionEnum),
   number: JerseyNumber,
@@ -174,6 +176,7 @@ export const playerCreateSchema = Schema.Struct({
 
 export const playerUpdateSchema = Schema.Struct({
   classification: Schema.optional(ClassificationEnum),
+  status: Schema.optional(StatusEnum),
   teamId: OptionalId,
   position: Schema.NullishOr(PositionEnum),
   number: JerseyNumber,
@@ -181,6 +184,8 @@ export const playerUpdateSchema = Schema.Struct({
   goalieRating: Rating,
   lockerRating: Rating,
   registrationNumber: OptionalString,
+  ratingVerified: Schema.optional(Schema.Boolean),
+  confirmed: Schema.NullishOr(Schema.Boolean),
 });
 
 export const gameCreateSchema = Schema.Struct({

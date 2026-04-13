@@ -40,6 +40,12 @@ export function getPlayerCatalog(filter: PlayerCatalogFilter, ctx: ServerContext
     where.classification = filter.classification;
   }
 
+  if (filter.statuses && filter.statuses.length > 0) {
+    where.status = { in: filter.statuses };
+  } else if (filter.status) {
+    where.status = filter.status;
+  }
+
   if (filter.teamIds && filter.teamIds.length > 0) {
     where.teamId = { in: filter.teamIds };
   }

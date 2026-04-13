@@ -39,6 +39,7 @@ import prisma, {
   PenaltyType,
   Position,
   Role,
+  Status,
   Strength,
 } from "../src/service/prisma/__mocks__";
 
@@ -277,6 +278,9 @@ export function makePlayer(
       | "userId"
       | "seasonId"
       | "teamId"
+      | "ratingVerified"
+      | "confirmed"
+      | "status"
     >
   > = {},
 ): PlayerModel {
@@ -285,6 +289,7 @@ export function makePlayer(
     userId = randUuid(),
     seasonId = randUuid(),
     classification = Classification.ROSTER,
+    status = Status.ACTIVE,
     position = rand([Position.G, Position.D, Position.D_F, Position.F, Position.F_D] as const),
     number = randNumber({ min: 1, max: 99 }),
     playerRating = randNumber({ min: 1, max: 5 }),
@@ -292,6 +297,8 @@ export function makePlayer(
     lockerRating = randNumber({ min: 1, max: 5 }),
     registrationNumber = randUuid(),
     teamId = null,
+    ratingVerified = false,
+    confirmed = null,
   } = player;
 
   const playerModel = {
@@ -299,6 +306,7 @@ export function makePlayer(
     userId,
     seasonId,
     classification,
+    status,
     teamId,
     position,
     number: number,
@@ -306,6 +314,8 @@ export function makePlayer(
     goalieRating,
     lockerRating,
     registrationNumber,
+    ratingVerified,
+    confirmed,
   };
 
   return playerModel;

@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import PageHeader from "@/components/PageHeader";
 import PageLayout from "@/components/PageLayout";
-import PlayersTable from "@/components/PlayersTable";
+import PlayersSection from "@/components/PlayersSection";
+import { auth } from "@/service/auth/authService";
 import prisma from "@/service/prisma";
 
 type Props = {
@@ -13,10 +14,13 @@ type Props = {
 export default async function PlayersPage({ params }: Props) {
   const { leagueSlug, seasonSlug } = await params;
 
-  const league = await prisma.league.findUnique({
-    where: { slug: leagueSlug },
-    select: { id: true, name: true, slug: true },
-  });
+  const [league, session] = await Promise.all([
+    prisma.league.findUnique({
+      where: { slug: leagueSlug },
+      select: { id: true, name: true, slug: true },
+    }),
+    auth(),
+  ]);
 
   if (!league) {
     notFound();
@@ -37,6 +41,7 @@ export default async function PlayersPage({ params }: Props) {
       id: true,
       number: true,
       position: true,
+      classification: true,
       playerRating: true,
       goalieRating: true,
       user: { select: { firstName: true, lastName: true } },
@@ -54,6 +59,8 @@ export default async function PlayersPage({ params }: Props) {
     orderBy: { user: { lastName: "asc" } },
   });
 
+  const isAdmin = session?.user?.role === "ADMIN";
+
   return (
     <PageLayout>
       <PageHeader>
@@ -66,7 +73,12 @@ export default async function PlayersPage({ params }: Props) {
           ]}
         />
       </PageHeader>
-      <PlayersTable players={players} />
+      <PlayersSection
+        players={players}
+        isAdmin={isAdmin}
+        leagueSlug={league.slug}
+        seasonSlug={season.slug}
+      />
     </PageLayout>
   );
 }

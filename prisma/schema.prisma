@@ -118,6 +118,7 @@ model Player {
   season             Season         @relation(fields: [seasonId], references: [id])
   seasonId           String
   classification     Classification @default(ROSTER)
+  status             Status         @default(ACTIVE)
   managedTeam        Team?
   team               Team?          @relation("TeamPlayers", fields: [teamId], references: [id])
   teamId             String?
@@ -127,6 +128,7 @@ model Player {
   goalieRating       Float?
   lockerRating       Float?
   registrationNumber String?
+  ratingVerified     Boolean        @default(false)
   confirmed          Boolean?
   goals              Goal[]         @relation("Scorer")
   primaryAssists     Goal[]         @relation("PrimaryAssist")
@@ -139,6 +141,10 @@ model Player {
 enum Classification {
   ROSTER
   SUBSTITUTE
+}
+
+enum Status {
+  ACTIVE
   INJURED
   SUSPENDED
 }

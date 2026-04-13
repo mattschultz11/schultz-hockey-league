@@ -1,6 +1,6 @@
 "use client";
 
-import { DatePicker, Input, Select, SelectItem, Textarea } from "@heroui/react";
+import { Checkbox, DatePicker, Input, Select, SelectItem, Textarea } from "@heroui/react";
 import type { ComponentPropsWithoutRef } from "react";
 import type { Control, FieldPath, FieldValues } from "react-hook-form";
 import { Controller } from "react-hook-form";
@@ -107,6 +107,38 @@ export function FormDatePicker<T extends FieldValues>({
           isInvalid={!!fieldState.error}
           errorMessage={fieldState.error?.message}
         />
+      )}
+    />
+  );
+}
+
+// --- FormCheckbox ---
+
+type FormCheckboxProps<T extends FieldValues> = {
+  name: FieldPath<T>;
+  control: Control<T>;
+  children?: React.ReactNode;
+} & Omit<ComponentPropsWithoutRef<typeof Checkbox>, "isSelected" | "onValueChange" | "children">;
+
+export function FormCheckbox<T extends FieldValues>({
+  name,
+  control,
+  children,
+  ...props
+}: FormCheckboxProps<T>) {
+  return (
+    <Controller
+      name={name}
+      control={control}
+      render={({ field }) => (
+        <Checkbox
+          {...props}
+          isSelected={!!field.value}
+          onValueChange={field.onChange}
+          onBlur={field.onBlur}
+        >
+          {children}
+        </Checkbox>
       )}
     />
   );

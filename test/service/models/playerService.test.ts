@@ -99,6 +99,31 @@ describe("playerService", () => {
     expect(updated.number).toBe(30);
   });
 
+  it("can update a player's team to another team in the same season", async () => {
+    const teamA = await insertTeam({ seasonId: season.id, name: "Edit Team A" });
+    const teamB = await insertTeam({ seasonId: season.id, name: "Edit Team B" });
+    const player = await createPlayer(
+      makePlayer({ userId: user.id, seasonId: season.id, teamId: teamA.id }),
+      ctx,
+    );
+
+    const updated = await updatePlayer(player.id, { teamId: teamB.id }, ctx);
+
+    expect(updated.teamId).toBe(teamB.id);
+  });
+
+  it("can update a player to a free agent (null team)", async () => {
+    const team = await insertTeam({ seasonId: season.id, name: "Edit Free Agent Team" });
+    const player = await createPlayer(
+      makePlayer({ userId: user.id, seasonId: season.id, teamId: team.id }),
+      ctx,
+    );
+
+    const updated = await updatePlayer(player.id, { teamId: null }, ctx);
+
+    expect(updated.teamId).toBeNull();
+  });
+
   it("can delete a player", async () => {
     const player = await createPlayer(
       makePlayer({ userId: user.id, seasonId: season.id, teamId: null }),
@@ -418,7 +443,7 @@ describe("playerService", () => {
           userId: userCharlie.id,
           seasonId: season.id,
           teamId: null,
-          classification: Classification.INJURED,
+          classification: Classification.ROSTER,
         }),
         ctx,
       );
@@ -431,7 +456,7 @@ describe("playerService", () => {
         ctx,
       );
 
-      expect(result).toHaveLength(2);
+      expect(result).toHaveLength(3);
     });
 
     it("filters by multiple teamIds", async () => {

@@ -40,6 +40,10 @@ export const typeDefs = /* GraphQL */ `
   enum Classification {
     ROSTER
     SUBSTITUTE
+  }
+
+  enum Status {
+    ACTIVE
     INJURED
     SUSPENDED
   }
@@ -164,6 +168,7 @@ export const typeDefs = /* GraphQL */ `
     season: Season!
     seasonId: ID!
     classification: Classification!
+    status: Status!
     managedTeam: Team
     team: Team
     teamId: ID
@@ -173,6 +178,7 @@ export const typeDefs = /* GraphQL */ `
     goalieRating: Float
     lockerRating: Float
     registrationNumber: String
+    ratingVerified: Boolean!
     confirmed: Boolean
     goals: [Goal!]!
     assists: [Goal!]!
@@ -364,6 +370,8 @@ export const typeDefs = /* GraphQL */ `
     available: Boolean
     classification: Classification
     classifications: [Classification!]
+    status: Status
+    statuses: [Status!]
     teamIds: [ID!]
     minPlayerRating: Float
     maxPlayerRating: Float
@@ -455,6 +463,7 @@ export const typeDefs = /* GraphQL */ `
     userId: ID!
     seasonId: ID!
     classification: Classification
+    status: Status
     teamId: ID
     position: Position
     number: Int
@@ -466,6 +475,7 @@ export const typeDefs = /* GraphQL */ `
 
   input PlayerUpdateInput {
     classification: Classification
+    status: Status
     teamId: ID
     position: Position
     number: Int
@@ -473,6 +483,8 @@ export const typeDefs = /* GraphQL */ `
     goalieRating: Float
     lockerRating: Float
     registrationNumber: String
+    ratingVerified: Boolean
+    confirmed: Boolean
   }
 
   input GameCreateInput {

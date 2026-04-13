@@ -53,7 +53,9 @@ export type Result = "WIN" | "LOSS" | "TIE";
 
 export type Strength = "EVEN" | "POWERPLAY" | "SHORTHANDED";
 
-export type Classification = "ROSTER" | "SUBSTITUTE" | "INJURED" | "SUSPENDED";
+export type Classification = "ROSTER" | "SUBSTITUTE";
+
+export type Status = "ACTIVE" | "INJURED" | "SUSPENDED";
 
 export type PenaltyCategory = "MINOR" | "MAJOR" | "MATCH" | "MISCONDUCT" | "GAME_MISCONDUCT";
 
@@ -177,6 +179,7 @@ export type Player = {
   season: Season;
   seasonId: Scalars["ID"]["output"];
   classification: Classification;
+  status: Status;
   managedTeam?: Maybe<Team>;
   team?: Maybe<Team>;
   teamId?: Maybe<Scalars["ID"]["output"]>;
@@ -186,6 +189,7 @@ export type Player = {
   goalieRating?: Maybe<Scalars["Float"]["output"]>;
   lockerRating?: Maybe<Scalars["Float"]["output"]>;
   registrationNumber?: Maybe<Scalars["String"]["output"]>;
+  ratingVerified: Scalars["Boolean"]["output"];
   confirmed?: Maybe<Scalars["Boolean"]["output"]>;
   goals: Array<Goal>;
   assists: Array<Goal>;
@@ -470,6 +474,8 @@ export type PlayerCatalogFilter = {
   available?: InputMaybe<Scalars["Boolean"]["input"]>;
   classification?: InputMaybe<Classification>;
   classifications?: InputMaybe<Array<Classification>>;
+  status?: InputMaybe<Status>;
+  statuses?: InputMaybe<Array<Status>>;
   teamIds?: InputMaybe<Array<Scalars["ID"]["input"]>>;
   minPlayerRating?: InputMaybe<Scalars["Float"]["input"]>;
   maxPlayerRating?: InputMaybe<Scalars["Float"]["input"]>;
@@ -561,6 +567,7 @@ export type PlayerCreateInput = {
   userId: Scalars["ID"]["input"];
   seasonId: Scalars["ID"]["input"];
   classification?: InputMaybe<Classification>;
+  status?: InputMaybe<Status>;
   teamId?: InputMaybe<Scalars["ID"]["input"]>;
   position?: InputMaybe<Position>;
   number?: InputMaybe<Scalars["Int"]["input"]>;
@@ -572,6 +579,7 @@ export type PlayerCreateInput = {
 
 export type PlayerUpdateInput = {
   classification?: InputMaybe<Classification>;
+  status?: InputMaybe<Status>;
   teamId?: InputMaybe<Scalars["ID"]["input"]>;
   position?: InputMaybe<Position>;
   number?: InputMaybe<Scalars["Int"]["input"]>;
@@ -579,6 +587,8 @@ export type PlayerUpdateInput = {
   goalieRating?: InputMaybe<Scalars["Float"]["input"]>;
   lockerRating?: InputMaybe<Scalars["Float"]["input"]>;
   registrationNumber?: InputMaybe<Scalars["String"]["input"]>;
+  ratingVerified?: InputMaybe<Scalars["Boolean"]["input"]>;
+  confirmed?: InputMaybe<Scalars["Boolean"]["input"]>;
 };
 
 export type GameCreateInput = {
@@ -1042,6 +1052,7 @@ export type ResolversTypes = {
   Result: Result;
   Strength: Strength;
   Classification: Classification;
+  Status: Status;
   PenaltyCategory: PenaltyCategory;
   PenaltyType: PenaltyType;
   User: ResolverTypeWrapper<PrismaUser>;
@@ -1272,6 +1283,7 @@ export type PlayerResolvers<
   season?: Resolver<ResolversTypes["Season"], ParentType, ContextType>;
   seasonId?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
   classification?: Resolver<ResolversTypes["Classification"], ParentType, ContextType>;
+  status?: Resolver<ResolversTypes["Status"], ParentType, ContextType>;
   managedTeam?: Resolver<Maybe<ResolversTypes["Team"]>, ParentType, ContextType>;
   team?: Resolver<Maybe<ResolversTypes["Team"]>, ParentType, ContextType>;
   teamId?: Resolver<Maybe<ResolversTypes["ID"]>, ParentType, ContextType>;
@@ -1281,6 +1293,7 @@ export type PlayerResolvers<
   goalieRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
   lockerRating?: Resolver<Maybe<ResolversTypes["Float"]>, ParentType, ContextType>;
   registrationNumber?: Resolver<Maybe<ResolversTypes["String"]>, ParentType, ContextType>;
+  ratingVerified?: Resolver<ResolversTypes["Boolean"], ParentType, ContextType>;
   confirmed?: Resolver<Maybe<ResolversTypes["Boolean"]>, ParentType, ContextType>;
   goals?: Resolver<Array<ResolversTypes["Goal"]>, ParentType, ContextType>;
   assists?: Resolver<Array<ResolversTypes["Goal"]>, ParentType, ContextType>;

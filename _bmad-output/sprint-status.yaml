@@ -48,8 +48,7 @@ development_status:
   2-2-player-catalog-for-draft-prep: done
   2-3-live-draft-board-view: done
   2-4-record-picks-with-manager-override: done
-  2-5-publish-rosters-after-draft: backlog
-  2-6-post-draft-roster-edits: backlog
+  2-5-admin-player-edit-page: review
   epic-2-retrospective: optional
 
   epic-3: backlog

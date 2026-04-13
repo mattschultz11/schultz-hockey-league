@@ -34,7 +34,7 @@ import PageLayout from "@/components/PageLayout";
 
 // --- Constants ---
 
-const CLASSIFICATIONS = ["ROSTER", "SUBSTITUTE", "INJURED", "SUSPENDED"] as const;
+const CLASSIFICATIONS = ["ROSTER", "SUBSTITUTE"] as const;
 const POSITIONS = ["G", "D", "D_F", "F", "F_D"] as const;
 
 // --- GraphQL ---

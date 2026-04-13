@@ -75,6 +75,7 @@ const DRAFT_BOARD_QUERY = gql`
           position
           playerRating
           goalieRating
+          ratingVerified
           user {
             id
             firstName
@@ -87,6 +88,7 @@ const DRAFT_BOARD_QUERY = gql`
         position
         playerRating
         goalieRating
+        ratingVerified
         user {
           id
           firstName
@@ -101,6 +103,7 @@ const DRAFT_BOARD_QUERY = gql`
           position
           playerRating
           goalieRating
+          ratingVerified
           user {
             id
             firstName
@@ -152,6 +155,7 @@ type PlayerWithUser = {
   position: Position | null;
   playerRating: number | null;
   goalieRating: number | null;
+  ratingVerified: boolean;
   user: { id: string; firstName: string | null; lastName: string | null };
 };
 
@@ -370,7 +374,10 @@ function AvailablePlayersCard({
               <TableRow key={p.id}>
                 <TableCell>{playerName(p)}</TableCell>
                 <TableCell>{playerPosition(p)}</TableCell>
-                <TableCell>{formatPositionRating(p)}</TableCell>
+                <TableCell>
+                  {formatPositionRating(p)}
+                  {!p.ratingVerified && "*"}
+                </TableCell>
                 <TableCell className="p-1">
                   {canPick && selectedPlayer?.id === p.id && (
                     <Button
@@ -531,30 +538,14 @@ function PicksCard({
             <TableColumn>#</TableColumn>
             <TableColumn>Team</TableColumn>
             <TableColumn>Player</TableColumn>
+            <TableColumn>Pos</TableColumn>
+            <TableColumn>Rating</TableColumn>
           </TableHeader>
           <TableBody>
             <>
-              {limitedRecent.map((pick) => (
-                <TableRow key={pick.id} onClick={() => isAdmin && setEditingPickId(pick.id)}>
-                  <TableCell>{pick.overall}</TableCell>
-                  <TableCell>{teamName(pick.team)}</TableCell>
-                  <TableCell>{playerName(pick.player)}</TableCell>
-                </TableRow>
-              ))}
-              {current && (
-                <TableRow key={current.id} onClick={() => isAdmin && setEditingPickId(current.id)}>
-                  <TableCell>{current.overall}</TableCell>
-                  <TableCell>{teamName(current.team)}</TableCell>
-                  <TableCell>{playerName(current.player)}</TableCell>
-                </TableRow>
-              )}
-              {limitedUpcoming.map((pick) => (
-                <TableRow key={pick.id} onClick={() => isAdmin && setEditingPickId(pick.id)}>
-                  <TableCell>{pick.overall}</TableCell>
-                  <TableCell>{teamName(pick.team)}</TableCell>
-                  <TableCell>{playerName(pick.player)}</TableCell>
-                </TableRow>
-              ))}
+              {limitedRecent.map((pick) => PickRow({ pick, isAdmin, setEditingPickId }))}
+              {current && PickRow({ pick: current, isAdmin, setEditingPickId })}
+              {limitedUpcoming.map((pick) => PickRow({ pick, isAdmin, setEditingPickId }))}
             </>
           </TableBody>
         </DataTable>
@@ -571,6 +562,27 @@ function PicksCard({
         />
       )}
     </Card>
+  );
+}
+
+type PickRowProps = {
+  pick: DraftPick;
+  isAdmin: boolean;
+  setEditingPickId: (id: string) => void;
+};
+
+function PickRow({ pick, isAdmin, setEditingPickId }: PickRowProps) {
+  return (
+    <TableRow key={pick.id} onClick={() => isAdmin && setEditingPickId(pick.id)}>
+      <TableCell>{pick.overall}</TableCell>
+      <TableCell>{teamName(pick.team)}</TableCell>
+      <TableCell>{playerName(pick.player)}</TableCell>
+      <TableCell>{playerPosition(pick.player)}</TableCell>
+      <TableCell>
+        {formatPositionRating(pick.player)}
+        {Predicate.isNotNullable(pick.player) && !pick.player.ratingVerified && "*"}
+      </TableCell>
+    </TableRow>
   );
 }
 

@@ -9,6 +9,7 @@ import type {
 import { broadcastDraftUpdate } from "@/service/draft/draftBroadcast";
 import { NotFoundError, ValidationError } from "@/service/errors";
 import type { DraftPick, Player, Prisma, Team } from "@/service/prisma";
+import { Classification } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
 
@@ -34,7 +35,10 @@ export async function getDraftBoard(seasonId: string, ctx: ServerContext) {
   const nextPick = remainingPicks[1] ?? null;
   const teams = await getTeamsBySeason(seasonId, ctx);
 
-  const availablePlayers = await getPlayerCatalog({ seasonId, available: true }, ctx);
+  const availablePlayers = await getPlayerCatalog(
+    { seasonId, available: true, classification: Classification.ROSTER },
+    ctx,
+  );
 
   return {
     currentPick,
