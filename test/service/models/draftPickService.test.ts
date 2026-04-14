@@ -11,7 +11,7 @@ import {
   recordPick,
   updateDraftPick,
 } from "@/service/models/draftPickService";
-import prisma from "@/service/prisma";
+import prisma, { Classification } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
 import type { SeasonModel, TeamModel } from "../../modelFactory";
@@ -564,6 +564,30 @@ describe("getDraftBoard", () => {
     const availableIds = board.availablePlayers.map((p) => p.id);
     expect(availableIds).toContain(player2.id);
     expect(availableIds).not.toContain(player1.id);
+  });
+
+  it("availablePlayers excludes substitutes (only ROSTER classification is draftable)", async () => {
+    await createDraft(
+      { seasonId: season.id, teamIds: teams.map((t) => t.id), rounds: 1, rotation: "CYCLICAL" },
+      ctx,
+    );
+
+    const rosterPlayer = await insertPlayer({
+      seasonId: season.id,
+      teamId: null,
+      classification: Classification.ROSTER,
+    });
+    const subPlayer = await insertPlayer({
+      seasonId: season.id,
+      teamId: null,
+      classification: Classification.SUBSTITUTE,
+    });
+
+    const board = await getDraftBoard(season.id, ctx);
+
+    const availableIds = board.availablePlayers.map((p) => p.id);
+    expect(availableIds).toContain(rosterPlayer.id);
+    expect(availableIds).not.toContain(subPlayer.id);
   });
 
   it("returns null currentPick when all picks are filled", async () => {

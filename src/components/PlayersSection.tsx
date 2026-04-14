@@ -28,6 +28,13 @@ const POSITION_OPTIONS: { value: string; label: string }[] = [
   { value: "__NONE__", label: "No position" },
 ];
 
+const POSITION_FILTER_MATCHES: Record<string, string[]> = {
+  F: ["F", "F_D", "D_F"],
+  D: ["D", "D_F", "F_D"],
+  G: ["G"],
+  __NONE__: ["__NONE__"],
+};
+
 const RATING_OPTIONS = [
   { value: "5", label: "5" },
   { value: "4.5", label: "4.5" },
@@ -93,7 +100,10 @@ export default function PlayersSection({ players, isAdmin, leagueSlug, seasonSlu
       }
       if (positionKeys.size > 0) {
         const position = player.position ?? NONE_KEY;
-        if (!Array.from(positionKeys).some((key) => position.includes(key))) return false;
+        const matched = Array.from(positionKeys).some((key) =>
+          (POSITION_FILTER_MATCHES[key] ?? [key]).includes(position),
+        );
+        if (!matched) return false;
       }
       if (ratingKeys.size > 0) {
         if (!ratingKeys.has(ratingBucket(player))) return false;

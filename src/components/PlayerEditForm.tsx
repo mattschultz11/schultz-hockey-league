@@ -24,8 +24,7 @@ const OptionalInt = Schema.String.pipe(
   Schema.filter(
     (s) => {
       if (s === "") return true;
-      const n = Number(s);
-      return Number.isInteger(n) && n >= 1 && n <= 99;
+      return /^\d{1,2}$/.test(s) && Number(s) >= 1 && Number(s) <= 99;
     },
     { message: () => "Must be a whole number between 1 and 99" },
   ),
@@ -42,18 +41,28 @@ const OptionalRating = Schema.String.pipe(
   ),
 );
 
+const ClassificationLiteral = Schema.Literal("ROSTER", "SUBSTITUTE");
+const StatusLiteral = Schema.Literal("ACTIVE", "INJURED", "SUSPENDED");
+const PositionLiteral = Schema.Literal("", "G", "D", "D_F", "F", "F_D");
+const BooleanStringLiteral = Schema.Literal("true", "false");
+const NullableBooleanStringLiteral = Schema.Literal("", "true", "false");
+
+const NonEmptyString = Schema.String.pipe(
+  Schema.filter((s) => s.length > 0, { message: () => "Required" }),
+);
+
 const playerEditFormSchema = Schema.Struct({
-  classification: Schema.String,
-  status: Schema.String,
-  teamId: Schema.String,
-  position: Schema.String,
+  classification: ClassificationLiteral,
+  status: StatusLiteral,
+  teamId: NonEmptyString,
+  position: PositionLiteral,
   number: OptionalInt,
   playerRating: OptionalRating,
   goalieRating: OptionalRating,
   lockerRating: OptionalRating,
   registrationNumber: Schema.String,
-  ratingVerified: Schema.String,
-  confirmed: Schema.String,
+  ratingVerified: BooleanStringLiteral,
+  confirmed: NullableBooleanStringLiteral,
 });
 
 // --- Mutation ---
@@ -152,19 +161,7 @@ type Props = {
   returnHref: string;
 };
 
-type FormValues = {
-  classification: string;
-  status: string;
-  teamId: string;
-  position: string;
-  number: string;
-  playerRating: string;
-  goalieRating: string;
-  lockerRating: string;
-  registrationNumber: string;
-  ratingVerified: string;
-  confirmed: string;
-};
+type FormValues = Schema.Schema.Type<typeof playerEditFormSchema>;
 
 // --- Helpers ---
 
@@ -221,7 +218,7 @@ export default function PlayerEditForm({ player, teams, returnHref }: Props) {
       classification: values.classification as Classification,
       status: values.status as Status,
       teamId: values.teamId === FREE_AGENT_KEY ? null : values.teamId,
-      position: (values.position === "" ? null : values.position) as Position | null,
+      position: values.position === "" ? null : (values.position as Position),
       number: parseIntField(values.number),
       playerRating: parseRating(values.playerRating),
       goalieRating: parseRating(values.goalieRating),
@@ -238,7 +235,6 @@ export default function PlayerEditForm({ player, teams, returnHref }: Props) {
         color: "success",
       });
       router.push(returnHref);
-      router.refresh();
     } catch (err) {
       const message =
         err instanceof Error ? err.message.replace(/^[^:]+:\s*/, "") : "Failed to update player";

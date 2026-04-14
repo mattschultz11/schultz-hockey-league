@@ -40,11 +40,10 @@ export default async function EditPlayerPage({ params }: Props) {
   }
 
   const [player, teams] = await Promise.all([
-    prisma.player.findUnique({
-      where: { id: playerId },
+    prisma.player.findFirst({
+      where: { id: playerId, seasonId: season.id },
       select: {
         id: true,
-        seasonId: true,
         classification: true,
         status: true,
         teamId: true,
@@ -66,7 +65,7 @@ export default async function EditPlayerPage({ params }: Props) {
     }),
   ]);
 
-  if (!player || player.seasonId !== season.id) {
+  if (!player) {
     notFound();
   }
 

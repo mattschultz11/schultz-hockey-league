@@ -91,7 +91,10 @@ function comparePlayers(a: PlayersTablePlayer, b: PlayersTablePlayer, column: Co
     case "team":
       return (a.team?.name ?? "").localeCompare(b.team?.name ?? "");
     case "rating":
-      return (positionRating(a) ?? 0) - (positionRating(b) ?? 0);
+      return (
+        (positionRating(a) ?? Number.POSITIVE_INFINITY) -
+        (positionRating(b) ?? Number.POSITIVE_INFINITY)
+      );
     case "games":
     case "goals":
     case "assists":

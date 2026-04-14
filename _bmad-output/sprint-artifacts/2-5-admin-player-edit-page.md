@@ -1,6 +1,6 @@
 # Story 2.5: Admin Player Edit Page
 
-Status: review
+Status: done
 
 <!-- Scope note: This story originally was "Publish Rosters After Draft" but scope was cut on 2026-04-10.
      Rosters are already updated live via recordPick/updateDraftPick (Story 2.4), and roster publishing
@@ -270,3 +270,4 @@ Claude Opus 4.6
 
 - 2026-04-10: Story 2.5 scope reduced from "Publish Rosters After Draft" to "Admin Player Edit Page" — publish/export/verification cut; post-draft trade handling is the only retained requirement and is addressed via the existing `updatePlayer` mutation
 - 2026-04-10: Story 2.5 implemented — admin player edit page, PlayerEditForm component, PlayersTable upgraded with sorting/selection/Edit button, 2 new playerService tests, 0 regressions
+- 2026-04-14: Code review fixes — tightened `playerEditFormSchema` to strict enum literals + non-empty `teamId` (H1/H2); scoped edit-page player lookup with `findFirst({ id, seasonId })` (M4); unrated players now sort to end of rating column (M5); explicit `POSITION_FILTER_MATCHES` map in `PlayersSection` replaces `String.includes` (M3); added `draftPickService` test covering substitute-exclusion from draft board (M2); dropped redundant `router.refresh()` after `router.push` (L2); tightened `OptionalInt` regex (L3). Typecheck/lint/tests clean.
