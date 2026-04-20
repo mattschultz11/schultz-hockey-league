@@ -125,7 +125,7 @@ export async function getTeamPlayers(teamId: string, ctx: ServerContext) {
 export async function getTeamGames(teamId: string, ctx: ServerContext) {
   return ctx.prisma.game.findMany({
     where: { OR: [{ homeTeamId: teamId }, { awayTeamId: teamId }] },
-    orderBy: [{ date: "asc" }, { time: "asc" }],
+    orderBy: { datetime: "asc" },
   });
 }
 

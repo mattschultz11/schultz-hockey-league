@@ -33,7 +33,7 @@ describe("emailService", () => {
       });
 
       expect(mockCreate).toHaveBeenCalledWith("test.example.com", {
-        from: "League <noreply@test.example.com>",
+        from: "Schultz Hockey League <noreply@test.example.com>",
         to: "user@example.com",
         subject: "Test Subject",
         html: "<p>Hello</p>",
@@ -55,7 +55,7 @@ describe("emailService", () => {
       });
 
       expect(mockCreate).toHaveBeenCalledWith("test.example.com", {
-        from: "League <noreply@test.example.com>",
+        from: "Schultz Hockey League <noreply@test.example.com>",
         to: "user@example.com",
         subject: "No text",
         html: "<p>Hi</p>",
@@ -140,7 +140,7 @@ describe("emailService", () => {
 
       expect(mockCreate).toHaveBeenCalledTimes(1);
       expect(mockCreate).toHaveBeenCalledWith("test.example.com", {
-        from: "League <noreply@test.example.com>",
+        from: "Schultz Hockey League <noreply@test.example.com>",
         to: ["a@example.com", "b@example.com"],
         subject: "Bulk Test",
         html: "<p>Hello %recipient.name%</p>",

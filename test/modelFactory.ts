@@ -18,7 +18,6 @@ import { Predicate } from "effect";
 
 import type {
   DraftPick,
-  Game,
   Goal,
   League,
   Lineup,
@@ -30,6 +29,7 @@ import type {
   User,
 } from "@/graphql/generated";
 import { generateSlug } from "@/service/models/modelServiceUtils";
+import type { Game } from "@/service/prisma";
 
 import prisma, {
   Classification,
@@ -360,31 +360,17 @@ export async function insertPlayer(overrides: Partial<PlayerModel> = {}): Promis
   });
 }
 
-export type GameModel = Omit<
-  Game,
-  | "season"
-  | "homeTeam"
-  | "awayTeam"
-  | "goals"
-  | "penalties"
-  | "homeTeamGoals"
-  | "awayTeamGoals"
-  | "lineups"
->;
+export type GameModel = Omit<Game, "createdAt" | "updatedAt">;
 
 export function makeGame(
   game: Partial<
-    Pick<
-      GameModel,
-      "round" | "date" | "time" | "location" | "seasonId" | "homeTeamId" | "awayTeamId"
-    >
+    Pick<GameModel, "round" | "datetime" | "location" | "seasonId" | "homeTeamId" | "awayTeamId">
   > = {},
 ): GameModel {
   const {
     seasonId = randUuid(),
     round = randNumber({ min: 1, max: 10 }),
-    date = randPastDate(),
-    time = setRandomTime(date),
+    datetime = setRandomTime(randPastDate()),
     location = randCity(),
     homeTeamId = null,
     awayTeamId = null,
@@ -394,19 +380,21 @@ export function makeGame(
     id: randUuid(),
     seasonId,
     round,
-    date,
-    time,
+    datetime,
     location,
     homeTeamId,
+    homeTeamResult: null,
+    homeTeamPoints: null,
     awayTeamId,
+    awayTeamResult: null,
+    awayTeamPoints: null,
   };
 }
 
 function setRandomTime(date: Date | string): Date {
-  const newDate = new Date(date);
-  newDate.setHours(randNumber({ min: 0, max: 23 }), randNumber({ min: 0, max: 59 }), 0, 0);
-
-  return newDate;
+  const d = new Date(date);
+  d.setUTCHours(randNumber({ min: 0, max: 23 }), randNumber({ min: 0, max: 59 }), 0, 0);
+  return d;
 }
 
 export async function insertGame(overrides: Partial<GameModel> = {}): Promise<GameModel> {

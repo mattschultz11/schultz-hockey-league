@@ -1,6 +1,6 @@
 import { randCity, randUuid } from "@ngneat/falso";
 
-import { NotFoundError } from "@/service/errors";
+import { NotFoundError, ValidationError } from "@/service/errors";
 import {
   createGame,
   deleteGame,
@@ -8,10 +8,11 @@ import {
   getGamesBySeason,
   updateGame,
 } from "@/service/models/gameService";
+import prisma from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
 import type { SeasonModel } from "../../modelFactory";
-import { insertSeason, insertTeam, makeGame } from "../../modelFactory";
+import { insertGame, insertPlayer, insertSeason, insertTeam, makeGame } from "../../modelFactory";
 import { createCtx } from "../../utils";
 
 describe("gameService", () => {
@@ -31,7 +32,7 @@ describe("gameService", () => {
 
     const actual = await createGame(input, ctx);
 
-    expect(actual).toMatchObject(input);
+    expect(actual).toMatchObject({ ...input, location: input.location.toLowerCase() });
   });
 
   it("throws when teams are from different seasons", async () => {
@@ -140,7 +141,7 @@ describe("gameService", () => {
 
     const updated = await updateGame(game.id, { location: newLocation }, ctx);
 
-    expect(updated.location).toBe(newLocation);
+    expect(updated.location).toBe(newLocation.toLowerCase());
   });
 
   it("can delete a game", async () => {
@@ -152,5 +153,277 @@ describe("gameService", () => {
     await deleteGame(game.id, ctx);
 
     await expect(getGameById(game.id, ctx)).rejects.toThrow(NotFoundError);
+  });
+
+  describe("schedule overlap detection", () => {
+    const SLOT_DATETIME = new Date("2026-05-12T19:00:00.000Z");
+
+    it("rejects create when home team already booked at the same slot (home ↔ home)", async () => {
+      const teamA = await insertTeam({ seasonId: season.id, name: "Overlap Home A" });
+      const teamB = await insertTeam({ seasonId: season.id, name: "Overlap Away B" });
+      const teamC = await insertTeam({ seasonId: season.id, name: "Overlap Away C" });
+
+      await createGame(
+        makeGame({
+          seasonId: season.id,
+          homeTeamId: teamA.id,
+          awayTeamId: teamB.id,
+          datetime: SLOT_DATETIME,
+        }),
+        ctx,
+      );
+
+      await expect(() =>
+        createGame(
+          makeGame({
+            seasonId: season.id,
+            homeTeamId: teamA.id,
+            awayTeamId: teamC.id,
+            datetime: SLOT_DATETIME,
+          }),
+          ctx,
+        ),
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it("rejects create when away team already booked at the same slot (away ↔ away)", async () => {
+      const teamA = await insertTeam({ seasonId: season.id, name: "Away-Away Home 1" });
+      const teamB = await insertTeam({ seasonId: season.id, name: "Away-Away Shared" });
+      const teamC = await insertTeam({ seasonId: season.id, name: "Away-Away Home 2" });
+
+      await createGame(
+        makeGame({
+          seasonId: season.id,
+          homeTeamId: teamA.id,
+          awayTeamId: teamB.id,
+          datetime: SLOT_DATETIME,
+        }),
+        ctx,
+      );
+
+      await expect(() =>
+        createGame(
+          makeGame({
+            seasonId: season.id,
+            homeTeamId: teamC.id,
+            awayTeamId: teamB.id,
+            datetime: SLOT_DATETIME,
+          }),
+          ctx,
+        ),
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it("rejects create when new home team matches existing away team (home ↔ away)", async () => {
+      const teamA = await insertTeam({ seasonId: season.id, name: "Sym HA Host" });
+      const teamB = await insertTeam({ seasonId: season.id, name: "Sym HA Swap" });
+      const teamC = await insertTeam({ seasonId: season.id, name: "Sym HA Other" });
+
+      await createGame(
+        makeGame({
+          seasonId: season.id,
+          homeTeamId: teamA.id,
+          awayTeamId: teamB.id,
+          datetime: SLOT_DATETIME,
+        }),
+        ctx,
+      );
+
+      await expect(() =>
+        createGame(
+          makeGame({
+            seasonId: season.id,
+            homeTeamId: teamB.id,
+            awayTeamId: teamC.id,
+            datetime: SLOT_DATETIME,
+          }),
+          ctx,
+        ),
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it("rejects create when new away team matches existing home team (away ↔ home)", async () => {
+      const teamA = await insertTeam({ seasonId: season.id, name: "Sym AH Host" });
+      const teamB = await insertTeam({ seasonId: season.id, name: "Sym AH Swap" });
+      const teamC = await insertTeam({ seasonId: season.id, name: "Sym AH Other" });
+
+      await createGame(
+        makeGame({
+          seasonId: season.id,
+          homeTeamId: teamA.id,
+          awayTeamId: teamB.id,
+          datetime: SLOT_DATETIME,
+        }),
+        ctx,
+      );
+
+      await expect(() =>
+        createGame(
+          makeGame({
+            seasonId: season.id,
+            homeTeamId: teamC.id,
+            awayTeamId: teamA.id,
+            datetime: SLOT_DATETIME,
+          }),
+          ctx,
+        ),
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it("allows update to succeed when the only conflicting row is the game being updated", async () => {
+      const teamA = await insertTeam({ seasonId: season.id, name: "Self Excl Home" });
+      const teamB = await insertTeam({ seasonId: season.id, name: "Self Excl Away" });
+
+      const created = await createGame(
+        makeGame({
+          seasonId: season.id,
+          homeTeamId: teamA.id,
+          awayTeamId: teamB.id,
+          datetime: SLOT_DATETIME,
+        }),
+        ctx,
+      );
+
+      const updated = await updateGame(created.id, { location: "New Rink" }, ctx);
+
+      expect(updated.location).toBe("new rink");
+    });
+
+    it("includes the conflicting team name and round in the error message", async () => {
+      const teamA = await insertTeam({ seasonId: season.id, name: "Ice Dragons" });
+      const teamB = await insertTeam({ seasonId: season.id, name: "Err Msg Away" });
+      const teamC = await insertTeam({ seasonId: season.id, name: "Err Msg Other" });
+
+      await createGame(
+        makeGame({
+          seasonId: season.id,
+          homeTeamId: teamA.id,
+          awayTeamId: teamB.id,
+          datetime: SLOT_DATETIME,
+          round: 7,
+        }),
+        ctx,
+      );
+
+      await expect(() =>
+        createGame(
+          makeGame({
+            seasonId: season.id,
+            homeTeamId: teamA.id,
+            awayTeamId: teamC.id,
+            datetime: SLOT_DATETIME,
+          }),
+          ctx,
+        ),
+      ).rejects.toThrow(/'Ice Dragons'.*round 7/);
+    });
+
+    it("allows create when datetimes differ", async () => {
+      const teamA = await insertTeam({ seasonId: season.id, name: "Time Diff Home" });
+      const teamB = await insertTeam({ seasonId: season.id, name: "Time Diff Away" });
+      const teamC = await insertTeam({ seasonId: season.id, name: "Time Diff Other" });
+
+      await createGame(
+        makeGame({
+          seasonId: season.id,
+          homeTeamId: teamA.id,
+          awayTeamId: teamB.id,
+          datetime: SLOT_DATETIME,
+        }),
+        ctx,
+      );
+
+      const second = await createGame(
+        makeGame({
+          seasonId: season.id,
+          homeTeamId: teamA.id,
+          awayTeamId: teamC.id,
+          datetime: new Date("2026-05-12T21:00:00.000Z"),
+        }),
+        ctx,
+      );
+
+      expect(second.id).toBeDefined();
+    });
+  });
+
+  describe("deleteGame cascade guard", () => {
+    it("deletes a game with no children", async () => {
+      const game = await insertGame({ seasonId: season.id });
+
+      await deleteGame(game.id, ctx);
+
+      await expect(getGameById(game.id, ctx)).rejects.toThrow(NotFoundError);
+    });
+
+    it("rejects delete when a goal is attached to the game", async () => {
+      const team = await insertTeam({ seasonId: season.id, name: "Goal Guard Home" });
+      const away = await insertTeam({ seasonId: season.id, name: "Goal Guard Away" });
+      const scorer = await insertPlayer({ seasonId: season.id, teamId: team.id });
+      const game = await insertGame({
+        seasonId: season.id,
+        homeTeamId: team.id,
+        awayTeamId: away.id,
+      });
+
+      await prisma.goal.create({
+        data: {
+          gameId: game.id,
+          teamId: team.id,
+          scorerId: scorer.id,
+          period: 1,
+          time: 120,
+          strength: "EVEN",
+        },
+      });
+
+      await expect(() => deleteGame(game.id, ctx)).rejects.toThrow(ValidationError);
+    });
+
+    it("rejects delete when a penalty is attached to the game", async () => {
+      const team = await insertTeam({ seasonId: season.id, name: "Pen Guard Home" });
+      const away = await insertTeam({ seasonId: season.id, name: "Pen Guard Away" });
+      const offender = await insertPlayer({ seasonId: season.id, teamId: team.id });
+      const game = await insertGame({
+        seasonId: season.id,
+        homeTeamId: team.id,
+        awayTeamId: away.id,
+      });
+
+      await prisma.penalty.create({
+        data: {
+          gameId: game.id,
+          teamId: team.id,
+          playerId: offender.id,
+          period: 1,
+          time: 45,
+          type: "HOOKING",
+          minutes: 2,
+        },
+      });
+
+      await expect(() => deleteGame(game.id, ctx)).rejects.toThrow(ValidationError);
+    });
+
+    it("rejects delete when a lineup is attached to the game", async () => {
+      const team = await insertTeam({ seasonId: season.id, name: "Line Guard Home" });
+      const away = await insertTeam({ seasonId: season.id, name: "Line Guard Away" });
+      const player = await insertPlayer({ seasonId: season.id, teamId: team.id });
+      const game = await insertGame({
+        seasonId: season.id,
+        homeTeamId: team.id,
+        awayTeamId: away.id,
+      });
+
+      await prisma.lineup.create({
+        data: {
+          gameId: game.id,
+          teamId: team.id,
+          playerId: player.id,
+        },
+      });
+
+      await expect(() => deleteGame(game.id, ctx)).rejects.toThrow(ValidationError);
+    });
   });
 });

@@ -164,8 +164,7 @@ model Game {
   season         Season    @relation(fields: [seasonId], references: [id])
   seasonId       String
   round          Int
-  date           DateTime
-  time           DateTime
+  datetime       DateTime
   location       String
   homeTeam       Team?     @relation("HomeTeam", fields: [homeTeamId], references: [id])
   homeTeamId     String?

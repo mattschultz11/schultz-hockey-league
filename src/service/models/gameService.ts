@@ -1,7 +1,7 @@
 import { Option } from "effect";
 
 import type { GameCreateInput, GameUpdateInput } from "@/graphql/generated";
-import { NotFoundError } from "@/service/errors";
+import { NotFoundError, ValidationError } from "@/service/errors";
 import type { Prisma, Team } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 import { assertNonNullableFields, invariant } from "@/utils/assertionUtils";
@@ -13,7 +13,7 @@ import { maybeGetTeamById } from "./teamService";
 export function getGamesBySeason(seasonId: string, ctx: ServerContext) {
   return ctx.prisma.game.findMany({
     where: { seasonId },
-    orderBy: [{ date: "asc" }, { time: "asc" }],
+    orderBy: { datetime: "asc" },
   });
 }
 
@@ -35,14 +35,26 @@ export async function createGame(data: GameCreateInput, ctx: ServerContext) {
   const awayTeam = await maybeGetTeamById(awayTeamId, ctx);
 
   validateGame(data.seasonId, homeTeam, awayTeam);
+  await validateNoScheduleConflict(
+    {
+      seasonId: data.seasonId,
+      datetime: data.datetime,
+      homeTeamId,
+      awayTeamId,
+    },
+    ctx,
+  );
 
-  return ctx.prisma.game.create({ data: cleanInput(data) });
+  return ctx.prisma.game.create({
+    data: { ...cleanInput(data), location: data.location.toLowerCase() },
+  });
 }
 
 export async function updateGame(id: string, data: GameUpdateInput, ctx: ServerContext) {
   validate(gameUpdateSchema, data);
   const payload: GameUpdateInput = cleanInput(data);
-  assertNonNullableFields(payload, ["round", "date", "time", "location", "awayTeamId"] as const);
+  if (payload.location) payload.location = payload.location.toLowerCase();
+  assertNonNullableFields(payload, ["round", "datetime", "location", "awayTeamId"] as const);
 
   const game = await getGameById(id, ctx);
   const { homeTeamId = game.homeTeamId, awayTeamId = game.awayTeamId } = payload;
@@ -51,6 +63,16 @@ export async function updateGame(id: string, data: GameUpdateInput, ctx: ServerC
   const awayTeam = await maybeGetTeamById(awayTeamId, ctx);
 
   validateGame(game.seasonId, homeTeam, awayTeam);
+  await validateNoScheduleConflict(
+    {
+      seasonId: game.seasonId,
+      datetime: payload.datetime ?? game.datetime,
+      homeTeamId,
+      awayTeamId,
+      excludeGameId: id,
+    },
+    ctx,
+  );
 
   return ctx.prisma.game.update({
     where: { id },
@@ -78,7 +100,65 @@ function validateGame(
   );
 }
 
-export function deleteGame(id: string, ctx: ServerContext) {
+async function validateNoScheduleConflict(
+  params: {
+    seasonId: string;
+    datetime: Date | string;
+    homeTeamId?: string | null;
+    awayTeamId?: string | null;
+    excludeGameId?: string;
+  },
+  ctx: ServerContext,
+) {
+  const { seasonId, datetime, homeTeamId, awayTeamId, excludeGameId } = params;
+
+  const teamIds = [homeTeamId, awayTeamId].filter((id): id is string => !!id);
+  if (teamIds.length === 0) return;
+
+  const conflicts = await ctx.prisma.game.findMany({
+    where: {
+      seasonId,
+      datetime,
+      ...(excludeGameId ? { NOT: { id: excludeGameId } } : {}),
+      OR: [{ homeTeamId: { in: teamIds } }, { awayTeamId: { in: teamIds } }],
+    },
+    select: {
+      id: true,
+      round: true,
+      datetime: true,
+      homeTeam: { select: { id: true, name: true } },
+      awayTeam: { select: { id: true, name: true } },
+    },
+  });
+
+  if (conflicts.length > 0) {
+    const conflict = conflicts[0];
+    const conflictTeam =
+      (conflict.homeTeam && teamIds.includes(conflict.homeTeam.id) ? conflict.homeTeam : null) ??
+      (conflict.awayTeam && teamIds.includes(conflict.awayTeam.id) ? conflict.awayTeam : null);
+    const teamLabel = conflictTeam ? `'${conflictTeam.name}'` : "Team";
+    const when = new Date(conflict.datetime).toISOString().replace("T", " ").slice(0, 16);
+    throw new ValidationError(
+      `Team ${teamLabel} already plays at ${when} (round ${conflict.round})`,
+    );
+  }
+}
+
+export async function deleteGame(id: string, ctx: ServerContext) {
+  await getGameById(id, ctx);
+
+  const [goalCount, penaltyCount, lineupCount] = await Promise.all([
+    ctx.prisma.goal.count({ where: { gameId: id } }),
+    ctx.prisma.penalty.count({ where: { gameId: id } }),
+    ctx.prisma.lineup.count({ where: { gameId: id } }),
+  ]);
+
+  if (goalCount + penaltyCount + lineupCount > 0) {
+    throw new ValidationError(
+      "Cannot delete a game with recorded goals, penalties, or lineups — remove them first",
+    );
+  }
+
   return ctx.prisma.game.delete({ where: { id } });
 }
 

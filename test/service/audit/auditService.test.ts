@@ -156,7 +156,7 @@ describe("auditService", () => {
   });
 
   describe("getAuditLog", () => {
-    beforeAll(async () => {
+    beforeEach(async () => {
       // Seed some audit entries for query tests
       const authCtx = createAuthenticatedCtx(Role.ADMIN);
       const actorId = Option.match(authCtx.user, {

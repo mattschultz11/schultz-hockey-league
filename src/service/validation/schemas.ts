@@ -191,8 +191,7 @@ export const playerUpdateSchema = Schema.Struct({
 export const gameCreateSchema = Schema.Struct({
   seasonId: Id,
   round: PositiveInt,
-  date: DateTimeField,
-  time: DateTimeField,
+  datetime: DateTimeField,
   location: Name,
   homeTeamId: OptionalId,
   awayTeamId: OptionalId,
@@ -200,8 +199,7 @@ export const gameCreateSchema = Schema.Struct({
 
 export const gameUpdateSchema = Schema.Struct({
   round: Schema.NullishOr(PositiveInt),
-  date: Schema.optional(DateTimeField),
-  time: Schema.optional(DateTimeField),
+  datetime: Schema.optional(DateTimeField),
   location: OptionalName,
   homeTeamId: OptionalId,
   awayTeamId: OptionalId,

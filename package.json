@@ -10,7 +10,7 @@
     "lint": "eslint . --max-warnings=0",
     "lint:fix": "eslint . --max-warnings=0 --fix",
     "lint-staged": "lint-staged",
-    "test": "jest --passWithNoTests",
+    "test": "jest --passWithNoTests --runInBand",
     "test:watch": "npm run test -- --watch",
     "test:ci": "npm run test -- --runInBand --coverage",
     "typecheck": "tsc --noEmit",

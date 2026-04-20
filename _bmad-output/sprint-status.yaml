@@ -51,8 +51,8 @@ development_status:
   2-5-admin-player-edit-page: done
   epic-2-retrospective: optional
 
-  epic-3: backlog
-  3-1-create-season-schedule: backlog
+  epic-3: in-progress
+  3-1-create-season-schedule: done
   3-2-publish-and-republish-schedules: backlog
   3-3-league-schedule-view: backlog
   3-4-team-schedule-view: backlog

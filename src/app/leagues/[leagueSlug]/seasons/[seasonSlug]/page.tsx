@@ -1,19 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 
-import PageBreadcrumbs from "@/components/PageBreadcrumbs";
-import PageHeader from "@/components/PageHeader";
-import PageLayout from "@/components/PageLayout";
 import prisma from "@/service/prisma";
-
-const DAY_NAMES = [
-  ["sundays", "Sun"],
-  ["mondays", "Mon"],
-  ["tuesdays", "Tue"],
-  ["wednesdays", "Wed"],
-  ["thursdays", "Thu"],
-  ["fridays", "Fri"],
-  ["saturdays", "Sat"],
-] as const;
 
 type Props = {
   params: Promise<{ leagueSlug: string; seasonSlug: string }>;
@@ -54,32 +41,5 @@ export default async function SeasonPage({ params }: Props) {
     notFound();
   }
 
-  const hasStarted = season.startDate <= new Date();
-
-  if (!hasStarted) {
-    redirect(`/leagues/${league.slug}/seasons/${season.slug}/registration`);
-  }
-
-  const gameDays = DAY_NAMES.filter(([key]) => season[key]).map(([, label]) => label);
-
-  return (
-    <PageLayout>
-      <PageHeader>
-        <PageBreadcrumbs
-          items={[
-            { label: "Leagues", href: "/leagues" },
-            { label: league.name, href: `/leagues/${league.slug}/seasons` },
-            { label: season.name },
-          ]}
-        />
-      </PageHeader>
-      ß
-      <div className="text-default-300 space-y-2">
-        <p>
-          {season.startDate.toLocaleDateString()} – {season.endDate.toLocaleDateString()}
-        </p>
-        {gameDays.length > 0 && <p>Game days: {gameDays.join(", ")}</p>}
-      </div>
-    </PageLayout>
-  );
+  return redirect(`/leagues/${league.slug}/seasons/${season.slug}/registration`);
 }

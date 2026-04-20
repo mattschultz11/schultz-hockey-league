@@ -192,8 +192,7 @@ export const typeDefs = /* GraphQL */ `
     season: Season!
     seasonId: ID!
     round: Int!
-    date: DateTime!
-    time: DateTime!
+    datetime: DateTime!
     location: String!
     homeTeam: Team
     homeTeamId: ID
@@ -490,8 +489,7 @@ export const typeDefs = /* GraphQL */ `
   input GameCreateInput {
     seasonId: ID!
     round: Int!
-    date: DateTime!
-    time: DateTime!
+    datetime: DateTime!
     location: String!
     homeTeamId: ID
     awayTeamId: ID
@@ -499,8 +497,7 @@ export const typeDefs = /* GraphQL */ `
 
   input GameUpdateInput {
     round: Int
-    date: DateTime
-    time: DateTime
+    datetime: DateTime
     location: String
     homeTeamId: ID
     awayTeamId: ID

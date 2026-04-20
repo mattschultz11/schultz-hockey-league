@@ -1,0 +1,53 @@
+import { notFound } from "next/navigation";
+
+import GameForm from "@/components/GameForm";
+import PageLayout from "@/components/PageLayout";
+import { auth } from "@/service/auth/authService";
+import prisma from "@/service/prisma";
+
+type Props = {
+  params: Promise<{ leagueSlug: string; seasonSlug: string }>;
+};
+
+export default async function NewGamePage({ params }: Props) {
+  const [session, { leagueSlug, seasonSlug }] = await Promise.all([auth(), params]);
+
+  if (session?.user?.role !== "ADMIN") {
+    notFound();
+  }
+
+  const league = await prisma.league.findUnique({
+    where: { slug: leagueSlug },
+    select: { id: true, name: true, slug: true },
+  });
+
+  if (!league) {
+    notFound();
+  }
+
+  const season = await prisma.season.findUnique({
+    where: { leagueId_slug: { leagueId: league.id, slug: seasonSlug } },
+    select: { id: true, name: true, slug: true },
+  });
+
+  if (!season) {
+    notFound();
+  }
+
+  const teams = await prisma.team.findMany({
+    where: { seasonId: season.id },
+    select: { id: true, name: true },
+    orderBy: { name: "asc" },
+  });
+
+  const returnHref = `/leagues/${league.slug}/seasons/${season.slug}/games`;
+
+  return (
+    <PageLayout>
+      <div className="mx-auto w-full max-w-2xl">
+        <h1 className="mb-6 text-2xl font-semibold text-white">New Game</h1>
+        <GameForm mode="create" seasonId={season.id} teams={teams} returnHref={returnHref} />
+      </div>
+    </PageLayout>
+  );
+}

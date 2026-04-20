@@ -181,7 +181,7 @@ export const resolvers: Resolvers = {
       playerService.deletePlayer(args.id, ctx),
     ),
 
-    createGame: withPolicy([PolicyName.MANAGER, PolicyName.SEASON_ACCESS], (_p, args, ctx) =>
+    createGame: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       gameService.createGame(args.data, ctx),
     ),
     updateGame: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>

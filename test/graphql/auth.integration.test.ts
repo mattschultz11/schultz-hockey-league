@@ -814,8 +814,7 @@ describe("GraphQL Auth Integration", () => {
             data: {
               seasonId: season.id,
               round: gameInput.round,
-              date: gameInput.date,
-              time: gameInput.time,
+              datetime: gameInput.datetime,
               location: gameInput.location,
             },
           },
@@ -825,6 +824,33 @@ describe("GraphQL Auth Integration", () => {
       } catch (error) {
         expect(error).toBeInstanceOf(GraphQLError);
         expect((error as GraphQLError).extensions?.code).toBe(401);
+      }
+    });
+
+    it("manager denied createGame (403) — ADMIN-only for schedule creation", async () => {
+      const managerUser = await insertUser({ role: Role.MANAGER });
+      const season = await insertSeason();
+      const ctx = createCtx(managerUser) as GraphQLContext;
+      const gameInput = makeGame({ seasonId: season.id });
+
+      try {
+        await invokeResolver(
+          resolvers.Mutation!.createGame,
+          {},
+          {
+            data: {
+              seasonId: season.id,
+              round: gameInput.round,
+              datetime: gameInput.datetime,
+              location: gameInput.location,
+            },
+          },
+          ctx,
+        );
+        fail("Expected GraphQLError to be thrown");
+      } catch (error) {
+        expect(error).toBeInstanceOf(GraphQLError);
+        expect((error as GraphQLError).extensions?.code).toBe(403);
       }
     });
   });

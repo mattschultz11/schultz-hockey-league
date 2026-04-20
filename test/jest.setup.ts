@@ -20,6 +20,7 @@ async function clearDatabase() {
   await prisma.emailSend.deleteMany();
   await prisma.season.deleteMany();
   await prisma.league.deleteMany();
+  await prisma.auditLog.deleteMany();
   await prisma.user.deleteMany();
 }
 

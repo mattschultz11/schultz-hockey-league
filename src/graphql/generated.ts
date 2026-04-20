@@ -204,8 +204,7 @@ export type Game = {
   season: Season;
   seasonId: Scalars["ID"]["output"];
   round: Scalars["Int"]["output"];
-  date: Scalars["DateTime"]["output"];
-  time: Scalars["DateTime"]["output"];
+  datetime: Scalars["DateTime"]["output"];
   location: Scalars["String"]["output"];
   homeTeam?: Maybe<Team>;
   homeTeamId?: Maybe<Scalars["ID"]["output"]>;
@@ -594,8 +593,7 @@ export type PlayerUpdateInput = {
 export type GameCreateInput = {
   seasonId: Scalars["ID"]["input"];
   round: Scalars["Int"]["input"];
-  date: Scalars["DateTime"]["input"];
-  time: Scalars["DateTime"]["input"];
+  datetime: Scalars["DateTime"]["input"];
   location: Scalars["String"]["input"];
   homeTeamId?: InputMaybe<Scalars["ID"]["input"]>;
   awayTeamId?: InputMaybe<Scalars["ID"]["input"]>;
@@ -603,8 +601,7 @@ export type GameCreateInput = {
 
 export type GameUpdateInput = {
   round?: InputMaybe<Scalars["Int"]["input"]>;
-  date?: InputMaybe<Scalars["DateTime"]["input"]>;
-  time?: InputMaybe<Scalars["DateTime"]["input"]>;
+  datetime?: InputMaybe<Scalars["DateTime"]["input"]>;
   location?: InputMaybe<Scalars["String"]["input"]>;
   homeTeamId?: InputMaybe<Scalars["ID"]["input"]>;
   awayTeamId?: InputMaybe<Scalars["ID"]["input"]>;
@@ -1310,8 +1307,7 @@ export type GameResolvers<
   season?: Resolver<ResolversTypes["Season"], ParentType, ContextType>;
   seasonId?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
   round?: Resolver<ResolversTypes["Int"], ParentType, ContextType>;
-  date?: Resolver<ResolversTypes["DateTime"], ParentType, ContextType>;
-  time?: Resolver<ResolversTypes["DateTime"], ParentType, ContextType>;
+  datetime?: Resolver<ResolversTypes["DateTime"], ParentType, ContextType>;
   location?: Resolver<ResolversTypes["String"], ParentType, ContextType>;
   homeTeam?: Resolver<Maybe<ResolversTypes["Team"]>, ParentType, ContextType>;
   homeTeamId?: Resolver<Maybe<ResolversTypes["ID"]>, ParentType, ContextType>;
