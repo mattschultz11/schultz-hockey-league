@@ -1,3 +1,6 @@
+import fs from "fs";
+import path from "path";
+
 import { renderTemplate, sendBulkEmail, sendEmail } from "@/service/email/emailService";
 
 const mockCreate = jest.fn();
@@ -118,6 +121,58 @@ describe("emailService", () => {
     it("preserves non-template content", () => {
       const result = renderTemplate("<p>No variables here</p>", {});
       expect(result).toBe("<p>No variables here</p>");
+    });
+  });
+
+  describe("schedule-published.html template", () => {
+    const templatePath = path.join(
+      process.cwd(),
+      "src/service/email/templates/schedule-published.html",
+    );
+
+    const fixture = {
+      baseUrl: "https://example.com",
+      player: {
+        id: "player-1",
+        number: 42,
+        position: "F",
+        classification: "ROSTER",
+        user: {
+          id: "user-1",
+          firstName: "Alice",
+          lastName: "Smith",
+          email: "alice@example.com",
+          role: "PLAYER",
+        },
+        season: {
+          id: "season-1",
+          slug: "spring-2026",
+          name: "Spring 2026",
+          league: {
+            id: "league-1",
+            slug: "shl",
+            name: "Schultz Hockey League",
+          },
+        },
+        team: { id: "team-1", slug: "red", name: "Red" },
+      },
+    };
+
+    it("renders with all expected substitutions", () => {
+      const template = fs.readFileSync(templatePath, "utf8");
+      const result = renderTemplate(template, fixture);
+
+      expect(result).toContain("Schultz Hockey League");
+      expect(result).toContain("Spring 2026");
+      expect(result).toContain("Hi Alice,");
+      expect(result).toContain('href="https://example.com/leagues/shl/seasons/spring-2026/games"');
+    });
+
+    it("leaves no unresolved template tokens", () => {
+      const template = fs.readFileSync(templatePath, "utf8");
+      const result = renderTemplate(template, fixture);
+
+      expect(result).not.toMatch(/\{\{[^}]+\}\}/);
     });
   });
 

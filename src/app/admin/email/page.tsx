@@ -249,15 +249,20 @@ export default function AdminEmailPage() {
 
   function htmlToPlainText(html: string): string {
     return html
+      .replace(/<a\s+[^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, "$2 ($1)")
       .replace(/<br\s*\/?>/gi, "\n")
       .replace(/<\/p>/gi, "\n\n")
+      .replace(/<\/(?:tr|table)>/gi, "\n")
       .replace(/<\/li>/gi, "\n")
       .replace(/<li[^>]*>/gi, "- ")
       .replace(/<[^>]+>/g, "")
       .replace(/&nbsp;/gi, " ")
+      .replace(/&mdash;/gi, "—")
+      .replace(/&rsquo;/gi, "’")
       .replace(/&amp;/gi, "&")
       .replace(/&lt;/gi, "<")
       .replace(/&gt;/gi, ">")
+      .replace(/[ \t]+\n/g, "\n")
       .replace(/\n{3,}/g, "\n\n")
       .trim();
   }
