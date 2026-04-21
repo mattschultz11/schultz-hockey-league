@@ -31,9 +31,6 @@ export default async function StandingsPage({ params }: Props) {
     notFound();
   }
 
-  const today = new Date();
-  today.setUTCHours(0, 0, 0, 0);
-
   const [teams, goals] = await Promise.all([
     prisma.team.findMany({
       where: { seasonId: season.id },
@@ -47,11 +44,11 @@ export default async function StandingsPage({ params }: Props) {
         abbreviation: true,
         awayGames: {
           select: { id: true, awayTeamResult: true, awayTeamPoints: true, datetime: true },
-          where: { datetime: { lt: today } },
+          where: { awayTeamResult: { not: null } },
         },
         homeGames: {
           select: { id: true, homeTeamResult: true, homeTeamPoints: true, datetime: true },
-          where: { datetime: { lt: today } },
+          where: { homeTeamResult: { not: null } },
         },
         penalties: { select: { minutes: true } },
         _count: { select: { goals: true } },

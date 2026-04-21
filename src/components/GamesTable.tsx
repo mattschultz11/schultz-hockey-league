@@ -1,9 +1,21 @@
 "use client";
 
-import { Button, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
+import {
+  Button,
+  Chip,
+  TableBody,
+  TableCell,
+  TableColumn,
+  TableHeader,
+  TableRow,
+} from "@heroui/react";
 import { useRouter } from "next/navigation";
 
+import type { Result } from "@/service/prisma/generated/enums";
+
 import DataTable from "./DataTable";
+import type { GameStatus } from "./gameStatus";
+import { getGameStatus } from "./gameStatus";
 
 const columns = [
   { key: "round", label: "Round" },
@@ -12,7 +24,14 @@ const columns = [
   { key: "date", label: "Date" },
   { key: "time", label: "Time" },
   { key: "location", label: "Location" },
+  { key: "status", label: "Status" },
 ] as const;
+
+const STATUS_COLOR: Record<GameStatus, "default" | "success" | "warning"> = {
+  Upcoming: "default",
+  Final: "success",
+  Awaiting: "warning",
+};
 
 export type GamesTableGame = {
   round: number;
@@ -21,6 +40,8 @@ export type GamesTableGame = {
   id: string;
   homeTeam: { name: string } | null;
   awayTeam: { name: string } | null;
+  homeTeamResult: Result | null;
+  awayTeamResult: Result | null;
 };
 
 type GamesTableProps = {
@@ -38,19 +59,22 @@ export default function GamesTable({ games, isAdmin, league, season }: GamesTabl
   const router = useRouter();
   const showActions = !!(isAdmin && league.slug && season.slug);
 
-  const rows = games.map((game) => ({
-    key: game.id,
-    round: game.round,
-    date: game.datetime.toLocaleDateString(undefined, { timeZone: "UTC" }),
-    time: game.datetime.toLocaleTimeString([], {
-      hour: "numeric",
-      minute: "2-digit",
-      timeZone: "UTC",
-    }),
-    home: game.homeTeam?.name ?? "TBD",
-    away: game.awayTeam?.name ?? "TBD",
-    location: game.location,
-  }));
+  const rows = games.map((game) => {
+    const status = getGameStatus(game.datetime, game.homeTeamResult, game.awayTeamResult);
+    return {
+      key: game.id,
+      round: game.round,
+      date: game.datetime.toLocaleDateString(),
+      time: game.datetime.toLocaleTimeString([], {
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+      home: game.homeTeam?.name ?? "TBD",
+      away: game.awayTeam?.name ?? "TBD",
+      location: game.location,
+      status,
+    };
+  });
 
   return (
     <DataTable aria-label="Games">
@@ -70,7 +94,17 @@ export default function GamesTable({ games, isAdmin, league, season }: GamesTabl
         {rows.map((row) => (
           <TableRow key={row.key}>
             {[
-              ...columns.map((col) => <TableCell key={col.key}>{row[col.key]}</TableCell>),
+              ...columns.map((col) => (
+                <TableCell key={col.key}>
+                  {col.key === "status" ? (
+                    <Chip size="sm" color={STATUS_COLOR[row.status]}>
+                      {row.status}
+                    </Chip>
+                  ) : (
+                    row[col.key]
+                  )}
+                </TableCell>
+              )),
               ...(showActions
                 ? [
                     <TableCell key="actions" className="p-1">

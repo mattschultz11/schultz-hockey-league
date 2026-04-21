@@ -73,6 +73,8 @@ export default async function GamesPage({ params, searchParams }: Props) {
         location: true,
         homeTeam: { select: { id: true, name: true } },
         awayTeam: { select: { id: true, name: true } },
+        homeTeamResult: true,
+        awayTeamResult: true,
       },
       orderBy: { datetime: "asc" },
       take: DEFAULT_PAGE_SIZE,

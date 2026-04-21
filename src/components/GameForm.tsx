@@ -119,8 +119,8 @@ function datetimeToCalendarDate(datetime: Date): CalendarDate {
 
 function datetimeToHHMM(datetime: Date): string {
   const d = new Date(datetime);
-  const hh = String(d.getUTCHours()).padStart(2, "0");
-  const mm = String(d.getUTCMinutes()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
   return `${hh}:${mm}`;
 }
 
@@ -131,7 +131,7 @@ function combineToISO(cd: CalendarDate, hhmm: string): string {
   const [hh, mm] = hhmm.split(":").map(Number);
   const hhStr = String(hh).padStart(2, "0");
   const mmStr = String(mm).padStart(2, "0");
-  return new Date(`${cd.toString()}T${hhStr}:${mmStr}:00.000Z`).toISOString();
+  return new Date(`${cd.toString()}T${hhStr}:${mmStr}:00.000`).toISOString();
 }
 
 function cleanErrorMessage(err: unknown, fallback: string): string {
