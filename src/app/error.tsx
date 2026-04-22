@@ -17,7 +17,7 @@ export default function Error({
   return (
     <div className="flex flex-col items-center justify-center gap-4 py-20">
       <h2 className="text-2xl font-bold">Something went wrong</h2>
-      {error.digest && <p className="text-default-500 text-sm">Error ID: {error.digest}</p>}
+      {error.digest && <p className="text-default-600 text-sm">Error ID: {error.digest}</p>}
       <Button color="primary" onPress={reset}>
         Try again
       </Button>

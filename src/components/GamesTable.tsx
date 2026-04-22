@@ -7,6 +7,7 @@ import type { Result } from "@/service/prisma/generated/enums";
 
 import DataTable from "./DataTable";
 import { getGameStatus, STATUS_COLOR } from "./gameStatus";
+import TeamName from "./TeamName";
 
 const columns = [
   { key: "round", label: "Round" },
@@ -18,13 +19,19 @@ const columns = [
   { key: "status", label: "Status" },
 ] as const;
 
+type GamesTableTeam = {
+  name: string;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+};
+
 export type GamesTableGame = {
+  id: string;
   round: number;
   datetime: Date;
   location: string;
-  id: string;
-  homeTeam: { name: string } | null;
-  awayTeam: { name: string } | null;
+  homeTeam: GamesTableTeam | null;
+  awayTeam: GamesTableTeam | null;
   homeTeamResult: Result | null;
   awayTeamResult: Result | null;
 };
@@ -44,9 +51,6 @@ type GamesTableProps = {
 export default function GamesTable({ games, nextUpId, league, season }: GamesTableProps) {
   const router = useRouter();
 
-  const rowHref = (gameId: string) =>
-    `/leagues/${league.slug}/seasons/${season.slug}/games/${gameId}`;
-
   const rows = games.map((game) => {
     const status = getGameStatus(game.datetime, game.homeTeamResult, game.awayTeamResult);
     return {
@@ -57,23 +61,22 @@ export default function GamesTable({ games, nextUpId, league, season }: GamesTab
         hour: "numeric",
         minute: "2-digit",
       }),
-      home: game.homeTeam?.name ?? "TBD",
-      away: game.awayTeam?.name ?? "TBD",
+      homeTeam: game.homeTeam,
+      awayTeam: game.awayTeam,
       location: game.location,
       status,
+      href: `/leagues/${league.slug}/seasons/${season.slug}/games/${game.id}`,
     };
   });
+
+  const rowsById = new Map(rows.map((row) => [row.key, row]));
 
   return (
     <DataTable
       aria-label="Games"
-      onRowAction={
-        rowHref
-          ? (key) => {
-              router.push(rowHref(String(key)));
-            }
-          : undefined
-      }
+      onRowAction={(key) => {
+        router.push(rowsById.get(String(key))?.href ?? "");
+      }}
     >
       <TableHeader>
         {columns.map((col) => (
@@ -86,22 +89,7 @@ export default function GamesTable({ games, nextUpId, league, season }: GamesTab
           return (
             <TableRow key={row.key}>
               {columns.map((col) => (
-                <TableCell key={col.key}>
-                  {col.key === "status" ? (
-                    <div className="flex flex-wrap items-center gap-1">
-                      <Chip size="sm" color={STATUS_COLOR[row.status]}>
-                        {row.status}
-                      </Chip>
-                      {isNextUp && (
-                        <Chip size="sm" variant="flat" color="primary">
-                          Next Up
-                        </Chip>
-                      )}
-                    </div>
-                  ) : (
-                    row[col.key]
-                  )}
-                </TableCell>
+                <TableCell key={col.key}>{renderCell(col.key, row, isNextUp)}</TableCell>
               ))}
             </TableRow>
           );
@@ -109,4 +97,39 @@ export default function GamesTable({ games, nextUpId, league, season }: GamesTab
       </TableBody>
     </DataTable>
   );
+}
+
+type Row = {
+  key: string;
+  round: number;
+  date: string;
+  time: string;
+  homeTeam: GamesTableTeam | null;
+  awayTeam: GamesTableTeam | null;
+  location: string;
+  status: ReturnType<typeof getGameStatus>;
+};
+
+function renderCell(key: (typeof columns)[number]["key"], row: Row, isNextUp: boolean) {
+  switch (key) {
+    case "home":
+      return row.homeTeam ? <TeamName team={row.homeTeam} outlineWidth={0.5} /> : "TBD";
+    case "away":
+      return row.awayTeam ? <TeamName team={row.awayTeam} outlineWidth={0.5} /> : "TBD";
+    case "status":
+      return (
+        <div className="flex flex-wrap items-center gap-1">
+          <Chip size="sm" color={STATUS_COLOR[row.status]}>
+            {row.status}
+          </Chip>
+          {isNextUp && (
+            <Chip size="sm" variant="flat" color="primary">
+              Next Up
+            </Chip>
+          )}
+        </div>
+      );
+    default:
+      return row[key];
+  }
 }

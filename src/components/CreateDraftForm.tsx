@@ -117,7 +117,7 @@ export default function CreateDraftForm({ league, season, teams }: Props) {
     return (
       <div className="mx-auto max-w-lg">
         <h2 className="mb-6 text-xl font-semibold">Create Draft</h2>
-        <p className="text-default-500">
+        <p className="text-default-600">
           You need at least 2 teams to create a draft. Add teams first.
         </p>
       </div>
@@ -135,7 +135,7 @@ export default function CreateDraftForm({ league, season, teams }: Props) {
 
         <div>
           <h2 className="text-default-800 mb-3 text-lg font-semibold">Create Draft</h2>
-          <p className="text-default-500 mb-3 text-sm">
+          <p className="text-default-600 mb-3 text-sm">
             Select teams and arrange them in draft order. Use arrows to reorder.
           </p>
           <CheckboxGroup value={selectedTeamIds} onValueChange={setSelectedTeamIds}>
@@ -150,13 +150,13 @@ export default function CreateDraftForm({ league, season, teams }: Props) {
 
           {selectedTeamIds.length > 0 && (
             <div className="mt-4">
-              <p className="text-default-500 mb-2 text-sm font-medium">Pick Order:</p>
+              <p className="text-default-600 mb-2 text-sm font-medium">Pick Order:</p>
               <div className="flex flex-col gap-1">
                 {selectedTeamIds.map((id, index) => {
                   const team = teams.find((t) => t.id === id);
                   return (
                     <div key={id} className="flex items-center gap-2">
-                      <span className="text-default-500 w-6 text-right text-sm">{index + 1}.</span>
+                      <span className="text-default-600 w-6 text-right text-sm">{index + 1}.</span>
                       <span className="text-default-800 flex-1">{team?.name}</span>
                       <Button
                         size="sm"

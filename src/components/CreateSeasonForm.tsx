@@ -112,7 +112,7 @@ export default function CreateSeasonForm({ league }: Props) {
       <FormDatePicker name="endDate" control={control} label="End Date" isRequired />
 
       <fieldset>
-        <legend className="text-default-500 mb-2 text-sm">Game Days</legend>
+        <legend className="text-default-600 mb-2 text-sm">Game Days</legend>
         <div className="flex flex-wrap gap-4">
           {DAYS.map(({ key, label }) => (
             <Checkbox

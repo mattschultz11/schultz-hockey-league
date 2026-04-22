@@ -39,12 +39,97 @@ export default async function GameDetailPage({ params }: Props) {
       round: true,
       datetime: true,
       location: true,
-      homeTeam: { select: { id: true, name: true, slug: true } },
-      awayTeam: { select: { id: true, name: true, slug: true } },
+      homeTeam: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          logoUrl: true,
+          primaryColor: true,
+          secondaryColor: true,
+        },
+      },
+      awayTeam: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          logoUrl: true,
+          primaryColor: true,
+          secondaryColor: true,
+        },
+      },
       homeTeamResult: true,
       homeTeamPoints: true,
       awayTeamResult: true,
       awayTeamPoints: true,
+      goals: {
+        select: {
+          id: true,
+          period: true,
+          time: true,
+          strength: true,
+          teamId: true,
+          scorer: {
+            select: {
+              id: true,
+              number: true,
+              user: { select: { firstName: true, lastName: true } },
+            },
+          },
+          primaryAssist: {
+            select: {
+              id: true,
+              number: true,
+              user: { select: { firstName: true, lastName: true } },
+            },
+          },
+          secondaryAssist: {
+            select: {
+              id: true,
+              number: true,
+              user: { select: { firstName: true, lastName: true } },
+            },
+          },
+        },
+        orderBy: [{ period: "asc" }, { time: "asc" }],
+      },
+      penalties: {
+        select: {
+          id: true,
+          period: true,
+          time: true,
+          teamId: true,
+          category: true,
+          type: true,
+          minutes: true,
+          player: {
+            select: {
+              id: true,
+              number: true,
+              user: { select: { firstName: true, lastName: true } },
+            },
+          },
+        },
+        orderBy: [{ period: "asc" }, { time: "asc" }],
+      },
+      lineups: {
+        select: {
+          id: true,
+          teamId: true,
+          player: {
+            select: {
+              id: true,
+              number: true,
+              position: true,
+              playerRating: true,
+              goalieRating: true,
+              teamId: true,
+              user: { select: { firstName: true, lastName: true } },
+            },
+          },
+        },
+      },
     },
   });
 

@@ -141,7 +141,7 @@ function RegistrationCard({
             )}
             <div>
               <p className="text-lg font-semibold text-white">{name}</p>
-              <p className="text-default-500 text-sm">{reg.email}</p>
+              <p className="text-default-600 text-sm">{reg.email}</p>
             </div>
           </div>
           {reg.position && (
@@ -173,7 +173,7 @@ function RegistrationCard({
         </div>
 
         <div className="flex items-center justify-between">
-          <p className="text-default-500 text-xs">Registered {formatDate(reg.createdAt)}</p>
+          <p className="text-default-600 text-xs">Registered {formatDate(reg.createdAt)}</p>
 
           {accepted && (
             <Chip
@@ -346,7 +346,7 @@ export default function RegistrationsTable({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <p className="text-default-500 text-sm">
+        <p className="text-default-600 text-sm">
           {registrations.length} registration{registrations.length !== 1 && "s"}
         </p>
         <ButtonGroup size="sm" variant="solid">

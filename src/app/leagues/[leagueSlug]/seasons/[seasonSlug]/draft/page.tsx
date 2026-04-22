@@ -43,13 +43,13 @@ export default async function DraftPage({ params }: Props) {
       where: { seasonId: season.id },
       orderBy: { overall: "asc" },
       include: {
-        team: { select: { id: true, name: true } },
+        team: { select: { id: true, name: true, primaryColor: true, secondaryColor: true } },
         player: { select: playerSelect },
       },
     }),
     prisma.team.findMany({
       where: { seasonId: season.id },
-      select: { id: true, name: true },
+      select: { id: true, name: true, primaryColor: true, secondaryColor: true },
       orderBy: { name: "asc" },
     }),
     prisma.player.findMany({

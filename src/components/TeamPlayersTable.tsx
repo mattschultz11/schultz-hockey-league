@@ -15,19 +15,11 @@ import {
 } from "@/utils/stringUtils";
 
 import DataTable from "./DataTable";
-import TeamName from "./TeamName";
 
 export type PlayersTablePlayer = {
   number: number | null;
   draftPick: {
-    overall: number;
-  } | null;
-  team: {
-    name: string;
-    id: string;
-    slug: string;
-    primaryColor: string | null;
-    secondaryColor: string | null;
+    round: number;
   } | null;
   position: Position | null;
   id: string;
@@ -53,7 +45,6 @@ type PlayersTableProps = {
   players: PlayersTablePlayer[];
   league?: { slug: string };
   season?: { slug: string };
-  hideTeam?: boolean;
 };
 
 const columns = [
@@ -61,7 +52,6 @@ const columns = [
   { key: "name", label: "Name" },
   { key: "position", label: "Position" },
   { key: "rating", label: "Rating" },
-  { key: "team", label: "Team" },
   { key: "number", label: "#" },
   { key: "games", label: "GP" },
   { key: "goals", label: "G" },
@@ -87,8 +77,8 @@ function comparePlayers(a: PlayersTablePlayer, b: PlayersTablePlayer, column: Co
   switch (column) {
     case "pick":
       return (
-        (a.draftPick?.overall ?? Number.POSITIVE_INFINITY) -
-        (b.draftPick?.overall ?? Number.POSITIVE_INFINITY)
+        (a.draftPick?.round ?? Number.POSITIVE_INFINITY) -
+        (b.draftPick?.round ?? Number.POSITIVE_INFINITY)
       );
     case "number":
       return (a.number ?? Number.POSITIVE_INFINITY) - (b.number ?? Number.POSITIVE_INFINITY);
@@ -99,8 +89,6 @@ function comparePlayers(a: PlayersTablePlayer, b: PlayersTablePlayer, column: Co
     }
     case "position":
       return (a.position ?? "").localeCompare(b.position ?? "");
-    case "team":
-      return (a.team?.name ?? "").localeCompare(b.team?.name ?? "");
     case "rating":
       return (
         (positionRating(a) ?? Number.POSITIVE_INFINITY) -
@@ -121,7 +109,7 @@ function comparePlayers(a: PlayersTablePlayer, b: PlayersTablePlayer, column: Co
   }
 }
 
-export default function PlayersTable({ players, league, season, hideTeam }: PlayersTableProps) {
+export default function TeamPlayersTable({ players, league, season }: PlayersTableProps) {
   const router = useRouter();
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: "name",
@@ -142,9 +130,8 @@ export default function PlayersTable({ players, league, season, hideTeam }: Play
     const stats = playerStats(player);
     return {
       key: player.id,
-      pick: player.draftPick?.overall,
+      pick: player.draftPick?.round,
       name: playerName(player),
-      team: player.team,
       number: playerNumber(player),
       rating: formatPositionRating(player),
       position: playerPosition(player),
@@ -159,7 +146,6 @@ export default function PlayersTable({ players, league, season, hideTeam }: Play
   });
 
   const rowsById = new Map(rows.map((row) => [row.key, row]));
-  const filteredColumns = hideTeam ? columns.filter((col) => col.key !== "team") : columns;
 
   return (
     <DataTable
@@ -171,7 +157,7 @@ export default function PlayersTable({ players, league, season, hideTeam }: Play
       }}
     >
       <TableHeader>
-        {filteredColumns.map((col) => (
+        {columns.map((col) => (
           <TableColumn key={col.key} allowsSorting>
             {col.label}
           </TableColumn>
@@ -180,10 +166,8 @@ export default function PlayersTable({ players, league, season, hideTeam }: Play
       <TableBody emptyContent="No players">
         {rows.map((row) => (
           <TableRow key={row.key}>
-            {filteredColumns.map((col) => (
-              <TableCell key={col.key}>
-                {col.key === "team" ? row.team ? <TeamName team={row.team} /> : "-" : row[col.key]}
-              </TableCell>
+            {columns.map((col) => (
+              <TableCell key={col.key}>{row[col.key]}</TableCell>
             ))}
           </TableRow>
         ))}

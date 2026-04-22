@@ -164,7 +164,7 @@ export default function EmailSendDetailPage() {
           <h1 className="text-2xl font-semibold text-white">{email.subject}</h1>
         </CardHeader>
         <CardBody className="flex flex-col gap-3">
-          <div className="text-default-500 flex flex-wrap gap-4 text-sm">
+          <div className="text-default-600 flex flex-wrap gap-4 text-sm">
             {email.sentAt && <span>Sent: {formatDateTime(email.sentAt)}</span>}
             <span>
               Status:{" "}

@@ -4,13 +4,34 @@ import { Button, Card, CardBody, CardHeader, Chip } from "@heroui/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import type { Result } from "@/graphql/generated";
+import type { PenaltyCategory, PenaltyType, Position, Result, Strength } from "@/graphql/generated";
 
+import GameGoalsList from "./GameGoalsList";
+import GameMatchup from "./GameMatchup";
+import GamePenaltiesList from "./GamePenaltiesList";
 import { getGameStatus, STATUS_COLOR } from "./gameStatus";
 
-function teamHref(league: { slug: string }, season: { slug: string }, team: { slug: string }) {
-  return `/leagues/${league.slug}/seasons/${season.slug}/teams/${team.slug}`;
-}
+type MatchupTeam = {
+  id: string;
+  slug: string;
+  name: string;
+  logoUrl: string | null;
+  primaryColor: string | null;
+  secondaryColor: string | null;
+};
+
+type GamePlayer = {
+  id: string;
+  number: number | null;
+  user: { firstName: string | null; lastName: string | null };
+};
+
+type LineupPlayer = GamePlayer & {
+  position: Position | null;
+  playerRating: number | null;
+  goalieRating: number | null;
+  teamId: string | null;
+};
 
 type Props = {
   game: {
@@ -18,12 +39,37 @@ type Props = {
     round: number;
     datetime: Date;
     location: string;
-    homeTeam: { slug: string; name: string } | null;
-    awayTeam: { slug: string; name: string } | null;
+    homeTeam: MatchupTeam | null;
+    awayTeam: MatchupTeam | null;
     homeTeamResult: Result | null;
     awayTeamResult: Result | null;
     homeTeamPoints: number | null;
     awayTeamPoints: number | null;
+    goals: {
+      id: string;
+      period: number;
+      time: number;
+      strength: Strength;
+      teamId: string;
+      scorer: GamePlayer;
+      primaryAssist: GamePlayer | null;
+      secondaryAssist: GamePlayer | null;
+    }[];
+    penalties: {
+      id: string;
+      period: number;
+      time: number;
+      teamId: string;
+      category: PenaltyCategory;
+      type: PenaltyType;
+      minutes: number;
+      player: GamePlayer;
+    }[];
+    lineups: {
+      id: string;
+      teamId: string;
+      player: LineupPlayer;
+    }[];
   };
   league: { slug: string; name: string };
   season: { slug: string; name: string };
@@ -39,16 +85,12 @@ export default function GameDetailCard({ game, league, season, isAdmin }: Props)
     awayTeam,
     homeTeamResult,
     awayTeamResult,
-    homeTeamPoints,
-    awayTeamPoints,
+    goals,
+    penalties,
   } = game;
 
   const router = useRouter();
   const status = getGameStatus(datetime, homeTeamResult, awayTeamResult);
-  const homeTeamName = homeTeam?.name ?? "TBD";
-  const awayTeamName = awayTeam?.name ?? "TBD";
-  const homeTeamHref = homeTeam && teamHref(league, season, homeTeam);
-  const awayTeamHref = awayTeam && teamHref(league, season, awayTeam);
   const dateLabel = datetime.toLocaleDateString();
   const timeLabel = game.datetime.toLocaleTimeString([], {
     hour: "numeric",
@@ -56,41 +98,30 @@ export default function GameDetailCard({ game, league, season, isAdmin }: Props)
   });
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <Card>
         <CardHeader>
-          <h1 className="flex flex-grow justify-between gap-1 text-2xl font-semibold">
-            <span>{dateLabel}</span>
-            <span>{timeLabel}</span>
-            <span>{location}</span>
-          </h1>
+          <div className="flex w-full flex-col gap-2">
+            <h1 className="flex flex-grow justify-between gap-1 text-2xl font-semibold">
+              <span>{dateLabel}</span>
+              <span>{timeLabel}</span>
+              <span>{location}</span>
+            </h1>
+            <div className="flex items-end justify-between gap-2">
+              <DetailField label="Round" value={round.toString()} />
+              <Chip size="sm" color={STATUS_COLOR[status]}>
+                {status}
+              </Chip>
+            </div>
+          </div>
         </CardHeader>
         <CardBody className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Matchup
-              label="Home"
-              teamName={homeTeamName}
-              teamHref={homeTeamHref}
-              points={homeTeamPoints}
-            />
-            <Matchup
-              label="Away"
-              teamName={awayTeamName}
-              teamHref={awayTeamHref}
-              points={awayTeamPoints}
-            />
-          </div>
-
-          <div className="flex items-end justify-between gap-2">
-            <dl className="flex flex-col gap-1">
-              <DetailField label="Round" value={round.toString()} />
-            </dl>
-            <Chip size="sm" color={STATUS_COLOR[status]}>
-              {status}
-            </Chip>
-          </div>
+          <GameMatchup league={league} season={season} game={game} />
         </CardBody>
       </Card>
+
+      <GameGoalsList goals={goals} homeTeam={homeTeam} awayTeam={awayTeam} />
+      <GamePenaltiesList penalties={penalties} homeTeam={homeTeam} awayTeam={awayTeam} />
 
       <div className="flex items-center justify-between gap-2">
         <Button onPress={() => router.back()} variant="flat" size="sm">
@@ -111,41 +142,11 @@ export default function GameDetailCard({ game, league, season, isAdmin }: Props)
   );
 }
 
-function Matchup({
-  label,
-  teamName,
-  teamHref,
-  points,
-}: {
-  label: string;
-  teamName: string;
-  teamHref: string | null;
-  points: number | null;
-}) {
-  return (
-    <div className="bg-default-200 flex flex-col gap-1 rounded-lg p-3">
-      <span className="text-default-500 text-xs font-medium tracking-wide uppercase">{label}</span>
-      {teamHref ? (
-        <Link href={teamHref} className="text-foreground text-lg font-semibold hover:underline">
-          {teamName}
-        </Link>
-      ) : (
-        <span className="text-foreground text-lg font-semibold">{teamName}</span>
-      )}
-      {points != null && (
-        <span className="text-default-600 text-sm">
-          <span className="font-semibold">{points}</span> pts
-        </span>
-      )}
-    </div>
-  );
-}
-
 function DetailField({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col">
-      <dt className="text-default-500 text-xs font-medium tracking-wide uppercase">{label}</dt>
-      <dd className="text-foreground">{value}</dd>
+    <div className="flex items-center gap-1">
+      <span className="text-default-600 text-xs font-medium tracking-wide uppercase">{label}:</span>
+      <span className="text-foreground">{value}</span>
     </div>
   );
 }

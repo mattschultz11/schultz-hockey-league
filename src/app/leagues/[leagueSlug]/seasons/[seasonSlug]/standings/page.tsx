@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import PageHeader from "@/components/PageHeader";
 import PageLayout from "@/components/PageLayout";
-import TeamsTable from "@/components/StandingsTable";
+import StandingsTable from "@/components/StandingsTable";
 import prisma from "@/service/prisma";
 
 type Props = {
@@ -31,7 +31,7 @@ export default async function StandingsPage({ params }: Props) {
     notFound();
   }
 
-  const [teams, goals] = await Promise.all([
+  const [teams] = await Promise.all([
     prisma.team.findMany({
       where: { seasonId: season.id },
       select: {
@@ -51,13 +51,10 @@ export default async function StandingsPage({ params }: Props) {
           where: { homeTeamResult: { not: null } },
         },
         penalties: { select: { minutes: true } },
-        _count: { select: { goals: true } },
+        standing: true,
+        _count: { select: { goals: true, goalsAgainst: true } },
       },
-      orderBy: { name: "asc" },
-    }),
-    prisma.goal.findMany({
-      where: { game: { seasonId: season.id } },
-      select: { gameId: true, teamId: true },
+      orderBy: { standing: { rank: "asc" } },
     }),
   ]);
 
@@ -73,7 +70,7 @@ export default async function StandingsPage({ params }: Props) {
           ]}
         />
       </PageHeader>
-      <TeamsTable teams={teams} goals={goals} />
+      <StandingsTable teams={teams} league={league} season={season} />
     </PageLayout>
   );
 }

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 
 import PageLayout from "@/components/PageLayout";
 import PlayerEditForm from "@/components/PlayerEditForm";
+import UserEditForm from "@/components/UserEditForm";
 import { auth } from "@/service/auth/authService";
 import prisma from "@/service/prisma";
 
@@ -55,7 +56,19 @@ export default async function EditPlayerPage({ params }: Props) {
         registrationNumber: true,
         ratingVerified: true,
         confirmed: true,
-        user: { select: { firstName: true, lastName: true } },
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            birthday: true,
+            handedness: true,
+            gloveHand: true,
+            role: true,
+          },
+        },
       },
     }),
     prisma.team.findMany({
@@ -69,15 +82,23 @@ export default async function EditPlayerPage({ params }: Props) {
     notFound();
   }
 
-  const returnHref = `/leagues/${league.slug}/seasons/${season.slug}/players`;
   const displayName =
     [player.user.firstName, player.user.lastName].filter(Boolean).join(" ") || "Player";
 
   return (
     <PageLayout>
-      <div className="mx-auto w-full max-w-2xl">
-        <h1 className="mb-6 text-2xl font-semibold text-white">Edit {displayName}</h1>
-        <PlayerEditForm player={player} teams={teams} returnHref={returnHref} />
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-8">
+        <h1 className="text-2xl font-semibold text-white">Edit {displayName}</h1>
+
+        <section className="flex flex-col gap-4">
+          <h2 className="text-xl font-semibold text-white">Player</h2>
+          <PlayerEditForm player={player} teams={teams} />
+        </section>
+
+        <section className="flex flex-col gap-4">
+          <h2 className="text-xl font-semibold text-white">User</h2>
+          <UserEditForm user={player.user} />
+        </section>
       </div>
     </PageLayout>
   );

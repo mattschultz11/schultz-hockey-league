@@ -98,7 +98,6 @@ type Props = {
   seasonId: string;
   teams: TeamOption[];
   game?: GameFormInput;
-  returnHref: string;
 };
 
 type FormValues = {

@@ -1,11 +1,14 @@
 "use client";
 
+import type { SortDescriptor } from "@heroui/react";
 import { TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
-import { useMemo } from "react";
+import { useRouter } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
 
 import { Result } from "@/service/prisma/generated/enums";
 
 import DataTable from "./DataTable";
+import TeamName from "./TeamName";
 
 const columns = [
   { key: "rank", label: "Rank" },
@@ -21,33 +24,7 @@ const columns = [
   { key: "pim", label: "PIM" },
 ] as const;
 
-function buildGoalsAgainstMap(
-  teams: {
-    id: string;
-    homeGames: { id: string }[];
-    awayGames: { id: string }[];
-  }[],
-  goals: { gameId: string; teamId: string }[],
-) {
-  const goalsAgainstMap = new Map<string, number>();
-  const teamGameIds = new Map<string, Set<string>>();
-  for (const team of teams) {
-    const gameIds = new Set([
-      ...team.homeGames.map((g) => g.id),
-      ...team.awayGames.map((g) => g.id),
-    ]);
-    teamGameIds.set(team.id, gameIds);
-    goalsAgainstMap.set(team.id, 0);
-  }
-  for (const goal of goals) {
-    for (const [teamId, gameIds] of teamGameIds) {
-      if (gameIds.has(goal.gameId) && goal.teamId !== teamId) {
-        goalsAgainstMap.set(teamId, (goalsAgainstMap.get(teamId) ?? 0) + 1);
-      }
-    }
-  }
-  return goalsAgainstMap;
-}
+type ColumnKey = (typeof columns)[number]["key"];
 
 type StandingsTableProps = {
   teams: {
@@ -56,6 +33,7 @@ type StandingsTableProps = {
     name: string;
     _count: {
       goals: number;
+      goalsAgainst: number;
     };
     abbreviation: string | null;
     logoUrl: string | null;
@@ -74,22 +52,32 @@ type StandingsTableProps = {
     penalties: {
       minutes: number;
     }[];
+    standing: {
+      rank: number;
+    } | null;
   }[];
-  goals: {
-    gameId: string;
-    teamId: string;
-  }[];
+  league: {
+    slug: string;
+  };
+  season: {
+    slug: string;
+  };
 };
 
-export default function StandingsTable({ teams, goals }: StandingsTableProps) {
-  // Build goals-against map: for each team, count goals in their games scored by opponents
-  const goalsAgainstMap = useMemo(() => buildGoalsAgainstMap(teams, goals), [teams, goals]);
+export default function StandingsTable({ teams, league, season }: StandingsTableProps) {
+  const router = useRouter();
+  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+    column: "rank",
+    direction: "ascending",
+  });
 
-  const rows = teams
-    .map((team) => {
-      return {
+  const rows = useMemo(
+    () =>
+      teams.map((team) => ({
         id: team.id,
+        rank: team.standing?.rank ?? 0,
         name: team.name,
+        team,
         games: team.homeGames.length + team.awayGames.length,
         wins:
           team.homeGames.filter((g) => g.homeTeamResult === Result.WIN).length +
@@ -104,29 +92,54 @@ export default function StandingsTable({ teams, goals }: StandingsTableProps) {
           team.homeGames.reduce((acc, g) => acc + (g.homeTeamPoints ?? 0), 0) +
           team.awayGames.reduce((acc, g) => acc + (g.awayTeamPoints ?? 0), 0),
         goalsFor: team._count.goals,
-        goalsAgainst: goalsAgainstMap.get(team.id) ?? 0,
-        plusMinus: team._count.goals - (goalsAgainstMap.get(team.id) ?? 0),
+        goalsAgainst: team._count.goalsAgainst,
+        plusMinus: team._count.goals - team._count.goalsAgainst,
         pim: team.penalties.reduce((acc, p) => acc + p.minutes, 0),
-      };
-    })
-    .sort((a, b) => b.points - a.points)
-    .map((team, index) => ({
-      ...team,
-      rank: index + 1,
-    }));
+        href: `/leagues/${league.slug}/seasons/${season.slug}/teams/${team.slug}`,
+      })),
+    [teams, league.slug, season.slug],
+  );
+
+  const sortedRows = useMemo(() => {
+    const column = sortDescriptor.column as ColumnKey;
+    const sorted = [...rows].sort((a, b) => {
+      const va = a[column];
+      const vb = b[column];
+      if (typeof va === "number" && typeof vb === "number") return va - vb;
+      return String(va).localeCompare(String(vb));
+    });
+    return sortDescriptor.direction === "descending" ? sorted.reverse() : sorted;
+  }, [rows, sortDescriptor]);
+
+  const handleSortChange = useCallback((descriptor: SortDescriptor) => {
+    setSortDescriptor(descriptor);
+  }, []);
+
+  const rowsById = new Map(sortedRows.map((row) => [row.id, row]));
 
   return (
-    <DataTable aria-label="Standings">
+    <DataTable
+      aria-label="Standings"
+      sortDescriptor={sortDescriptor}
+      onSortChange={handleSortChange}
+      onRowAction={(key) => {
+        router.push(rowsById.get(String(key))?.href ?? "");
+      }}
+    >
       <TableHeader>
         {columns.map((col) => (
-          <TableColumn key={col.key}>{col.label}</TableColumn>
+          <TableColumn key={col.key} allowsSorting>
+            {col.label}
+          </TableColumn>
         ))}
       </TableHeader>
       <TableBody>
-        {rows.map((row) => (
+        {sortedRows.map((row) => (
           <TableRow key={row.id}>
             {columns.map((col) => (
-              <TableCell key={col.key}>{row[col.key]}</TableCell>
+              <TableCell key={col.key}>
+                {col.key === "name" ? <TeamName team={row.team} /> : row[col.key]}
+              </TableCell>
             ))}
           </TableRow>
         ))}

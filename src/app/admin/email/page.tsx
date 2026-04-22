@@ -492,7 +492,7 @@ export default function AdminEmailPage() {
         {/* Selected Recipients */}
         {selectedEmails.size > 0 && (
           <div className="flex flex-wrap gap-2">
-            <span className="text-default-500 text-sm leading-8">
+            <span className="text-default-600 text-sm leading-8">
               Recipients ({selectedEmails.size}):
             </span>
             {[...selectedEmails].map((email) => (
@@ -530,7 +530,7 @@ export default function AdminEmailPage() {
           {showTemplateRef && (
             <Card className="mt-2">
               <CardBody>
-                <p className="text-default-500 mb-2 text-sm">
+                <p className="text-default-600 mb-2 text-sm">
                   Use these in subject or body. Each recipient gets personalized values.
                 </p>
                 <div className="flex flex-wrap gap-2">
@@ -553,7 +553,7 @@ export default function AdminEmailPage() {
         {showPreview && (
           <Card>
             <CardBody>
-              <h3 className="text-default-500 mb-2 text-sm font-medium">Preview (raw template)</h3>
+              <h3 className="text-default-600 mb-2 text-sm font-medium">Preview (raw template)</h3>
               <div
                 className="prose prose-invert max-w-none rounded-lg bg-white p-4 text-black"
                 dangerouslySetInnerHTML={{ __html: htmlBody }}
@@ -591,7 +591,7 @@ export default function AdminEmailPage() {
               </strong>
               ?
             </p>
-            <p className="text-default-500 text-sm">
+            <p className="text-default-600 text-sm">
               Subject: <span className="font-medium">{subject}</span>
             </p>
           </ModalBody>

@@ -4,10 +4,11 @@ import { TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@herou
 import { useState } from "react";
 
 import type { Position } from "@/graphql/generated";
-import { formatPositionRating, playerName, playerPosition, teamName } from "@/utils/stringUtils";
+import { formatPositionRating, playerName, playerPosition } from "@/utils/stringUtils";
 
 import DataTable from "./DataTable";
 import EditDraftPickModal from "./EditDraftPickModal";
+import TeamName from "./TeamName";
 
 const columns = [
   { key: "overall", label: "Overall" },
@@ -30,6 +31,8 @@ type PlayerOption = {
 type TeamOption = {
   id: string;
   name: string;
+  primaryColor: string | null;
+  secondaryColor: string | null;
 };
 
 type DraftPickRow = {
@@ -56,7 +59,7 @@ export default function DraftTable({ draftPicks, isAdmin, teams, players }: Prop
     overall: pick.overall,
     round: pick.round,
     pick: pick.pick,
-    team: teamName(pick.team),
+    team: pick.team,
     player: playerName(pick.player),
     rating: formatPositionRating(pick.player),
     position: playerPosition(pick.player),
@@ -83,7 +86,17 @@ export default function DraftTable({ draftPicks, isAdmin, teams, players }: Prop
           {rows.map((row) => (
             <TableRow key={row.key}>
               {columns.map((col) => (
-                <TableCell key={col.key}>{row[col.key]}</TableCell>
+                <TableCell key={col.key}>
+                  {col.key === "team" ? (
+                    row.team ? (
+                      <TeamName team={row.team} />
+                    ) : (
+                      "-"
+                    )
+                  ) : (
+                    row[col.key]
+                  )}
+                </TableCell>
               ))}
             </TableRow>
           ))}

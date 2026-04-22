@@ -40,13 +40,11 @@ export default async function NewGamePage({ params }: Props) {
     orderBy: { name: "asc" },
   });
 
-  const returnHref = `/leagues/${league.slug}/seasons/${season.slug}/games`;
-
   return (
     <PageLayout>
       <div className="mx-auto w-full max-w-2xl">
         <h1 className="mb-6 text-2xl font-semibold text-white">New Game</h1>
-        <GameForm mode="create" seasonId={season.id} teams={teams} returnHref={returnHref} />
+        <GameForm mode="create" seasonId={season.id} teams={teams} />
       </div>
     </PageLayout>
   );

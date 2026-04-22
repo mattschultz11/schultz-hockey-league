@@ -8,10 +8,11 @@ import { formatPositionRating, playerName, playerPosition } from "@/utils/string
 import DataTable from "./DataTable";
 
 const columns = [
+  { key: "pick", label: "Pick" },
   { key: "name", label: "Name" },
+  { key: "number", label: "#" },
   { key: "position", label: "Position" },
   { key: "rating", label: "Rating" },
-  { key: "pick", label: "Pick" },
 ] as const;
 
 type TeamTableProps = {
@@ -20,6 +21,7 @@ type TeamTableProps = {
     name: string;
     players: {
       id: string;
+      number: number | null;
       position: Position | null;
       playerRating: number | null;
       goalieRating: number | null;
@@ -36,14 +38,16 @@ type TeamTableProps = {
       } | null;
     }[];
   };
+  hideNumber?: boolean;
 };
 
-export default function TeamTable({ team }: TeamTableProps) {
+export default function TeamTable({ team, hideNumber }: TeamTableProps) {
   // Build goals-against map: for each team, count goals in their games scored by opponents
   const rows = team.players
     .map((player) => {
       return {
         id: player.id,
+        number: player.number,
         name: playerName(player),
         position: playerPosition(player),
         rating: formatPositionRating(player),
@@ -53,17 +57,19 @@ export default function TeamTable({ team }: TeamTableProps) {
     .sort((a, b) => b.pick - a.pick)
     .sort((a, b) => a.position.localeCompare(b.position));
 
+  const filteredColumns = hideNumber ? columns.filter((col) => col.key !== "number") : columns;
+
   return (
     <DataTable aria-label={`${team.name} players`}>
       <TableHeader>
-        {columns.map((col) => (
+        {filteredColumns.map((col) => (
           <TableColumn key={col.key}>{col.label}</TableColumn>
         ))}
       </TableHeader>
       <TableBody>
         {rows.map((row) => (
           <TableRow key={row.id}>
-            {columns.map((col) => (
+            {filteredColumns.map((col) => (
               <TableCell key={col.key}>{row[col.key]}</TableCell>
             ))}
           </TableRow>

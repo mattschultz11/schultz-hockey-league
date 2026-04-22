@@ -1,3 +1,8 @@
+"use client";
+
+import { Button } from "@heroui/react";
+import Link from "next/link";
+
 import PageBreadcrumbs from "./PageBreadcrumbs";
 import PageHeader from "./PageHeader";
 
@@ -14,9 +19,10 @@ type Props = {
     slug: string;
     name: string;
   };
+  isAdmin?: boolean;
 };
 
-export default function TeamGamesHeader({ league, season, team }: Props) {
+export default function TeamHeader({ league, season, team, isAdmin }: Props) {
   return (
     <PageHeader>
       <PageBreadcrumbs
@@ -28,6 +34,16 @@ export default function TeamGamesHeader({ league, season, team }: Props) {
           { label: team.name },
         ]}
       />
+      {isAdmin && (
+        <Button
+          as={Link}
+          href={`/admin/leagues/${league.slug}/seasons/${season.slug}/teams/${team.slug}/edit`}
+          color="primary"
+          size="sm"
+        >
+          Edit Team
+        </Button>
+      )}
     </PageHeader>
   );
 }

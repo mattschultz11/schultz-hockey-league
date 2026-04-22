@@ -1013,34 +1013,29 @@ So that I can see key information at a glance.
 
 ---
 
-### Story 6.3: Team Overview Dashboard
+### Story 6.3: Season Overview Dashboard
 
-As a **viewer or manager**,
-I want a team overview page,
-So that I can see my team's key information at a glance.
+As a **viewer**,
+I want a Season overview page,
+So that I can see the season's key information at a glance.
 
 **Acceptance Criteria:**
 
-**Given** I navigate to a team's home page
+**Given** I navigate to a season's home page
 **When** the page loads
-**Then** I see the team roster summary
-**And** upcoming games for the team
+**Then** I see the season summary
+**And** upcoming games for the season
 **And** recent results and current standing
 
-**Given** I am a manager viewing my team's dashboard
-**When** the page loads
-**Then** I see the same information as viewers
-**And** quick action links (submit stats, view full roster) are visible
-
-**Given** the team has a game today
+**Given**There are games today
 **When** I view the dashboard
-**Then** today's game is prominently highlighted
-**And** opponent and time/location are clearly visible
+**Then** today's games are prominently highlighted
+**And** teams and time/location are clearly visible
 
 **Given** the dashboard is loaded
 **When** I check performance
 **Then** the page renders within 2s (P75)
-**And** all data is scoped to the selected team and season
+**And** all data is scoped to the selected season
 
 ---
 

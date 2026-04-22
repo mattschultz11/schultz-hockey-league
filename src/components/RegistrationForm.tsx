@@ -349,14 +349,14 @@ export default function RegistrationForm({ seasonId }: RegistrationFormProps) {
               <ModalContent>
                 <ModalHeader>Skill Rating Guide</ModalHeader>
                 <ModalBody className="pb-6">
-                  <p className="text-default-500 text-sm">
+                  <p className="text-default-600 text-sm">
                     Use half-point ratings if you feel you fit between two categories. League
                     average is about 3.5
                   </p>
                   {RATING_DESCRIPTIONS.map((item) => (
                     <div key={item.rating}>
                       <p className="text-md font-medium text-white">{item.rating}</p>
-                      <p className="text-default-500 text-sm">{item.description}</p>
+                      <p className="text-default-600 text-sm">{item.description}</p>
                     </div>
                   ))}
                 </ModalBody>

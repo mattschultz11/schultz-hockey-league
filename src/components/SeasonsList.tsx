@@ -35,7 +35,7 @@ export default function SeasonsList({ leagueSlug, seasons }: Props) {
                   <h2 className="text-lg font-semibold">{season.name}</h2>
                 </CardHeader>
                 <CardBody className="pt-0">
-                  <p className="text-default-500 text-sm">
+                  <p className="text-default-600 text-sm">
                     {formatDate(season.startDate)} – {formatDate(season.endDate)}
                   </p>
                 </CardBody>

@@ -5,6 +5,8 @@ import Link from "next/link";
 
 import type { Position } from "@/graphql/generated";
 
+import TeamLogo from "./TeamLogo";
+import TeamName from "./TeamName";
 import TeamTable from "./TeamTable";
 
 type Props = {
@@ -18,6 +20,7 @@ type Props = {
     secondaryColor: string | null;
     players: {
       id: string;
+      number: number | null;
       position: Position | null;
       playerRating: number | null;
       goalieRating: number | null;
@@ -44,22 +47,26 @@ type Props = {
     slug: string;
     name: string;
   };
+  hideNumber?: boolean;
 };
 
-export default function TeamCard({ team, league, season }: Props) {
+export default function TeamCard({ team, league, season, hideNumber }: Props) {
   const scheduleHref = `/leagues/${league.slug}/seasons/${season.slug}/teams/${team.slug}`;
   return (
     <Card>
       <CardHeader>
-        <Link
-          href={scheduleHref}
-          className="text-lg font-semibold hover:underline focus-visible:underline"
-        >
-          {team.name}
-        </Link>
+        <div className="flex items-center gap-3">
+          <TeamLogo team={team} width={36} height={36} isBlurred />
+          <TeamName
+            as={Link}
+            team={team}
+            href={scheduleHref}
+            className="text-3xl font-semibold hover:underline focus-visible:underline"
+          />
+        </div>
       </CardHeader>
       <CardBody>
-        <TeamTable key={team.id} team={team} />
+        <TeamTable key={team.id} team={team} hideNumber={hideNumber} />
       </CardBody>
     </Card>
   );

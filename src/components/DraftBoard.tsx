@@ -24,16 +24,11 @@ import { useEffect, useState } from "react";
 import { MdLockReset } from "react-icons/md";
 
 import type { Position } from "@/graphql/generated";
-import {
-  formatName,
-  formatPositionRating,
-  playerName,
-  playerPosition,
-  teamName,
-} from "@/utils/stringUtils";
+import { formatName, formatPositionRating, playerName, playerPosition } from "@/utils/stringUtils";
 
 import DataTable from "./DataTable";
 import EditDraftPickModal from "./EditDraftPickModal";
+import TeamName from "./TeamName";
 import TeamTable from "./TeamTable";
 
 // --- GraphQL Query ---
@@ -49,6 +44,8 @@ const DRAFT_BOARD_QUERY = gql`
         team {
           id
           name
+          primaryColor
+          secondaryColor
         }
       }
       nextPick {
@@ -59,6 +56,8 @@ const DRAFT_BOARD_QUERY = gql`
         team {
           id
           name
+          primaryColor
+          secondaryColor
         }
       }
       draftPicks {
@@ -69,9 +68,12 @@ const DRAFT_BOARD_QUERY = gql`
         team {
           id
           name
+          primaryColor
+          secondaryColor
         }
         player {
           id
+          number
           position
           playerRating
           goalieRating
@@ -98,6 +100,8 @@ const DRAFT_BOARD_QUERY = gql`
       teams {
         id
         name
+        primaryColor
+        secondaryColor
         players {
           id
           position
@@ -146,12 +150,18 @@ type DraftPick = {
   overall: number;
   round: number;
   pick: number;
-  team: { id: string; name: string } | null;
+  team: {
+    id: string;
+    name: string;
+    primaryColor: string | null;
+    secondaryColor: string | null;
+  } | null;
   player: PlayerWithUser | null;
 };
 
 type PlayerWithUser = {
   id: string;
+  number: number | null;
   position: Position | null;
   playerRating: number | null;
   goalieRating: number | null;
@@ -162,6 +172,8 @@ type PlayerWithUser = {
 type Team = {
   id: string;
   name: string;
+  primaryColor: string | null;
+  secondaryColor: string | null;
 };
 
 type TeamWithPlayers = Team & {
@@ -210,12 +222,12 @@ function PickBanner({
         {isDraftComplete ? (
           <div>
             <p className="text-success text-xl font-bold">Draft Complete</p>
-            <p className="text-default-500">All picks have been made</p>
+            <p className="text-default-600">All picks have been made</p>
           </div>
         ) : current ? (
           <div className="flex flex-col items-center justify-center gap-3">
             <div>
-              <p className="text-default-500 text-sm">Now Picking</p>
+              <p className="text-default-600 text-sm">Now Picking</p>
               <p className="text-2xl font-bold">
                 Round {current.round}, Pick {current.pick}
               </p>
@@ -223,7 +235,7 @@ function PickBanner({
             <PickCarousel recent={recent} current={current} upcoming={upcoming} />
           </div>
         ) : (
-          <p className="text-default-500">No draft created yet</p>
+          <p className="text-default-600">No draft created yet</p>
         )}
       </CardBody>
     </Card>
@@ -251,7 +263,7 @@ function PickCarousel({
       >
         {recent.map((pick) => (
           <Chip key={pick.id} size="sm" variant="flat" color="default">
-            <span className="text-default-500 text-xs">#{pick.overall}</span>{" "}
+            <span className="text-default-600 text-xs">#{pick.overall}</span>{" "}
             {pick.team?.name ?? "?"}
           </Chip>
         ))}
@@ -455,7 +467,7 @@ function TeamRosters({
         </div>
       </CardHeader>
       <CardBody>
-        <TeamTable team={activeTeam} />
+        <TeamTable team={activeTeam} hideNumber={true} />
       </CardBody>
     </Card>
   );
@@ -575,7 +587,7 @@ function PickRow({ pick, isAdmin, setEditingPickId }: PickRowProps) {
   return (
     <TableRow key={pick.id} onClick={() => isAdmin && setEditingPickId(pick.id)}>
       <TableCell>{pick.overall}</TableCell>
-      <TableCell>{teamName(pick.team)}</TableCell>
+      <TableCell>{pick.team ? <TeamName team={pick.team} /> : "-"}</TableCell>
       <TableCell>{playerName(pick.player)}</TableCell>
       <TableCell>{playerPosition(pick.player)}</TableCell>
       <TableCell>

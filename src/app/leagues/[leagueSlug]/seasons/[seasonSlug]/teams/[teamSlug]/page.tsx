@@ -3,17 +3,20 @@ import { notFound } from "next/navigation";
 import GamesTable from "@/components/GamesTable";
 import { findNextUpcomingId } from "@/components/gameStatus";
 import PageLayout from "@/components/PageLayout";
-import TeamGamesHeader from "@/components/TeamGamesHeader";
+import TeamHeader from "@/components/TeamHeader";
+import TeamLogo from "@/components/TeamLogo";
+import TeamName from "@/components/TeamName";
+import TeamPlayersTable from "@/components/TeamPlayersTable";
+import TeamStatsCard from "@/components/TeamStatsCard";
+import { auth } from "@/service/auth/authService";
 import prisma from "@/service/prisma";
-
-const TEAM_GAMES_CEILING = 100;
 
 type Props = {
   params: Promise<{ leagueSlug: string; seasonSlug: string; teamSlug: string }>;
 };
 
 export default async function TeamGamesPage({ params }: Props) {
-  const { leagueSlug, seasonSlug, teamSlug } = await params;
+  const [session, { leagueSlug, seasonSlug, teamSlug }] = await Promise.all([auth(), params]);
 
   const league = await prisma.league.findUnique({
     where: { slug: leagueSlug },
@@ -35,38 +38,91 @@ export default async function TeamGamesPage({ params }: Props) {
 
   const team = await prisma.team.findUnique({
     where: { seasonId_slug: { seasonId: season.id, slug: teamSlug } },
-    select: { id: true, name: true, slug: true },
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      logoUrl: true,
+      primaryColor: true,
+      secondaryColor: true,
+      standing: true,
+      homeGames: {
+        select: {
+          id: true,
+          round: true,
+          datetime: true,
+          location: true,
+          homeTeam: true,
+          awayTeam: true,
+          homeTeamResult: true,
+          homeTeamPoints: true,
+          awayTeamResult: true,
+          awayTeamPoints: true,
+        },
+      },
+      awayGames: {
+        select: {
+          id: true,
+          round: true,
+          datetime: true,
+          location: true,
+          homeTeam: true,
+          awayTeam: true,
+          homeTeamResult: true,
+          homeTeamPoints: true,
+          awayTeamPoints: true,
+          awayTeamResult: true,
+        },
+      },
+      _count: { select: { goals: true, goalsAgainst: true } },
+      penalties: { select: { minutes: true } },
+      players: {
+        select: {
+          id: true,
+          number: true,
+          position: true,
+          playerRating: true,
+          goalieRating: true,
+          user: { select: { firstName: true, lastName: true } },
+          draftPick: { select: { round: true } },
+          penalties: { select: { id: true, minutes: true } },
+          _count: {
+            select: {
+              goals: true,
+              primaryAssists: true,
+              secondaryAssists: true,
+              lineups: true,
+            },
+          },
+        },
+      },
+    },
   });
 
   if (!team) {
     notFound();
   }
 
-  const games = await prisma.game.findMany({
-    where: {
-      seasonId: season.id,
-      OR: [{ homeTeamId: team.id }, { awayTeamId: team.id }],
-    },
-    select: {
-      id: true,
-      round: true,
-      datetime: true,
-      location: true,
-      homeTeam: { select: { id: true, name: true } },
-      awayTeam: { select: { id: true, name: true } },
-      homeTeamResult: true,
-      awayTeamResult: true,
-    },
-    orderBy: { datetime: "asc" },
-    take: TEAM_GAMES_CEILING,
-  });
-
+  const games = team.homeGames.concat(team.awayGames);
   const nextUpId = findNextUpcomingId(games);
+  const isAdmin = session?.user?.role === "ADMIN";
 
   return (
     <PageLayout>
-      <TeamGamesHeader league={league} season={season} team={team} />
-      <GamesTable league={league} season={season} games={games} nextUpId={nextUpId} />
+      <TeamHeader league={league} season={season} team={team} isAdmin={isAdmin} />
+      <div className="flex flex-col items-center justify-center gap-2">
+        <TeamLogo team={team} width={150} height={150} />
+        <TeamName team={team} as="h1" className="text-4xl font-extrabold tracking-widest" />
+      </div>
+      <TeamStatsCard team={team} />
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xl font-semibold text-white">Roster</h2>
+        <TeamPlayersTable players={team.players} league={league} season={season} />
+      </section>
+      <section className="flex flex-col gap-3">
+        <h2 className="text-xl font-semibold text-white">Schedule</h2>
+        <GamesTable league={league} season={season} games={games} nextUpId={nextUpId} />
+      </section>
     </PageLayout>
   );
 }

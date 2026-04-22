@@ -5,8 +5,9 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client"
-  output   = "../src/service/prisma/generated"
+  provider        = "prisma-client"
+  output          = "../src/service/prisma/generated"
+  previewFeatures = ["views"]
 }
 
 datasource db {
@@ -102,11 +103,19 @@ model Team {
   homeGames      Game[]      @relation("HomeTeam")
   awayGames      Game[]      @relation("AwayTeam")
   goals          Goal[]
+  goalsAgainst   GoalAgainst[]
   penalties      Penalty[]
   draftPicks     DraftPick[]
   lineups        Lineup[]
+  standing       Standing?
 
   @@unique([seasonId, slug])
+}
+
+view Standing {
+  teamId       String @unique
+  rank         Int
+  team         Team   @relation(fields: [teamId], references: [id])
 }
 
 model Player {
@@ -202,6 +211,21 @@ model Goal {
   primaryAssistId   String?
   secondaryAssist   Player?  @relation("SecondaryAssist", fields: [secondaryAssistId], references: [id])
   secondaryAssistId String?
+}
+
+view GoalAgainst {
+  id                String   @unique
+  createdAt         DateTime
+  updatedAt         DateTime
+  gameId            String
+  period            Int
+  time              Int
+  strength          Strength
+  teamId            String
+  scorerId          String
+  primaryAssistId   String?
+  secondaryAssistId String?
+  team              Team     @relation(fields: [teamId], references: [id])
 }
 
 enum Strength {

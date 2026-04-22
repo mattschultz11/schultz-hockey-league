@@ -158,7 +158,6 @@ type TeamOption = {
 type Props = {
   player: PlayerInput;
   teams: TeamOption[];
-  returnHref: string;
 };
 
 type FormValues = Schema.Schema.Type<typeof playerEditFormSchema>;
@@ -184,7 +183,7 @@ function parseIntField(value: string): number | null {
 
 // --- Component ---
 
-export default function PlayerEditForm({ player, teams, returnHref }: Props) {
+export default function PlayerEditForm({ player, teams }: Props) {
   const router = useRouter();
   const [submitError, setSubmitError] = useState("");
   const [updatePlayer] = useMutation(UPDATE_PLAYER_MUTATION);
@@ -234,7 +233,7 @@ export default function PlayerEditForm({ player, teams, returnHref }: Props) {
         title: "Player updated",
         color: "success",
       });
-      router.push(returnHref);
+      router.back();
     } catch (err) {
       const message =
         err instanceof Error ? err.message.replace(/^[^:]+:\s*/, "") : "Failed to update player";
@@ -309,7 +308,7 @@ export default function PlayerEditForm({ player, teams, returnHref }: Props) {
         <Button
           type="button"
           variant="flat"
-          onPress={() => router.push(returnHref)}
+          onPress={() => router.back()}
           isDisabled={formState.isSubmitting}
         >
           Cancel

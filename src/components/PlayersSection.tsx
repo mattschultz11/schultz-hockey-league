@@ -16,23 +16,20 @@ export type PlayersSectionPlayer = PlayersTablePlayer & {
 
 type Props = {
   players: PlayersSectionPlayer[];
-  isAdmin?: boolean;
-  leagueSlug?: string;
-  seasonSlug?: string;
+  league?: { slug: string };
+  season?: { slug: string };
 };
 
 const POSITION_OPTIONS: { value: string; label: string }[] = [
   { value: "F", label: "Forward" },
   { value: "D", label: "Defense" },
   { value: "G", label: "Goalie" },
-  { value: "__NONE__", label: "No position" },
 ];
 
 const POSITION_FILTER_MATCHES: Record<string, string[]> = {
   F: ["F", "F_D", "D_F"],
   D: ["D", "D_F", "F_D"],
   G: ["G"],
-  __NONE__: ["__NONE__"],
 };
 
 const RATING_OPTIONS = [
@@ -45,7 +42,6 @@ const RATING_OPTIONS = [
   { value: "2", label: "2" },
   { value: "1.5", label: "1.5" },
   { value: "1", label: "1" },
-  { value: "__NONE__", label: "Unrated" },
 ];
 
 const NONE_KEY = "__NONE__";
@@ -68,7 +64,7 @@ function matchesSearch(player: PlayersTablePlayer, search: string): boolean {
   return false;
 }
 
-export default function PlayersSection({ players, isAdmin, leagueSlug, seasonSlug }: Props) {
+export default function PlayersSection({ players, league, season }: Props) {
   const [search, setSearch] = useState("");
   const [teamKeys, setTeamKeys] = useState<Set<string>>(new Set());
   const [positionKeys, setPositionKeys] = useState<Set<string>>(new Set());
@@ -176,22 +172,12 @@ export default function PlayersSection({ players, isAdmin, leagueSlug, seasonSlu
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-white">Full Time</h2>
-        <PlayersTable
-          players={rosterPlayers}
-          isAdmin={isAdmin}
-          leagueSlug={leagueSlug}
-          seasonSlug={seasonSlug}
-        />
+        <PlayersTable players={rosterPlayers} league={league} season={season} />
       </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-white">Spares</h2>
-        <PlayersTable
-          players={subPlayers}
-          isAdmin={isAdmin}
-          leagueSlug={leagueSlug}
-          seasonSlug={seasonSlug}
-        />
+        <PlayersTable players={subPlayers} league={league} season={season} />
       </section>
     </div>
   );
