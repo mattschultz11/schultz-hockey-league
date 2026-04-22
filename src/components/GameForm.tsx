@@ -140,7 +140,7 @@ function cleanErrorMessage(err: unknown, fallback: string): string {
 
 // --- Component ---
 
-export default function GameForm({ mode, seasonId, teams, game, returnHref }: Props) {
+export default function GameForm({ mode, seasonId, teams, game }: Props) {
   const router = useRouter();
   const deleteModal = useDisclosure();
   const [submitError, setSubmitError] = useState("");
@@ -197,7 +197,7 @@ export default function GameForm({ mode, seasonId, teams, game, returnHref }: Pr
         await updateGame({ variables: { id: game.id, data: payload } });
       }
       addToast({ title: mode === "create" ? "Game created" : "Game updated", color: "success" });
-      router.push(returnHref);
+      router.back();
     } catch (err) {
       setSubmitError(cleanErrorMessage(err, "Failed to save game"));
     }
@@ -209,7 +209,7 @@ export default function GameForm({ mode, seasonId, teams, game, returnHref }: Pr
     try {
       await deleteGame({ variables: { id: game.id } });
       addToast({ title: "Game deleted", color: "success" });
-      router.push(returnHref);
+      router.back();
     } catch (err) {
       setSubmitError(cleanErrorMessage(err, "Failed to delete game"));
       deleteModal.onClose();
@@ -259,7 +259,7 @@ export default function GameForm({ mode, seasonId, teams, game, returnHref }: Pr
           <Button
             type="button"
             variant="flat"
-            onPress={() => router.push(returnHref)}
+            onPress={() => router.back()}
             isDisabled={formState.isSubmitting}
           >
             Cancel

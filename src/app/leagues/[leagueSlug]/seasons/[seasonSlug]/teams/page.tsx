@@ -65,7 +65,7 @@ export default async function TeamsPage({ params }: Props) {
       <TeamsHeader season={season} league={league} isAdmin={isAdmin} />
       <div className="flex flex-wrap justify-center gap-4">
         {teams.map((team) => (
-          <TeamCard key={team.id} team={team} />
+          <TeamCard key={team.id} team={team} league={league} season={season} />
         ))}
       </div>
     </PageLayout>

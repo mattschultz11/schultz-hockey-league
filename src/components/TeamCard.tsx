@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardBody, CardHeader } from "@heroui/react";
+import Link from "next/link";
 
 import type { Position } from "@/graphql/generated";
 
@@ -33,13 +34,29 @@ type Props = {
       } | null;
     }[];
   };
+  league: {
+    id: string;
+    slug: string;
+    name: string;
+  };
+  season: {
+    id: string;
+    slug: string;
+    name: string;
+  };
 };
 
-export default function TeamCard({ team }: Props) {
+export default function TeamCard({ team, league, season }: Props) {
+  const scheduleHref = `/leagues/${league.slug}/seasons/${season.slug}/teams/${team.slug}`;
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-lg font-semibold">{team.name}</h2>
+        <Link
+          href={scheduleHref}
+          className="text-lg font-semibold hover:underline focus-visible:underline"
+        >
+          {team.name}
+        </Link>
       </CardHeader>
       <CardBody>
         <TeamTable key={team.id} team={team} />

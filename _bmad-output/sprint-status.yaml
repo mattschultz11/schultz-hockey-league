@@ -55,27 +55,15 @@ development_status:
   3-1-create-season-schedule: done
   3-2-publish-and-republish-schedules: done
   3-3-league-schedule-view: done
-  3-4-team-schedule-view: backlog
-  3-5-multi-season-context: backlog
+  3-4-team-schedule-view: done
   epic-3-retrospective: optional
-
-  epic-4: backlog
-  4-1-propose-trade: backlog
-  4-2-approve-reject-trade: backlog
-  4-3-trade-history-view: backlog
-  4-4-post-draft-roster-adjustment-manual: backlog
-  epic-4-retrospective: optional
 
   epic-5: backlog
   5-1-submit-game-results-manager: backlog
-  5-2-admin-review-and-approve-stats: backlog
-  5-3-publish-scores-and-standings: backlog
-  5-4-upload-stats-via-csv-json: backlog
   epic-5-retrospective: optional
 
   epic-6: in-progress
-  6-1-export-rosters-and-schedules: backlog
   6-2-league-overview-dashboard: backlog
-  6-3team-overview-dashboard: backlog
+  6-3-team-overview-dashboard: backlog
   6-4-email-integration: done
   epic-6-retrospective: optional

@@ -53,7 +53,6 @@ export async function createGame(data: GameCreateInput, ctx: ServerContext) {
 export async function updateGame(id: string, data: GameUpdateInput, ctx: ServerContext) {
   validate(gameUpdateSchema, data);
   const payload: GameUpdateInput = cleanInput(data);
-  if (payload.location) payload.location = payload.location.toLowerCase();
   assertNonNullableFields(payload, ["round", "datetime", "location", "awayTeamId"] as const);
 
   const game = await getGameById(id, ctx);

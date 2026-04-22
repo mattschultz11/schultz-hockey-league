@@ -21,7 +21,6 @@ type Props = {
   page: number;
   pageSize: number;
   filters: GamesSectionFilters;
-  isAdmin?: boolean;
   league: {
     slug: string;
   };
@@ -39,7 +38,6 @@ export default function GamesSection({
   page,
   pageSize,
   filters,
-  isAdmin,
   league,
   season,
 }: Props) {
@@ -136,7 +134,7 @@ export default function GamesSection({
         />
       </div>
 
-      <GamesTable games={games} isAdmin={isAdmin} league={league} season={season} />
+      <GamesTable games={games} league={league} season={season} />
 
       {totalPages > 1 && (
         <div className="flex justify-center">

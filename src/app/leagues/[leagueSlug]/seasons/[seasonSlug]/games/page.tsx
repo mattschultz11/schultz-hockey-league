@@ -98,7 +98,6 @@ export default async function GamesPage({ params, searchParams }: Props) {
         page={page}
         pageSize={DEFAULT_PAGE_SIZE}
         filters={{ startDate, endDate, teamId, location }}
-        isAdmin={isAdmin}
         league={league}
         season={season}
       />

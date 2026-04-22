@@ -1,21 +1,12 @@
 "use client";
 
-import {
-  Button,
-  Chip,
-  TableBody,
-  TableCell,
-  TableColumn,
-  TableHeader,
-  TableRow,
-} from "@heroui/react";
+import { Chip, TableBody, TableCell, TableColumn, TableHeader, TableRow } from "@heroui/react";
 import { useRouter } from "next/navigation";
 
 import type { Result } from "@/service/prisma/generated/enums";
 
 import DataTable from "./DataTable";
-import type { GameStatus } from "./gameStatus";
-import { getGameStatus } from "./gameStatus";
+import { getGameStatus, STATUS_COLOR } from "./gameStatus";
 
 const columns = [
   { key: "round", label: "Round" },
@@ -26,12 +17,6 @@ const columns = [
   { key: "location", label: "Location" },
   { key: "status", label: "Status" },
 ] as const;
-
-const STATUS_COLOR: Record<GameStatus, "default" | "success" | "warning"> = {
-  Upcoming: "default",
-  Final: "success",
-  Awaiting: "warning",
-};
 
 export type GamesTableGame = {
   round: number;
@@ -46,7 +31,8 @@ export type GamesTableGame = {
 
 type GamesTableProps = {
   games: GamesTableGame[];
-  isAdmin?: boolean;
+  /** Game id to highlight with a "Next Up" chip in the status cell. */
+  nextUpId?: string | null;
   league: {
     slug: string;
   };
@@ -55,9 +41,11 @@ type GamesTableProps = {
   };
 };
 
-export default function GamesTable({ games, isAdmin, league, season }: GamesTableProps) {
+export default function GamesTable({ games, nextUpId, league, season }: GamesTableProps) {
   const router = useRouter();
-  const showActions = !!(isAdmin && league.slug && season.slug);
+
+  const rowHref = (gameId: string) =>
+    `/leagues/${league.slug}/seasons/${season.slug}/games/${gameId}`;
 
   const rows = games.map((game) => {
     const status = getGameStatus(game.datetime, game.homeTeamResult, game.awayTeamResult);
@@ -77,55 +65,47 @@ export default function GamesTable({ games, isAdmin, league, season }: GamesTabl
   });
 
   return (
-    <DataTable aria-label="Games">
+    <DataTable
+      aria-label="Games"
+      onRowAction={
+        rowHref
+          ? (key) => {
+              router.push(rowHref(String(key)));
+            }
+          : undefined
+      }
+    >
       <TableHeader>
-        {[
-          ...columns.map((col) => <TableColumn key={col.key}>{col.label}</TableColumn>),
-          ...(showActions
-            ? [
-                <TableColumn key="actions" width={80}>
-                  {""}
-                </TableColumn>,
-              ]
-            : []),
-        ]}
+        {columns.map((col) => (
+          <TableColumn key={col.key}>{col.label}</TableColumn>
+        ))}
       </TableHeader>
       <TableBody emptyContent="No games">
-        {rows.map((row) => (
-          <TableRow key={row.key}>
-            {[
-              ...columns.map((col) => (
+        {rows.map((row) => {
+          const isNextUp = nextUpId != null && nextUpId === row.key && row.status === "Upcoming";
+          return (
+            <TableRow key={row.key}>
+              {columns.map((col) => (
                 <TableCell key={col.key}>
                   {col.key === "status" ? (
-                    <Chip size="sm" color={STATUS_COLOR[row.status]}>
-                      {row.status}
-                    </Chip>
+                    <div className="flex flex-wrap items-center gap-1">
+                      <Chip size="sm" color={STATUS_COLOR[row.status]}>
+                        {row.status}
+                      </Chip>
+                      {isNextUp && (
+                        <Chip size="sm" variant="flat" color="primary">
+                          Next Up
+                        </Chip>
+                      )}
+                    </div>
                   ) : (
                     row[col.key]
                   )}
                 </TableCell>
-              )),
-              ...(showActions
-                ? [
-                    <TableCell key="actions" className="p-1">
-                      <Button
-                        size="sm"
-                        color="primary"
-                        className="h-7"
-                        onPress={() =>
-                          router.push(
-                            `/admin/leagues/${league.slug}/seasons/${season.slug}/games/${row.key}/edit`,
-                          )
-                        }
-                      >
-                        Edit
-                      </Button>
-                    </TableCell>,
-                  ]
-                : []),
-            ]}
-          </TableRow>
-        ))}
+              ))}
+            </TableRow>
+          );
+        })}
       </TableBody>
     </DataTable>
   );

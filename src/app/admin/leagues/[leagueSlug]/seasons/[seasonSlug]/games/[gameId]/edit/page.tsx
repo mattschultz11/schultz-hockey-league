@@ -57,19 +57,11 @@ export default async function EditGamePage({ params }: Props) {
     notFound();
   }
 
-  const returnHref = `/leagues/${league.slug}/seasons/${season.slug}/games`;
-
   return (
     <PageLayout>
       <div className="mx-auto w-full max-w-2xl">
         <h1 className="mb-6 text-2xl font-semibold text-white">Edit Game — Round {game.round}</h1>
-        <GameForm
-          mode="edit"
-          seasonId={season.id}
-          teams={teams}
-          game={game}
-          returnHref={returnHref}
-        />
+        <GameForm mode="edit" seasonId={season.id} teams={teams} game={game} />
       </div>
     </PageLayout>
   );
