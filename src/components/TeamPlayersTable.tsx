@@ -112,7 +112,7 @@ function comparePlayers(a: PlayersTablePlayer, b: PlayersTablePlayer, column: Co
 export default function TeamPlayersTable({ players, league, season }: PlayersTableProps) {
   const router = useRouter();
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-    column: "name",
+    column: "pick",
     direction: "ascending",
   });
 
