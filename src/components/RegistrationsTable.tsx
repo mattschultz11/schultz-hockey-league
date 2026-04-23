@@ -158,7 +158,7 @@ function RegistrationCard({
         </div>
 
         <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-          <Field label="Phone" value={formatPhoneNumber(reg.phone ?? "")} />
+          <Field label="Phone" value={formatPhoneNumber(reg.phone)} />
           <Field label="Age" value={formatAge(reg.birthday)} />
           <Field
             label={isGoalie ? "Glove Hand" : "Handedness"}
@@ -483,7 +483,7 @@ export default function RegistrationsTable({
                   </TableCell>
                   <TableCell>{name}</TableCell>
                   <TableCell>{reg.email}</TableCell>
-                  <TableCell>{formatPhoneNumber(reg.phone ?? "")}</TableCell>
+                  <TableCell>{formatPhoneNumber(reg.phone)}</TableCell>
                   <TableCell>{formatAge(reg.birthday)}</TableCell>
                   <TableCell>{playerPosition(reg)}</TableCell>
                   <TableCell>{formatPositionRating(reg)}</TableCell>

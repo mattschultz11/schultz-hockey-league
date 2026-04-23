@@ -19,7 +19,7 @@ type SeasonsHeaderProps = {
 export default function SeasonsHeader({ league, isAdmin }: SeasonsHeaderProps) {
   return (
     <PageHeader>
-      <PageBreadcrumbs items={[{ label: "Leagues", href: "/leagues" }, { label: league.name }]} />
+      <PageBreadcrumbs items={[{ label: league.name }]} />
       {isAdmin && (
         <Button
           as={NextLink}

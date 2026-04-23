@@ -139,6 +139,7 @@ model Player {
   registrationNumber String?
   ratingVerified     Boolean        @default(false)
   confirmed          Boolean?
+  paid               Decimal        @default(0) @db.Decimal(10, 2)
   goals              Goal[]         @relation("Scorer")
   primaryAssists     Goal[]         @relation("PrimaryAssist")
   secondaryAssists   Goal[]         @relation("SecondaryAssist")

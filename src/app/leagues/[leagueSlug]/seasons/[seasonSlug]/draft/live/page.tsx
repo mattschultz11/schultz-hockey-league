@@ -39,7 +39,6 @@ export default async function LiveDraftPage({ params }: Props) {
       <PageHeader>
         <PageBreadcrumbs
           items={[
-            { label: "Leagues", href: "/leagues" },
             { label: league.name, href: `/leagues/${league.slug}/seasons` },
             { label: season.name, href: basePath },
             { label: "Draft", href: `${basePath}/draft` },

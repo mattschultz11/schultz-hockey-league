@@ -6,7 +6,12 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
 import type { Position } from "@/graphql/generated";
-import { formatPositionRating, playerName, playerPosition } from "@/utils/stringUtils";
+import {
+  formatPhoneNumber,
+  formatPositionRating,
+  playerName,
+  playerPosition,
+} from "@/utils/stringUtils";
 
 import DataTable from "./DataTable";
 import TeamName from "./TeamName";
@@ -28,6 +33,8 @@ export type PlayersTablePlayer = {
   user: {
     firstName: string | null;
     lastName: string | null;
+    email: string;
+    phone: string | null;
   };
   _count: {
     goals: number;
@@ -48,28 +55,31 @@ type PlayersTableProps = {
   league?: { slug: string };
   season?: { slug: string };
   hideTeam?: boolean;
+  showContact?: boolean;
 };
 
 const columns = [
-  { key: "pick", label: "Pick" },
   { key: "name", label: "Name" },
-  { key: "position", label: "Position" },
-  { key: "rating", label: "Rating" },
-  { key: "team", label: "Team" },
+  { key: "position", label: "Pos" },
+  { key: "rating", label: "Rtg" },
   { key: "number", label: "#" },
+  { key: "team", label: "Team" },
   { key: "games", label: "GP" },
   { key: "goals", label: "G" },
   { key: "assists", label: "A" },
   { key: "points", label: "Pts" },
   { key: "ppg", label: "PPG" },
   { key: "pim", label: "PIM" },
+  { key: "email", label: "Email" },
+  { key: "phone", label: "Phone" },
 ] as const;
+
+const CONTACT_COLUMNS: ColumnKey[] = ["email", "phone"];
 
 type ColumnKey = (typeof columns)[number]["key"];
 
 type Row = {
   key: string;
-  pick: number;
   name: string;
   team: {
     name: string;
@@ -87,6 +97,8 @@ type Row = {
   points: number;
   ppg: number;
   pim: number;
+  email: string;
+  phone: string;
   href: string;
 };
 
@@ -113,7 +125,10 @@ function comparePlayers(a: Row, b: Row, column: ColumnKey): number {
       return (a.team?.name ?? "").localeCompare(b.team?.name ?? "");
     case "rating":
       return a.rating.localeCompare(b.rating);
-    case "pick":
+    case "email":
+      return a.email.localeCompare(b.email);
+    case "phone":
+      return a.phone.localeCompare(b.phone);
     case "games":
     case "goals":
     case "assists":
@@ -127,7 +142,13 @@ function comparePlayers(a: Row, b: Row, column: ColumnKey): number {
   }
 }
 
-export default function PlayersTable({ players, league, season, hideTeam }: PlayersTableProps) {
+export default function PlayersTable({
+  players,
+  league,
+  season,
+  hideTeam,
+  showContact,
+}: PlayersTableProps) {
   const router = useRouter();
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: "points",
@@ -153,6 +174,8 @@ export default function PlayersTable({ players, league, season, hideTeam }: Play
             points: stats.points,
             ppg: stats.ppg,
             pim: stats.pim,
+            email: player.user.email,
+            phone: formatPhoneNumber(player.user.phone),
             href: `/leagues/${league?.slug}/seasons/${season?.slug}/players/${player.id}`,
           };
         })
@@ -171,7 +194,11 @@ export default function PlayersTable({ players, league, season, hideTeam }: Play
   }, []);
 
   const rowsById = new Map(rows.map((row) => [row.key, row]));
-  const filteredColumns = hideTeam ? columns.filter((col) => col.key !== "team") : columns;
+  const filteredColumns = columns.filter((col) => {
+    if (hideTeam && col.key === "team") return false;
+    if (!showContact && CONTACT_COLUMNS.includes(col.key)) return false;
+    return true;
+  });
 
   return (
     <DataTable
@@ -193,7 +220,7 @@ export default function PlayersTable({ players, league, season, hideTeam }: Play
         {sortedRows.map((row) => (
           <TableRow key={row.key}>
             {filteredColumns.map((col) => (
-              <TableCell key={col.key}>
+              <TableCell key={col.key} className="whitespace-nowrap">
                 {col.key === "team" ? row.team ? <TeamName team={row.team} /> : "-" : row[col.key]}
               </TableCell>
             ))}

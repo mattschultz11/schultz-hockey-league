@@ -1,8 +1,9 @@
 "use client";
 
-import { Input, Select, SelectItem } from "@heroui/react";
+import { Input, Select, SelectItem, Switch } from "@heroui/react";
 import { useCallback, useMemo, useState } from "react";
 
+import { useUserRole } from "@/hooks/useUserRole";
 import { positionRating } from "@/utils/stringUtils";
 
 import type { PlayersTablePlayer } from "./PlayersTable";
@@ -65,10 +66,13 @@ function matchesSearch(player: PlayersTablePlayer, search: string): boolean {
 }
 
 export default function PlayersSection({ players, league, season }: Props) {
+  const { isManager, isAdmin } = useUserRole();
+  const canViewContact = isManager || isAdmin;
   const [search, setSearch] = useState("");
   const [teamKeys, setTeamKeys] = useState<Set<string>>(new Set());
   const [positionKeys, setPositionKeys] = useState<Set<string>>(new Set());
   const [ratingKeys, setRatingKeys] = useState<Set<string>>(new Set());
+  const [showContact, setShowContact] = useState(false);
 
   const teamOptions = useMemo(() => {
     const map = new Map<string, string>();
@@ -126,6 +130,13 @@ export default function PlayersSection({ players, league, season }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
+      {canViewContact && (
+        <div className="flex justify-end">
+          <Switch isSelected={showContact} onValueChange={setShowContact} size="sm">
+            Show contact info
+          </Switch>
+        </div>
+      )}
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
         <Input
           label="Search"
@@ -172,12 +183,22 @@ export default function PlayersSection({ players, league, season }: Props) {
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-white">Full Time</h2>
-        <PlayersTable players={rosterPlayers} league={league} season={season} />
+        <PlayersTable
+          players={rosterPlayers}
+          league={league}
+          season={season}
+          showContact={canViewContact && showContact}
+        />
       </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-white">Spares</h2>
-        <PlayersTable players={subPlayers} league={league} season={season} />
+        <PlayersTable
+          players={subPlayers}
+          league={league}
+          season={season}
+          showContact={canViewContact && showContact}
+        />
       </section>
     </div>
   );

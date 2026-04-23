@@ -83,7 +83,7 @@ export default async function TeamGamesPage({ params }: Props) {
           position: true,
           playerRating: true,
           goalieRating: true,
-          user: { select: { firstName: true, lastName: true } },
+          user: { select: { firstName: true, lastName: true, email: true, phone: true } },
           draftPick: { select: { round: true } },
           penalties: { select: { id: true, minutes: true } },
           _count: {
@@ -115,10 +115,8 @@ export default async function TeamGamesPage({ params }: Props) {
         <TeamName team={team} as="h1" className="text-4xl font-extrabold tracking-widest" />
       </div>
       <TeamStatsCard team={team} />
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold text-white">Roster</h2>
-        <TeamPlayersTable players={team.players} league={league} season={season} />
-      </section>
+
+      <TeamPlayersTable players={team.players} league={league} season={season} />
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold text-white">Schedule</h2>
         <GamesTable league={league} season={season} games={games} nextUpId={nextUpId} />

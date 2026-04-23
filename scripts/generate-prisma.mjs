@@ -24,7 +24,8 @@ const copyPrismaSchema = () => {
   const updatedSchema = fs
     .readFileSync("tmp/schema.prisma", "utf8")
     .replace("../src/service/prisma/generated", "../src/service/prisma/__mocks__/generated")
-    .replace("postgresql", "sqlite");
+    .replace("postgresql", "sqlite")
+    .replace(/\s*@db\.\w+(?:\([^)]*\))?/g, "");
   fs.writeFileSync("tmp/schema.prisma", updatedSchema);
 };
 

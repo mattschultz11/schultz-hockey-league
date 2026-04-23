@@ -40,7 +40,7 @@ export default async function PlayersPage({ params }: Props) {
       classification: true,
       playerRating: true,
       goalieRating: true,
-      user: { select: { firstName: true, lastName: true } },
+      user: { select: { firstName: true, lastName: true, email: true, phone: true } },
       penalties: { select: { id: true, minutes: true } },
       team: {
         select: { id: true, slug: true, name: true, primaryColor: true, secondaryColor: true },
@@ -63,7 +63,6 @@ export default async function PlayersPage({ params }: Props) {
       <PageHeader>
         <PageBreadcrumbs
           items={[
-            { label: "Leagues", href: "/leagues" },
             { label: league.name, href: `/leagues/${league.slug}/seasons` },
             { label: season.name, href: `/leagues/${league.slug}/seasons/${season.slug}` },
             { label: "Players" },

@@ -16,8 +16,8 @@ const columns = [
   { key: "pick", label: "Pick" },
   { key: "team", label: "Team" },
   { key: "player", label: "Player" },
-  { key: "rating", label: "Rating" },
-  { key: "position", label: "Position" },
+  { key: "rating", label: "Rtg" },
+  { key: "position", label: "Pos" },
 ] as const;
 
 type PlayerOption = {
@@ -86,7 +86,7 @@ export default function DraftTable({ draftPicks, isAdmin, teams, players }: Prop
           {rows.map((row) => (
             <TableRow key={row.key}>
               {columns.map((col) => (
-                <TableCell key={col.key}>
+                <TableCell key={col.key} className="whitespace-nowrap">
                   {col.key === "team" ? (
                     row.team ? (
                       <TeamName team={row.team} />

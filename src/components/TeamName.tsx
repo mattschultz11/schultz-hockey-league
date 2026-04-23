@@ -64,6 +64,7 @@ export default function TeamName<E extends ElementType = "span">({
     <Component
       {...props}
       style={{
+        whiteSpace: "nowrap",
         textDecoration: "none",
         fontWeight: "bold",
         ...teamStyle,

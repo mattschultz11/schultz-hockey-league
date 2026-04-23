@@ -13,7 +13,7 @@ type Props = {
 export default function LeaguesHeader({ isAdmin }: Props) {
   return (
     <PageHeader>
-      <PageBreadcrumbs items={[{ label: "Leagues" }]} />
+      <PageBreadcrumbs items={[]} />
       {isAdmin && (
         <Button as={NextLink} href="/admin/leagues/new" color="primary" size="sm">
           New League

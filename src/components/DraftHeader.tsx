@@ -35,7 +35,6 @@ export default function DraftHeader({ season, league, draftPicks, isAdmin }: Pro
     <PageHeader>
       <PageBreadcrumbs
         items={[
-          { label: "Leagues", href: "/leagues" },
           { label: league.name, href: `/leagues/${league.slug}/seasons` },
           { label: season.name, href: basePath },
           { label: "Draft" },

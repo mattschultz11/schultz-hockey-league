@@ -12,7 +12,7 @@ const columns = [
   { key: "name", label: "Name" },
   { key: "number", label: "#" },
   { key: "position", label: "Pos" },
-  { key: "rating", label: "Rating" },
+  { key: "rating", label: "Rtg" },
 ] as const;
 
 type TeamTableProps = {

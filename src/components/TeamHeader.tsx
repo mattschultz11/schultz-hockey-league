@@ -27,7 +27,6 @@ export default function TeamHeader({ league, season, team, isAdmin }: Props) {
     <PageHeader>
       <PageBreadcrumbs
         items={[
-          { label: "Leagues", href: "/leagues" },
           { label: league.name, href: `/leagues/${league.slug}/seasons` },
           { label: season.name, href: `/leagues/${league.slug}/seasons/${season.slug}` },
           { label: "Teams", href: `/leagues/${league.slug}/seasons/${season.slug}/teams` },

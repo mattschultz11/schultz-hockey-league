@@ -46,7 +46,7 @@ export async function createGame(data: GameCreateInput, ctx: ServerContext) {
   );
 
   return ctx.prisma.game.create({
-    data: { ...cleanInput(data), location: data.location.toLowerCase() },
+    data: { ...cleanInput(data) },
   });
 }
 

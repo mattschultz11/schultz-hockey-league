@@ -22,8 +22,16 @@ function formatDateTime(dateTime?: Date | null) {
   return new Date(dateTime).toLocaleDateString() + " " + new Date(dateTime).toLocaleTimeString();
 }
 
-function formatPhoneNumber(phone: string) {
-  return phone.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
+function formatPhoneNumber(phone?: string | null) {
+  if (!phone) return "-";
+  const digits = phone.replace(/\D/g, "");
+  if (digits.length === 10) {
+    return digits.replace(/(\d{3})(\d{3})(\d{4})/, "($1) $2-$3");
+  }
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return digits.replace(/1(\d{3})(\d{3})(\d{4})/, "+1 ($1) $2-$3");
+  }
+  return phone;
 }
 
 function formatPosition(position?: Position | null) {
