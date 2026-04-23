@@ -100,7 +100,7 @@ export default function EmailHistoryPage() {
     <PageLayout>
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-semibold text-white">Email History</h1>
-        <Button as={Link} href="/admin/email" color="primary" variant="flat">
+        <Button as={Link} href="/admin/email" color="primary">
           Compose New
         </Button>
       </div>

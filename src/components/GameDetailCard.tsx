@@ -91,7 +91,11 @@ export default function GameDetailCard({ game, league, season, isAdmin }: Props)
 
   const router = useRouter();
   const status = getGameStatus(datetime, homeTeamResult, awayTeamResult);
-  const dateLabel = datetime.toLocaleDateString();
+  // April 23
+  const dateLabel = datetime.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+  });
   const timeLabel = game.datetime.toLocaleTimeString([], {
     hour: "numeric",
     minute: "2-digit",

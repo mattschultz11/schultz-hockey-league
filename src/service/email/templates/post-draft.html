@@ -1,0 +1,198 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SHL - Welcome to {{player.team.name}}</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f5;
+      font-family: -apple-system, BlinkMacSystemFont, &quot;Segoe UI&quot;, Roboto, sans-serif;
+    "
+  >
+    <table
+      role="presentation"
+      width="100%"
+      cellpadding="0"
+      cellspacing="0"
+      style="background-color: #f4f4f5; padding: 40px 20px"
+    >
+      <tr>
+        <td align="center">
+          <table
+            role="presentation"
+            width="600"
+            cellpadding="0"
+            cellspacing="0"
+            style="background-color: #ffffff; border-radius: 8px; overflow: hidden"
+          >
+            <!-- Header -->
+            <tr>
+              <td style="background-color: rgb(9, 10, 21); padding: 24px 32px; text-align: center">
+                <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700">
+                  Welcome to {{player.team.name}}
+                </h1>
+                <p style="margin: 8px 0 0; color: #a1a1aa; font-size: 14px">
+                  {{player.season.league.name}} &mdash; {{player.season.name}}
+                </p>
+              </td>
+            </tr>
+            <!-- Body -->
+            <tr>
+              <td style="padding: 32px">
+                <p style="margin: 0 0 16px; font-size: 16px; color: #27272a">
+                  Hi {{player.user.firstName}},
+                </p>
+                <p style="margin: 0 0 24px; font-size: 16px; color: #27272a; line-height: 1.5">
+                  The draft is complete and you&rsquo;ve been assigned to
+                  <strong>{{player.team.name}}</strong> for this season.
+                </p>
+
+                <!-- Captain card -->
+                <table
+                  role="presentation"
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="
+                    background-color: #fafafa;
+                    border: 1px solid #e4e4e7;
+                    border-radius: 8px;
+                    margin: 0 0 24px;
+                  "
+                >
+                  <tr>
+                    <td style="padding: 16px 20px">
+                      <p
+                        style="
+                          margin: 0 0 4px;
+                          font-size: 12px;
+                          font-weight: 600;
+                          text-transform: uppercase;
+                          letter-spacing: 0.05em;
+                          color: #71717a;
+                        "
+                      >
+                        Your Captain
+                      </p>
+                      <p style="margin: 0; font-size: 16px; color: #27272a"></p>
+                      <p style="margin: 4px 0 0; font-size: 14px; color: #52525b"></p>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- First game card -->
+                <table
+                  role="presentation"
+                  width="100%"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="
+                    background-color: #fafafa;
+                    border: 1px solid #e4e4e7;
+                    border-radius: 8px;
+                    margin: 0 0 32px;
+                  "
+                >
+                  <tr>
+                    <td style="padding: 16px 20px">
+                      <p
+                        style="
+                          margin: 0 0 4px;
+                          font-size: 12px;
+                          font-weight: 600;
+                          text-transform: uppercase;
+                          letter-spacing: 0.05em;
+                          color: #71717a;
+                        "
+                      >
+                        First Game
+                      </p>
+                      <p style="margin: 0; font-size: 16px; color: #27272a"></p>
+                      <p style="margin: 4px 0 0; font-size: 14px; color: #52525b"></p>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin: 0 0 24px; font-size: 16px; color: #27272a; line-height: 1.5">
+                  Your captain, will be reaching out later today. In the meantime, use the links
+                  below to see your full team roster and the complete draft results.
+                </p>
+
+                <!-- Primary button -->
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  style="margin: 0 auto 16px"
+                >
+                  <tr>
+                    <td>
+                      <a
+                        href="{{baseUrl}}/leagues/{{player.season.league.slug}}/seasons/{{player.season.slug}}/teams/{{player.team.slug}}"
+                        style="
+                          display: inline-block;
+                          padding: 14px 32px;
+                          background-color: rgb(19, 147, 134);
+                          color: #ffffff;
+                          text-decoration: none;
+                          font-size: 16px;
+                          font-weight: 600;
+                          border-radius: 8px;
+                        "
+                      >
+                        View My Team
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Secondary links -->
+                <p style="margin: 0 0 24px; font-size: 14px; color: #52525b; text-align: center">
+                  <a
+                    href="{{baseUrl}}/leagues/{{player.season.league.slug}}/seasons/{{player.season.slug}}/teams"
+                    style="color: rgb(19, 147, 134); text-decoration: none; margin: 0 8px"
+                    >All Teams</a
+                  >
+                  &middot;
+                  <a
+                    href="{{baseUrl}}/leagues/{{player.season.league.slug}}/seasons/{{player.season.slug}}/draft"
+                    style="color: rgb(19, 147, 134); text-decoration: none; margin: 0 8px"
+                    >Draft Results</a
+                  >
+                </p>
+
+                <p style="margin: 0; font-size: 14px; color: #71717a">
+                  Questions? Contact us at
+                  <a
+                    href="mailto:support@schultzhockey.com"
+                    style="color: rgb(19, 147, 134); text-decoration: none"
+                    >support@schultzhockey.com</a
+                  >
+                </p>
+              </td>
+            </tr>
+            <!-- Footer -->
+            <tr>
+              <td
+                style="
+                  padding: 16px 32px;
+                  background-color: #fafafa;
+                  border-top: 1px solid #e4e4e7;
+                  text-align: center;
+                "
+              >
+                <p style="margin: 0; font-size: 12px; color: #a1a1aa">
+                  {{player.season.league.name}} &mdash; {{player.season.name}}
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

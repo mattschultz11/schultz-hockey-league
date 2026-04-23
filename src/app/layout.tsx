@@ -38,7 +38,7 @@ export default async function RootLayout({
         <Providers session={session}>
           <div id="appContainer" className="relative flex min-h-screen flex-col">
             <Nav session={session} />
-            <main className="relative mx-auto w-full max-w-7xl grow p-6">{children}</main>
+            <main className="relative mx-auto w-full max-w-7xl grow px-4 py-6">{children}</main>
             <Footer />
           </div>
         </Providers>

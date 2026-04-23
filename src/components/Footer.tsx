@@ -4,7 +4,7 @@ import { MdEmail } from "react-icons/md";
 
 export default function Footer() {
   return (
-    <div className="relative mx-auto w-full max-w-7xl px-6 pb-3">
+    <div className="relative mx-auto w-full max-w-7xl px-4 pb-3">
       <div className="flex flex-col items-center justify-center gap-1">
         <p className="text-default-400 text-center text-sm">
           © 2026 SHL - Schultz&nbsp;Hockey&nbsp;League, LLC. All&nbsp;rights&nbsp;reserved.

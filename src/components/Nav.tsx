@@ -39,7 +39,15 @@ export default function Nav(props: NavProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
-    <Navbar maxWidth="xl" isBordered isMenuOpen={isMenuOpen} onMenuOpenChange={setIsMenuOpen}>
+    <Navbar
+      maxWidth="xl"
+      isBordered
+      isMenuOpen={isMenuOpen}
+      onMenuOpenChange={setIsMenuOpen}
+      classNames={{
+        wrapper: "px-4",
+      }}
+    >
       <NavbarContent>
         <NavbarMenuToggle
           className="sm:hidden"

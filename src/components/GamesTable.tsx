@@ -119,12 +119,13 @@ function renderCell(key: (typeof columns)[number]["key"], row: Row, isNextUp: bo
     case "status":
       return (
         <div className="flex flex-wrap items-center gap-1">
-          <Chip size="sm" color={STATUS_COLOR[row.status]}>
-            {row.status}
-          </Chip>
-          {isNextUp && (
-            <Chip size="sm" variant="flat" color="primary">
+          {isNextUp ? (
+            <Chip size="sm" variant="dot" color="primary">
               Next Up
+            </Chip>
+          ) : (
+            <Chip size="sm" color={STATUS_COLOR[row.status]}>
+              {row.status}
             </Chip>
           )}
         </div>
