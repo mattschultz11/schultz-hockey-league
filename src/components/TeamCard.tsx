@@ -66,7 +66,7 @@ export default function TeamCard({ team, league, season, hideNumber }: Props) {
               className="text-3xl font-semibold hover:underline focus-visible:underline"
             />
           </div>
-          <Chip size="sm" variant="bordered">
+          <Chip size="lg" variant="bordered">
             {team.players.reduce((acc, player) => acc + (positionRating(player) ?? 0), 0)}
           </Chip>
         </div>

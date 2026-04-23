@@ -6,13 +6,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
 
 import type { Position } from "@/graphql/generated";
-import {
-  formatPositionRating,
-  playerName,
-  playerNumber,
-  playerPosition,
-  positionRating,
-} from "@/utils/stringUtils";
+import { formatPositionRating, playerName, playerPosition } from "@/utils/stringUtils";
 
 import DataTable from "./DataTable";
 import TeamName from "./TeamName";
@@ -73,6 +67,29 @@ const columns = [
 
 type ColumnKey = (typeof columns)[number]["key"];
 
+type Row = {
+  key: string;
+  pick: number;
+  name: string;
+  team: {
+    name: string;
+    id: string;
+    slug: string;
+    primaryColor: string | null;
+    secondaryColor: string | null;
+  } | null;
+  number: number | null;
+  rating: string;
+  position: string;
+  games: number;
+  goals: number;
+  assists: number;
+  points: number;
+  ppg: number;
+  pim: number;
+  href: string;
+};
+
 function playerStats(player: PlayersTablePlayer) {
   const goals = player._count.goals;
   const assists = player._count.primaryAssists + player._count.secondaryAssists;
@@ -83,38 +100,27 @@ function playerStats(player: PlayersTablePlayer) {
   return { goals, assists, points, games, ppg, pim };
 }
 
-function comparePlayers(a: PlayersTablePlayer, b: PlayersTablePlayer, column: ColumnKey): number {
+function comparePlayers(a: Row, b: Row, column: ColumnKey): number {
   switch (column) {
-    case "pick":
-      return (
-        (a.draftPick?.overall ?? Number.POSITIVE_INFINITY) -
-        (b.draftPick?.overall ?? Number.POSITIVE_INFINITY)
-      );
     case "number":
       return (a.number ?? Number.POSITIVE_INFINITY) - (b.number ?? Number.POSITIVE_INFINITY);
     case "name": {
-      const aName = [a.user.lastName, a.user.firstName].filter(Boolean).join(", ");
-      const bName = [b.user.lastName, b.user.firstName].filter(Boolean).join(", ");
-      return aName.localeCompare(bName);
+      return a.name.localeCompare(b.name);
     }
     case "position":
       return (a.position ?? "").localeCompare(b.position ?? "");
     case "team":
       return (a.team?.name ?? "").localeCompare(b.team?.name ?? "");
     case "rating":
-      return (
-        (positionRating(a) ?? Number.POSITIVE_INFINITY) -
-        (positionRating(b) ?? Number.POSITIVE_INFINITY)
-      );
+      return a.rating.localeCompare(b.rating);
+    case "pick":
     case "games":
     case "goals":
     case "assists":
     case "points":
     case "ppg":
     case "pim": {
-      const aStats = playerStats(a);
-      const bStats = playerStats(b);
-      return aStats[column] - bStats[column];
+      return a[column] - b[column];
     }
     default:
       return 0;
@@ -125,38 +131,44 @@ export default function PlayersTable({ players, league, season, hideTeam }: Play
   const router = useRouter();
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
     column: "points",
-    direction: "ascending",
+    direction: "descending",
   });
 
-  const sortedPlayers = useMemo(() => {
+  const rows = useMemo(
+    () =>
+      players
+        .map((player) => {
+          const stats = playerStats(player);
+          return {
+            key: player.id,
+            pick: player.draftPick?.overall ?? 0,
+            name: playerName(player),
+            team: player.team,
+            number: player.number,
+            rating: formatPositionRating(player),
+            position: playerPosition(player),
+            games: stats.games,
+            goals: stats.goals,
+            assists: stats.assists,
+            points: stats.points,
+            ppg: stats.ppg,
+            pim: stats.pim,
+            href: `/leagues/${league?.slug}/seasons/${season?.slug}/players/${player.id}`,
+          };
+        })
+        .sort((a, b) => b.pick - a.pick),
+    [players, league, season],
+  );
+
+  const sortedRows = useMemo(() => {
     const column = sortDescriptor.column as ColumnKey;
-    const sorted = [...players].sort((a, b) => comparePlayers(a, b, column));
+    const sorted = [...rows].sort((a, b) => comparePlayers(a, b, column));
     return sortDescriptor.direction === "descending" ? sorted.reverse() : sorted;
-  }, [players, sortDescriptor]);
+  }, [rows, sortDescriptor]);
 
   const handleSortChange = useCallback((descriptor: SortDescriptor) => {
     setSortDescriptor(descriptor);
   }, []);
-
-  const rows = sortedPlayers.map((player) => {
-    const stats = playerStats(player);
-    return {
-      key: player.id,
-      pick: player.draftPick?.overall,
-      name: playerName(player),
-      team: player.team,
-      number: playerNumber(player),
-      rating: formatPositionRating(player),
-      position: playerPosition(player),
-      games: stats.games,
-      goals: stats.goals,
-      assists: stats.assists,
-      points: stats.points,
-      ppg: stats.ppg,
-      pim: stats.pim,
-      href: `/leagues/${league?.slug}/seasons/${season?.slug}/players/${player.id}`,
-    };
-  });
 
   const rowsById = new Map(rows.map((row) => [row.key, row]));
   const filteredColumns = hideTeam ? columns.filter((col) => col.key !== "team") : columns;
@@ -178,7 +190,7 @@ export default function PlayersTable({ players, league, season, hideTeam }: Play
         ))}
       </TableHeader>
       <TableBody emptyContent="No players">
-        {rows.map((row) => (
+        {sortedRows.map((row) => (
           <TableRow key={row.key}>
             {filteredColumns.map((col) => (
               <TableCell key={col.key}>

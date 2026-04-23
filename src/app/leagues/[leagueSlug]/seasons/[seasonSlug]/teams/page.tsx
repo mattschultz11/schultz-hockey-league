@@ -64,7 +64,7 @@ export default async function TeamsPage({ params }: Props) {
   return (
     <PageLayout>
       <TeamsHeader season={season} league={league} isAdmin={isAdmin} />
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {teams.map((team) => (
           <TeamCard key={team.id} team={team} league={league} season={season} />
         ))}

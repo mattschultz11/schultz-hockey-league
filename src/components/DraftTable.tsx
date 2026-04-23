@@ -11,7 +11,7 @@ import EditDraftPickModal from "./EditDraftPickModal";
 import TeamName from "./TeamName";
 
 const columns = [
-  { key: "overall", label: "Overall" },
+  { key: "overall", label: "#" },
   { key: "round", label: "Round" },
   { key: "pick", label: "Pick" },
   { key: "team", label: "Team" },

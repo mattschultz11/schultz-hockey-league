@@ -492,7 +492,7 @@ function PicksCard({
 }: PicksCardProps) {
   const recentLimit = Math.min(recent.length, 5);
   const upcomingLimit = 9 - recentLimit;
-  const limitedRecent = recent.slice(recent.length - recentLimit, recentLimit);
+  const limitedRecent = recent.slice(recent.length - recentLimit, recent.length);
   const limitedUpcoming = upcoming.slice(0, upcomingLimit);
   const lastPick = recent[recent.length - 1];
   const [editingPickId, setEditingPickId] = useState<string | null>(null);

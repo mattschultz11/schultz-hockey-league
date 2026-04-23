@@ -11,7 +11,7 @@ const columns = [
   { key: "pick", label: "Pick" },
   { key: "name", label: "Name" },
   { key: "number", label: "#" },
-  { key: "position", label: "Position" },
+  { key: "position", label: "Pos" },
   { key: "rating", label: "Rating" },
 ] as const;
 
@@ -54,7 +54,7 @@ export default function TeamTable({ team, hideNumber }: TeamTableProps) {
         pick: player.draftPick?.round ?? 0,
       };
     })
-    .sort((a, b) => b.pick - a.pick);
+    .sort((a, b) => a.pick - b.pick);
 
   const filteredColumns = hideNumber ? columns.filter((col) => col.key !== "number") : columns;
 
