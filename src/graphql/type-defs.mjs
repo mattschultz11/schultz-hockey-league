@@ -35,6 +35,7 @@ export const typeDefs = /* GraphQL */ `
     EVEN
     POWERPLAY
     SHORTHANDED
+    EMPTY_NET
   }
 
   enum Classification {

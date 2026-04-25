@@ -101,7 +101,12 @@ export default function PlayerDetailCard({ player, games, league, season, isAdmi
           <h2 className="text-lg font-semibold">Games Played</h2>
         </CardHeader>
         <CardBody>
-          <GamesTable league={league} season={season} games={games} nextUpId={nextUpId} />
+          <GamesTable
+            league={league}
+            season={season}
+            games={games}
+            nextUpIds={nextUpId ? [nextUpId] : []}
+          />
         </CardBody>
       </Card>
 

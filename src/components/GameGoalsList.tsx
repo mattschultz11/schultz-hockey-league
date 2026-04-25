@@ -1,9 +1,8 @@
 import { Card, CardBody, CardHeader, Chip } from "@heroui/react";
+import clsx from "clsx";
 
 import type { Strength } from "@/graphql/generated";
-import { formatEnum, playerName } from "@/utils/stringUtils";
-
-import TeamName from "./TeamName";
+import { playerName } from "@/utils/stringUtils";
 
 type GameTeam = {
   id: string;
@@ -38,7 +37,7 @@ type Props = {
 function formatTime(seconds: number) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, "0")}`;
+  return `${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
 }
 
 function periodLabel(period: number) {
@@ -48,72 +47,110 @@ function periodLabel(period: number) {
   return "OT";
 }
 
-function playerLabel(player: GoalPlayer) {
-  const num = player.number != null ? `#${player.number} ` : "";
-  return `${num}${playerName(player)}`;
-}
-
-function assistLabels(goal: Goal) {
-  return [goal.primaryAssist, goal.secondaryAssist]
-    .filter((a): a is GoalPlayer => a != null)
-    .map((a) => playerLabel(a));
+function abbreviateStrength(strength: Strength) {
+  switch (strength) {
+    case "EVEN":
+      return "EVEN";
+    case "POWERPLAY":
+      return "PP";
+    case "SHORTHANDED":
+      return "SH";
+    case "EMPTY_NET":
+      return "EN";
+  }
 }
 
 export default function GameGoalsList({ goals, homeTeam, awayTeam }: Props) {
   const periods = [...new Set(goals.map((g) => g.period))].sort((a, b) => a - b);
-  const teamsById = new Map<string, GameTeam>();
-  if (homeTeam) teamsById.set(homeTeam.id, homeTeam);
-  if (awayTeam) teamsById.set(awayTeam.id, awayTeam);
+  const homeTeamGoals = goals.filter((goal) => goal.teamId === homeTeam?.id);
+  const awayTeamGoals = goals.filter((goal) => goal.teamId === awayTeam?.id);
+
+  if (goals.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <h2 className="w-full text-center text-lg font-semibold">Goals</h2>
+        </CardHeader>
+        <CardBody>
+          <p className="text-default-500 text-center text-sm">No goals</p>
+        </CardBody>
+      </Card>
+    );
+  }
 
   return (
     <Card>
       <CardHeader>
-        <h2 className="text-lg font-semibold">Goals</h2>
+        <h2 className="w-full text-center text-lg font-semibold">Goals</h2>
       </CardHeader>
       <CardBody className="flex flex-col gap-4">
-        {periods.map((period) => (
-          <div key={period} className="flex flex-col gap-2">
-            <h3 className="text-default-600 text-xs font-medium tracking-wide uppercase">
-              {periodLabel(period)} Period
-            </h3>
-            <ul className="flex flex-col gap-2">
-              {goals
-                .filter((g) => g.period === period)
-                .map((goal) => {
-                  const team = teamsById.get(goal.teamId);
-                  const assists = assistLabels(goal);
+        {periods.map((period) => {
+          const periodGoals = goals
+            .filter((g) => g.period === period)
+            .sort((a, b) => b.time - a.time);
+          const periodHomeGoals = periodGoals.filter((goal) => goal.teamId === homeTeam?.id);
+          const periodAwayGoals = periodGoals.filter((goal) => goal.teamId === awayTeam?.id);
+          return (
+            <div key={period} className="flex flex-col gap-2">
+              <div className="flex justify-center gap-8">
+                <div className="font-mono">{periodHomeGoals.length}</div>
+                <h3 className="text-default-600 w-25 text-center text-base font-medium tracking-wide uppercase">
+                  {periodLabel(period)} Period
+                </h3>
+                <div className="font-mono">{periodAwayGoals.length}</div>
+              </div>
+              <ul className="flex flex-col gap-2">
+                {periodGoals.map((goal) => {
+                  const assists = [goal.primaryAssist, goal.secondaryAssist].filter(
+                    (a): a is GoalPlayer => a != null,
+                  );
                   return (
                     <li
                       key={goal.id}
-                      className="bg-default-100 flex items-start gap-3 rounded-lg p-3"
+                      className={clsx("bg-default-100 flex items-center gap-4 rounded-lg p-3", {
+                        "flex-row-reverse": goal.teamId === awayTeam?.id,
+                      })}
                     >
-                      <span className="text-default-600 w-10 shrink-0 font-mono text-sm">
+                      <span className="text-default-600 w-10 shrink-0 font-mono text-sm whitespace-nowrap">
                         {formatTime(goal.time)}
                       </span>
-                      <div className="flex w-20 shrink-0">
-                        {team && <TeamName team={team} className="text-sm" />}
-                      </div>
-                      <div className="flex flex-grow flex-col">
-                        <span className="text-foreground font-semibold">
-                          {playerLabel(goal.scorer)}
+                      <span className="flex flex-col">
+                        <span className="flex gap-2">
+                          {goal.scorer.number != null && (
+                            <span className="text-default-600">#{goal.scorer.number}</span>
+                          )}
+                          <span className="font-semibold">{playerName(goal.scorer)}</span>
                         </span>
                         {assists.length > 0 && (
-                          <span className="text-default-600 text-sm">
-                            Assists: {assists.join(", ")}
+                          <span className="text-default-500 flex gap-4 text-sm">
+                            {assists.map((player) => (
+                              <span key={player.id} className="flex gap-2">
+                                {player.number != null && <span>#{player.number}</span>}
+                                <span className="font-semibold">{playerName(player)}</span>
+                              </span>
+                            ))}
                           </span>
                         )}
-                      </div>
+                      </span>
                       {goal.strength !== "EVEN" && (
                         <Chip size="sm" variant="flat" color="warning">
-                          {formatEnum(goal.strength)}
+                          {abbreviateStrength(goal.strength)}
                         </Chip>
                       )}
                     </li>
                   );
                 })}
-            </ul>
-          </div>
-        ))}
+              </ul>
+            </div>
+          );
+        })}
+        <div className="flex justify-center gap-8">
+          <div className="font-mono">{homeTeamGoals.length}</div>
+          <h3 className="text-default-600 w-25 text-center text-base font-medium tracking-wide uppercase">
+            Final
+          </h3>
+          <div className="font-mono">{awayTeamGoals.length}</div>
+        </div>
       </CardBody>
     </Card>
   );

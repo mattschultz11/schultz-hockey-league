@@ -106,7 +106,7 @@ export default function GameDetailCard({ game, league, season, isAdmin }: Props)
       <Card>
         <CardHeader>
           <div className="flex w-full flex-col gap-2">
-            <h1 className="flex flex-grow justify-between gap-1 text-2xl font-semibold">
+            <h1 className="flex justify-between gap-1 text-2xl font-semibold">
               <span>{dateLabel}</span>
               <span>{timeLabel}</span>
               <span>{location}</span>

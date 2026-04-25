@@ -20,6 +20,7 @@ const columns = [
 ] as const;
 
 type GamesTableTeam = {
+  id: string;
   name: string;
   primaryColor: string | null;
   secondaryColor: string | null;
@@ -39,7 +40,7 @@ export type GamesTableGame = {
 type GamesTableProps = {
   games: GamesTableGame[];
   /** Game id to highlight with a "Next Up" chip in the status cell. */
-  nextUpId?: string | null;
+  nextUpIds: string[];
   league: {
     slug: string;
   };
@@ -48,26 +49,28 @@ type GamesTableProps = {
   };
 };
 
-export default function GamesTable({ games, nextUpId, league, season }: GamesTableProps) {
+export default function GamesTable({ games, nextUpIds, league, season }: GamesTableProps) {
   const router = useRouter();
 
-  const rows = games.map((game) => {
-    const status = getGameStatus(game.datetime, game.homeTeamResult, game.awayTeamResult);
-    return {
-      key: game.id,
-      round: game.round,
-      date: game.datetime.toLocaleDateString(),
-      time: game.datetime.toLocaleTimeString([], {
-        hour: "numeric",
-        minute: "2-digit",
-      }),
-      homeTeam: game.homeTeam,
-      awayTeam: game.awayTeam,
-      location: game.location,
-      status,
-      href: `/leagues/${league.slug}/seasons/${season.slug}/games/${game.id}`,
-    };
-  });
+  const rows = games
+    .sort((a, b) => a.datetime.valueOf() - b.datetime.valueOf())
+    .map((game) => {
+      const status = getGameStatus(game.datetime, game.homeTeamResult, game.awayTeamResult);
+      return {
+        key: game.id,
+        round: game.round,
+        date: game.datetime.toLocaleDateString(),
+        time: game.datetime.toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+        homeTeam: game.homeTeam,
+        awayTeam: game.awayTeam,
+        location: game.location,
+        status,
+        href: `/leagues/${league.slug}/seasons/${season.slug}/games/${game.id}`,
+      };
+    });
 
   const rowsById = new Map(rows.map((row) => [row.key, row]));
 
@@ -85,7 +88,7 @@ export default function GamesTable({ games, nextUpId, league, season }: GamesTab
       </TableHeader>
       <TableBody emptyContent="No games">
         {rows.map((row) => {
-          const isNextUp = nextUpId != null && nextUpId === row.key && row.status === "Upcoming";
+          const isNextUp = nextUpIds.includes(row.key) && row.status === "Upcoming";
           return (
             <TableRow key={row.key}>
               {columns.map((col) => (

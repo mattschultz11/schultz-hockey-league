@@ -1,11 +1,13 @@
 "use client";
 
 import { Input, Pagination, Select, SelectItem } from "@heroui/react";
+import { Predicate } from "effect";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { GamesTableGame } from "./GamesTable";
 import GamesTable from "./GamesTable";
+import { findNextUpcomingId } from "./gameStatus";
 
 export type GamesSectionFilters = {
   startDate: string;
@@ -50,6 +52,21 @@ export default function GamesSection({
     filters.teamId ? new Set([filters.teamId]) : new Set(),
   );
   const [location, setLocation] = useState(filters.location);
+  const nextUpIds = useMemo(() => {
+    return Array.from(
+      new Set(
+        teams
+          .map((team) =>
+            findNextUpcomingId(
+              games.filter(
+                (game) => game.awayTeam?.id === team.id || game.homeTeam?.id === team.id,
+              ),
+            ),
+          )
+          .filter((id) => Predicate.isNotNullable(id)),
+      ).values(),
+    );
+  }, [teams, games]);
 
   const teamId = teamKeys.values().next().value ?? "";
 
@@ -134,7 +151,7 @@ export default function GamesSection({
         />
       </div>
 
-      <GamesTable games={games} league={league} season={season} />
+      <GamesTable games={games} league={league} season={season} nextUpIds={nextUpIds} />
 
       {totalPages > 1 && (
         <div className="flex justify-center">

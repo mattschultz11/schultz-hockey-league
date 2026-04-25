@@ -51,7 +51,7 @@ export type Position = "G" | "D" | "D_F" | "F" | "F_D";
 
 export type Result = "WIN" | "LOSS" | "TIE";
 
-export type Strength = "EVEN" | "POWERPLAY" | "SHORTHANDED";
+export type Strength = "EVEN" | "POWERPLAY" | "SHORTHANDED" | "EMPTY_NET";
 
 export type Classification = "ROSTER" | "SUBSTITUTE";
 
