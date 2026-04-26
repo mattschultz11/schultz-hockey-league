@@ -46,7 +46,7 @@ export function maybeGetLineupEntry(
 
 export async function addPlayerToLineup(data: LineupCreateInput, ctx: ServerContext) {
   validate(lineupCreateSchema, data);
-  const { gameId, teamId, playerId } = data;
+  const { gameId, teamId, playerId, number } = data;
 
   const game = await getGameById(gameId, ctx);
   const team = await getTeamById(teamId, ctx);
@@ -55,7 +55,9 @@ export async function addPlayerToLineup(data: LineupCreateInput, ctx: ServerCont
   validateLineupEntry(game, team, player);
 
   try {
-    return await ctx.prisma.lineup.create({ data: { gameId, teamId, playerId } });
+    return await ctx.prisma.lineup.create({
+      data: { gameId, teamId, playerId, number: number ?? null },
+    });
   } catch (error) {
     if (
       error instanceof Error &&
@@ -75,11 +77,14 @@ export async function removePlayerFromLineup(id: string, ctx: ServerContext) {
 
 export async function setGameLineup(data: SetGameLineupInput, ctx: ServerContext) {
   validate(setGameLineupSchema, data);
-  const { gameId, teamId, playerIds } = data;
+  const { gameId, teamId, entries } = data;
 
   const game = await getGameById(gameId, ctx);
   const team = await getTeamById(teamId, ctx);
-  const players = await getPlayersByIds(playerIds, ctx);
+  const players = await getPlayersByIds(
+    entries.map((e) => e.playerId),
+    ctx,
+  );
 
   validateLineup(game, team, players);
 
@@ -87,7 +92,12 @@ export async function setGameLineup(data: SetGameLineupInput, ctx: ServerContext
     return ctx.prisma.$transaction(async (tx) => {
       await tx.lineup.deleteMany({ where: { gameId, teamId } });
       await tx.lineup.createMany({
-        data: playerIds.map((playerId) => ({ gameId, teamId, playerId })),
+        data: entries.map((entry) => ({
+          gameId,
+          teamId,
+          playerId: entry.playerId,
+          number: entry.number ?? null,
+        })),
       });
       return tx.lineup.findMany({ where: { gameId, teamId } });
     });

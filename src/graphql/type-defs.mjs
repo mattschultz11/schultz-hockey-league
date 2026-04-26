@@ -250,6 +250,7 @@ export const typeDefs = /* GraphQL */ `
     teamId: ID!
     player: Player!
     playerId: ID!
+    number: Int
   }
 
   type DraftPick {
@@ -550,12 +551,18 @@ export const typeDefs = /* GraphQL */ `
     gameId: ID!
     teamId: ID!
     playerId: ID!
+    number: Int
   }
 
   input SetGameLineupInput {
     gameId: ID!
     teamId: ID!
-    playerIds: [ID!]!
+    entries: [LineupEntryInput!]!
+  }
+
+  input LineupEntryInput {
+    playerId: ID!
+    number: Int
   }
 
   input DraftPickCreateInput {

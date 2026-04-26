@@ -99,13 +99,27 @@ describe("lineupService", () => {
 
     // Set initial lineup
     await setGameLineup(
-      { gameId: game.id, teamId: team.id, playerIds: [player.id, player2.id] },
+      {
+        gameId: game.id,
+        teamId: team.id,
+        entries: [
+          { playerId: player.id, number: null },
+          { playerId: player2.id, number: null },
+        ],
+      },
       ctx,
     );
 
     // Replace with new lineup
     const result = await setGameLineup(
-      { gameId: game.id, teamId: team.id, playerIds: [player2.id, player3.id] },
+      {
+        gameId: game.id,
+        teamId: team.id,
+        entries: [
+          { playerId: player2.id, number: null },
+          { playerId: player3.id, number: null },
+        ],
+      },
       ctx,
     );
 
@@ -123,12 +137,20 @@ describe("lineupService", () => {
     });
 
     await setGameLineup(
-      { gameId: gameWithBothTeams.id, teamId: awayTeam.id, playerIds: [awayPlayer.id] },
+      {
+        gameId: gameWithBothTeams.id,
+        teamId: awayTeam.id,
+        entries: [{ playerId: awayPlayer.id, number: null }],
+      },
       ctx,
     );
 
     await setGameLineup(
-      { gameId: gameWithBothTeams.id, teamId: team.id, playerIds: [player.id] },
+      {
+        gameId: gameWithBothTeams.id,
+        teamId: team.id,
+        entries: [{ playerId: player.id, number: null }],
+      },
       ctx,
     );
 

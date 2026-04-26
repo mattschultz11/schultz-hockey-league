@@ -47,6 +47,7 @@ export default async function GameDetailPage({ params }: Props) {
           logoUrl: true,
           primaryColor: true,
           secondaryColor: true,
+          manager: { select: { userId: true } },
         },
       },
       awayTeam: {
@@ -57,6 +58,7 @@ export default async function GameDetailPage({ params }: Props) {
           logoUrl: true,
           primaryColor: true,
           secondaryColor: true,
+          manager: { select: { userId: true } },
         },
       },
       homeTeamResult: true,
@@ -117,6 +119,7 @@ export default async function GameDetailPage({ params }: Props) {
         select: {
           id: true,
           teamId: true,
+          number: true,
           player: {
             select: {
               id: true,
@@ -138,6 +141,18 @@ export default async function GameDetailPage({ params }: Props) {
   }
 
   const isAdmin = session?.user?.role === "ADMIN";
+  const userId = session?.user?.id;
+  const lineupEditBase = `/manager/leagues/${league.slug}/seasons/${season.slug}/games/${game.id}/lineup/edit`;
+
+  const canEditHome =
+    isAdmin || (!!userId && !!game.homeTeam && game.homeTeam.manager?.userId === userId);
+  const canEditAway =
+    isAdmin || (!!userId && !!game.awayTeam && game.awayTeam.manager?.userId === userId);
+
+  const homeLineupEditHref =
+    canEditHome && game.homeTeam ? `${lineupEditBase}?teamId=${game.homeTeam.id}` : undefined;
+  const awayLineupEditHref =
+    canEditAway && game.awayTeam ? `${lineupEditBase}?teamId=${game.awayTeam.id}` : undefined;
 
   return (
     <PageLayout>
@@ -152,7 +167,14 @@ export default async function GameDetailPage({ params }: Props) {
         />
       </PageHeader>
 
-      <GameDetailCard isAdmin={isAdmin} game={game} league={league} season={season} />
+      <GameDetailCard
+        isAdmin={isAdmin}
+        game={game}
+        league={league}
+        season={season}
+        homeLineupEditHref={homeLineupEditHref}
+        awayLineupEditHref={awayLineupEditHref}
+      />
     </PageLayout>
   );
 }

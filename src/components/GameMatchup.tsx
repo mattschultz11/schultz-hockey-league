@@ -30,6 +30,7 @@ type GoalPlayer = {
 type Lineup = {
   id: string;
   teamId: string;
+  number: number | null;
   player: LineupPlayer;
 };
 
@@ -53,9 +54,17 @@ type Props = {
     goals: Goal[];
     lineups: Lineup[];
   };
+  homeLineupEditHref?: string;
+  awayLineupEditHref?: string;
 };
 
-export default function GameMatchup({ league, season, game }: Props) {
+export default function GameMatchup({
+  league,
+  season,
+  game,
+  homeLineupEditHref,
+  awayLineupEditHref,
+}: Props) {
   const { homeTeam, awayTeam, goals } = game;
 
   const homeTeamGoals = goals.filter((g) => g.teamId === homeTeam?.id);
@@ -65,13 +74,17 @@ export default function GameMatchup({ league, season, game }: Props) {
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div className="bg-default-200 flex flex-col gap-2 rounded-lg p-3">
         <HomeTeanMatchup league={league} season={season} team={homeTeam} goals={homeTeamGoals} />
-        <GameLineup lineup={game.lineups.filter((l) => l.teamId === homeTeam?.id)} />
+        <GameLineup
+          lineup={game.lineups.filter((l) => l.teamId === homeTeam?.id)}
+          editHref={homeLineupEditHref}
+        />
       </div>
       <div className="bg-default-200 flex flex-col gap-2 rounded-lg p-3">
         <AwayTeanMatchup league={league} season={season} team={awayTeam} goals={awayTeamGoals} />
         <GameLineup
           lineup={game.lineups.filter((l) => l.teamId === awayTeam?.id)}
           direction="right"
+          editHref={awayLineupEditHref}
         />
       </div>
     </div>
@@ -99,26 +112,26 @@ function HomeTeanMatchup({
   goals: Goal[];
 }) {
   return (
-    <div className="flex flex-col">
-      <div className="flex items-center justify-between gap-2">
-        <Chip size="sm" color="secondary" variant="solid" className="uppercase">
+    <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2">
+        <Chip size="sm" color="primary" variant="solid" className="uppercase">
           Home
         </Chip>
-        <span className="self-end font-mono text-4xl font-bold">{goals.length}</span>
+        {team ? (
+          <div className="flex items-center gap-3">
+            <TeamLogo team={team} width={36} height={36} />
+            <TeamName
+              as={Link}
+              team={team}
+              href={teamHref(league, season, team)}
+              className="text-2xl font-semibold hover:underline"
+            />
+          </div>
+        ) : (
+          <span className="text-foreground text-lg font-semibold">TBD</span>
+        )}
       </div>
-      {team ? (
-        <div className="flex items-center gap-3">
-          <TeamLogo team={team} width={36} height={36} />
-          <TeamName
-            as={Link}
-            team={team}
-            href={teamHref(league, season, team)}
-            className="text-2xl font-semibold hover:underline"
-          />
-        </div>
-      ) : (
-        <span className="text-foreground text-lg font-semibold">TBD</span>
-      )}
+      <span className="font-mono text-4xl font-bold">{goals.length}</span>
     </div>
   );
 }
@@ -135,26 +148,26 @@ function AwayTeanMatchup({
   goals: Goal[];
 }) {
   return (
-    <div className="flex flex-col">
-      <div className="flex grow items-center justify-between">
-        <span className="font-mono text-4xl font-bold">{goals.length}</span>
+    <div className="flex flex-row-reverse items-center justify-between">
+      <div className="flex flex-col items-end gap-2">
         <Chip size="sm" color="secondary" variant="solid" className="uppercase">
           Away
         </Chip>
+        {team ? (
+          <div className="flex items-center gap-3">
+            <TeamLogo team={team} width={36} height={36} />
+            <TeamName
+              as={Link}
+              team={team}
+              href={teamHref(league, season, team)}
+              className="text-2xl font-semibold hover:underline"
+            />
+          </div>
+        ) : (
+          <span className="text-foreground text-lg font-semibold">TBD</span>
+        )}
       </div>
-      {team ? (
-        <div className="flex items-center gap-3 self-end">
-          <TeamLogo team={team} width={36} height={36} />
-          <TeamName
-            as={Link}
-            team={team}
-            href={teamHref(league, season, team)}
-            className="text-2xl font-semibold hover:underline"
-          />
-        </div>
-      ) : (
-        <span className="text-foreground self-end text-lg font-semibold">TBD</span>
-      )}
+      <span className="font-mono text-4xl font-bold">{goals.length}</span>
     </div>
   );
 }

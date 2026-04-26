@@ -264,6 +264,7 @@ export type Lineup = {
   teamId: Scalars["ID"]["output"];
   player: Player;
   playerId: Scalars["ID"]["output"];
+  number?: Maybe<Scalars["Int"]["output"]>;
 };
 
 export type DraftPick = {
@@ -653,12 +654,18 @@ export type LineupCreateInput = {
   gameId: Scalars["ID"]["input"];
   teamId: Scalars["ID"]["input"];
   playerId: Scalars["ID"]["input"];
+  number?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type SetGameLineupInput = {
   gameId: Scalars["ID"]["input"];
   teamId: Scalars["ID"]["input"];
-  playerIds: Array<Scalars["ID"]["input"]>;
+  entries: Array<LineupEntryInput>;
+};
+
+export type LineupEntryInput = {
+  playerId: Scalars["ID"]["input"];
+  number?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type DraftPickCreateInput = {
@@ -1099,6 +1106,7 @@ export type ResolversTypes = {
   PenaltyUpdateInput: PenaltyUpdateInput;
   LineupCreateInput: LineupCreateInput;
   SetGameLineupInput: SetGameLineupInput;
+  LineupEntryInput: LineupEntryInput;
   DraftPickCreateInput: DraftPickCreateInput;
   DraftPickUpdateInput: DraftPickUpdateInput;
   Mutation: ResolverTypeWrapper<Record<PropertyKey, never>>;
@@ -1164,6 +1172,7 @@ export type ResolversParentTypes = {
   PenaltyUpdateInput: PenaltyUpdateInput;
   LineupCreateInput: LineupCreateInput;
   SetGameLineupInput: SetGameLineupInput;
+  LineupEntryInput: LineupEntryInput;
   DraftPickCreateInput: DraftPickCreateInput;
   DraftPickUpdateInput: DraftPickUpdateInput;
   Mutation: Record<PropertyKey, never>;
@@ -1373,6 +1382,7 @@ export type LineupResolvers<
   teamId?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
   player?: Resolver<ResolversTypes["Player"], ParentType, ContextType>;
   playerId?: Resolver<ResolversTypes["ID"], ParentType, ContextType>;
+  number?: Resolver<Maybe<ResolversTypes["Int"]>, ParentType, ContextType>;
 };
 
 export type DraftPickResolvers<

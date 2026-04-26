@@ -1,4 +1,6 @@
+import { Button } from "@heroui/react";
 import { clsx } from "clsx";
+import Link from "next/link";
 
 import type { Position } from "@/graphql/generated";
 import {
@@ -20,38 +22,56 @@ type LineupPlayer = {
 
 type LineupEntry = {
   id: string;
+  number: number | null;
   player: LineupPlayer;
 };
 
-function sortLineup(a: LineupPlayer, b: LineupPlayer) {
-  const aGoalie = a.position === "G";
-  const bGoalie = b.position === "G";
+function entryNumber(entry: LineupEntry) {
+  return entry.number ?? entry.player.number;
+}
+
+function sortLineup(a: LineupEntry, b: LineupEntry) {
+  const aGoalie = a.player.position === "G";
+  const bGoalie = b.player.position === "G";
   if (aGoalie !== bGoalie) return aGoalie ? -1 : 1;
-  const aNumber = a.number ?? Number.MAX_SAFE_INTEGER;
-  const bNumber = b.number ?? Number.MAX_SAFE_INTEGER;
+  const aNumber = entryNumber(a) ?? Number.MAX_SAFE_INTEGER;
+  const bNumber = entryNumber(b) ?? Number.MAX_SAFE_INTEGER;
   if (aNumber !== bNumber) return bNumber - aNumber;
-  const aRating = positionRating(a) ?? 0;
-  const bRating = positionRating(b) ?? 0;
+  const aRating = positionRating(a.player) ?? 0;
+  const bRating = positionRating(b.player) ?? 0;
   return bRating - aRating;
 }
 
 type Props = {
   lineup: LineupEntry[];
   direction?: "right" | "left";
+  editHref?: string;
 };
 
-export default function GameLineup({ lineup, direction }: Props) {
-  const sortedLineup = [...lineup].sort((a, b) => sortLineup(a.player, b.player));
+export default function GameLineup({ lineup, direction, editHref }: Props) {
+  const sortedLineup = [...lineup].sort(sortLineup);
 
   return (
     <div className="flex flex-col gap-2">
-      <span
-        className={clsx("text-default-600 text-xs font-medium tracking-wide uppercase", {
-          "self-end": direction === "right",
+      <div
+        className={clsx("flex items-center justify-between gap-2", {
+          "flex-row-reverse": direction === "right",
         })}
       >
-        Lineup
-      </span>
+        <span className="text-default-600 text-xs font-medium tracking-wide uppercase">Lineup</span>
+        {editHref && (
+          <Button
+            as={Link}
+            href={editHref}
+            size="sm"
+            variant="solid"
+            className="h-6 min-w-0 px-2"
+            color="warning"
+          >
+            Edit
+          </Button>
+        )}
+      </div>
       {lineup.length === 0 ? (
         <span className="text-default-600 text-sm">No lineup set</span>
       ) : (
@@ -67,7 +87,7 @@ export default function GameLineup({ lineup, direction }: Props) {
                 {playerPosition(lineupEntry.player)}
               </span>
               <span className="text-default-600 w-8 shrink-0 font-mono text-sm">
-                #{lineupEntry.player.number}
+                #{entryNumber(lineupEntry) ?? "—"}
               </span>
               <span
                 className={clsx("text-foreground grow text-sm font-medium", {

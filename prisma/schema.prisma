@@ -263,6 +263,7 @@ model Lineup {
   teamId    String
   player    Player   @relation(fields: [playerId], references: [id])
   playerId  String
+  number    Int?
 
   @@unique([gameId, playerId])
 }

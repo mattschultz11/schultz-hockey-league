@@ -108,14 +108,31 @@ export async function createPlayer(data: PlayerCreateInput, ctx: ServerContext) 
 
 export async function updatePlayer(id: string, data: PlayerUpdateInput, ctx: ServerContext) {
   const validated = validate(playerUpdateSchema, data);
-  const player = await getPlayerById(id, ctx);
-  const team = await maybeGetTeamById(validated.teamId ?? player.teamId, ctx);
+  const existing = await getPlayerById(id, ctx);
+  const team = await maybeGetTeamById(validated.teamId ?? existing.teamId, ctx);
 
-  validatePlayerTeam(player.seasonId, team);
+  validatePlayerTeam(existing.seasonId, team);
 
-  return ctx.prisma.player.update({
-    where: { id },
-    data: cleanInput(validated),
+  return ctx.prisma.$transaction(async (tx) => {
+    const before = await tx.player.findUniqueOrThrow({
+      where: { id },
+      select: { number: true },
+    });
+    const updated = await tx.player.update({
+      where: { id },
+      data: cleanInput(validated),
+    });
+
+    if (updated.number !== before.number && updated.teamId) {
+      // Only sync lineup rows whose stored number still matches the old season
+      // number — that distinguishes auto-filled rows from manual overrides.
+      await tx.lineup.updateMany({
+        where: { playerId: id, teamId: updated.teamId, number: before.number },
+        data: { number: updated.number },
+      });
+    }
+
+    return updated;
   });
 }
 

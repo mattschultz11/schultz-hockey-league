@@ -68,15 +68,25 @@ type Props = {
     lineups: {
       id: string;
       teamId: string;
+      number: number | null;
       player: LineupPlayer;
     }[];
   };
   league: { slug: string; name: string };
   season: { slug: string; name: string };
   isAdmin?: boolean;
+  homeLineupEditHref?: string;
+  awayLineupEditHref?: string;
 };
 
-export default function GameDetailCard({ game, league, season, isAdmin }: Props) {
+export default function GameDetailCard({
+  game,
+  league,
+  season,
+  isAdmin,
+  homeLineupEditHref,
+  awayLineupEditHref,
+}: Props) {
   const {
     round,
     datetime,
@@ -120,7 +130,13 @@ export default function GameDetailCard({ game, league, season, isAdmin }: Props)
           </div>
         </CardHeader>
         <CardBody className="flex flex-col gap-4">
-          <GameMatchup league={league} season={season} game={game} />
+          <GameMatchup
+            league={league}
+            season={season}
+            game={game}
+            homeLineupEditHref={homeLineupEditHref}
+            awayLineupEditHref={awayLineupEditHref}
+          />
         </CardBody>
       </Card>
 

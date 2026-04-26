@@ -211,13 +211,13 @@ export const resolvers: Resolvers = {
       penaltyService.deletePenalty(args.id, ctx),
     ),
 
-    addPlayerToLineup: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+    addPlayerToLineup: withPolicy(PolicyName.MANAGER_OF_TEAM, (_p, args, ctx) =>
       lineupService.addPlayerToLineup(args.data, ctx),
     ),
     removePlayerFromLineup: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
       lineupService.removePlayerFromLineup(args.id, ctx),
     ),
-    setGameLineup: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+    setGameLineup: withPolicy(PolicyName.MANAGER_OF_TEAM, (_p, args, ctx) =>
       lineupService.setGameLineup(args.data, ctx),
     ),
 

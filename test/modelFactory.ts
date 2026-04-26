@@ -576,15 +576,16 @@ export async function insertPenalty(overrides: Partial<PenaltyModel> = {}): Prom
 export type LineupModel = Omit<Lineup, "game" | "team" | "player">;
 
 export function makeLineup(
-  lineup: Partial<Pick<LineupModel, "gameId" | "teamId" | "playerId">> = {},
+  lineup: Partial<Pick<LineupModel, "gameId" | "teamId" | "playerId" | "number">> = {},
 ): LineupModel {
-  const { gameId = randUuid(), teamId = randUuid(), playerId = randUuid() } = lineup;
+  const { gameId = randUuid(), teamId = randUuid(), playerId = randUuid(), number = null } = lineup;
 
   return {
     id: randUuid(),
     gameId,
     teamId,
     playerId,
+    number,
   };
 }
 

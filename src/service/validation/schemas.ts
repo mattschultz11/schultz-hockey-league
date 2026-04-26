@@ -268,12 +268,18 @@ export const lineupCreateSchema = Schema.Struct({
   gameId: Id,
   teamId: Id,
   playerId: Id,
+  number: JerseyNumber,
+});
+
+const LineupEntry = Schema.Struct({
+  playerId: Id,
+  number: JerseyNumber,
 });
 
 export const setGameLineupSchema = Schema.Struct({
   gameId: Id,
   teamId: Id,
-  playerIds: Schema.Array(Id),
+  entries: Schema.Array(LineupEntry),
 });
 
 export const acceptRegistrationsSchema = Schema.Struct({

@@ -13,7 +13,14 @@ import prisma, { Classification, Position } from "@/service/prisma";
 import type { ServerContext } from "@/types";
 
 import type { SeasonModel, UserModel } from "../../modelFactory";
-import { insertSeason, insertTeam, insertUser, makePlayer } from "../../modelFactory";
+import {
+  insertGame,
+  insertLineup,
+  insertSeason,
+  insertTeam,
+  insertUser,
+  makePlayer,
+} from "../../modelFactory";
 import { createCtx } from "../../utils";
 
 describe("playerService", () => {
@@ -122,6 +129,76 @@ describe("playerService", () => {
     const updated = await updatePlayer(player.id, { teamId: null }, ctx);
 
     expect(updated.teamId).toBeNull();
+  });
+
+  it("syncs lineup numbers when a player's number changes (own team only)", async () => {
+    const team = await insertTeam({ seasonId: season.id, name: "Sync Team" });
+    const otherTeam = await insertTeam({ seasonId: season.id, name: "Other Team" });
+    const player = await createPlayer(
+      makePlayer({ userId: user.id, seasonId: season.id, teamId: team.id, number: 10 }),
+      ctx,
+    );
+    const ownGame = await insertGame({ seasonId: season.id, homeTeamId: team.id });
+    const guestGame = await insertGame({ seasonId: season.id, homeTeamId: otherTeam.id });
+    const ownLineup = await insertLineup({
+      gameId: ownGame.id,
+      teamId: team.id,
+      playerId: player.id,
+      number: 10,
+    });
+    const guestLineup = await insertLineup({
+      gameId: guestGame.id,
+      teamId: otherTeam.id,
+      playerId: player.id,
+      number: 77,
+    });
+
+    await updatePlayer(player.id, { number: 11 }, ctx);
+
+    const reloadedOwn = await prisma.lineup.findUnique({ where: { id: ownLineup.id } });
+    const reloadedGuest = await prisma.lineup.findUnique({ where: { id: guestLineup.id } });
+    expect(reloadedOwn?.number).toBe(11);
+    expect(reloadedGuest?.number).toBe(77);
+  });
+
+  it("preserves manual lineup overrides when the player's number changes", async () => {
+    const team = await insertTeam({ seasonId: season.id, name: "Override Team" });
+    const player = await createPlayer(
+      makePlayer({ userId: user.id, seasonId: season.id, teamId: team.id, number: 10 }),
+      ctx,
+    );
+    const game = await insertGame({ seasonId: season.id, homeTeamId: team.id });
+    const overriddenLineup = await insertLineup({
+      gameId: game.id,
+      teamId: team.id,
+      playerId: player.id,
+      number: 99,
+    });
+
+    await updatePlayer(player.id, { number: 11 }, ctx);
+
+    const reloaded = await prisma.lineup.findUnique({ where: { id: overriddenLineup.id } });
+    expect(reloaded?.number).toBe(99);
+  });
+
+  it("does not touch lineups when the player's number is unchanged", async () => {
+    const team = await insertTeam({ seasonId: season.id, name: "Stable Team" });
+    const player = await createPlayer(
+      makePlayer({ userId: user.id, seasonId: season.id, teamId: team.id, number: 10 }),
+      ctx,
+    );
+    const game = await insertGame({ seasonId: season.id, homeTeamId: team.id });
+    const lineup = await insertLineup({
+      gameId: game.id,
+      teamId: team.id,
+      playerId: player.id,
+      number: 10,
+    });
+
+    await updatePlayer(player.id, { position: Position.F }, ctx);
+
+    const reloaded = await prisma.lineup.findUnique({ where: { id: lineup.id } });
+    expect(reloaded?.number).toBe(10);
   });
 
   it("can delete a player", async () => {
