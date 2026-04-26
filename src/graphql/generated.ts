@@ -623,7 +623,6 @@ export type GoalUpdateInput = {
   period?: InputMaybe<Scalars["Int"]["input"]>;
   time?: InputMaybe<Scalars["Int"]["input"]>;
   strength?: InputMaybe<Strength>;
-  teamId?: InputMaybe<Scalars["ID"]["input"]>;
   scorerId?: InputMaybe<Scalars["ID"]["input"]>;
   primaryAssistId?: InputMaybe<Scalars["ID"]["input"]>;
   secondaryAssistId?: InputMaybe<Scalars["ID"]["input"]>;

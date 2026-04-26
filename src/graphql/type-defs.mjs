@@ -520,7 +520,6 @@ export const typeDefs = /* GraphQL */ `
     period: Int
     time: Int
     strength: Strength
-    teamId: ID
     scorerId: ID
     primaryAssistId: ID
     secondaryAssistId: ID

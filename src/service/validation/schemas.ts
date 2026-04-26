@@ -220,7 +220,6 @@ export const goalUpdateSchema = Schema.Struct({
   period: Schema.NullishOr(Period),
   time: Schema.NullishOr(GameTime),
   strength: Schema.NullishOr(StrengthEnum),
-  teamId: OptionalId,
   scorerId: OptionalId,
   primaryAssistId: OptionalId,
   secondaryAssistId: OptionalId,

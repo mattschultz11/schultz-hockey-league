@@ -150,18 +150,6 @@ describe("goalService", () => {
     );
   });
 
-  it("throws when updating a goal to a different team without changing the scorer", async () => {
-    const created = await createGoal(
-      makeGoal({ gameId: game.id, teamId: team.id, scorerId: scorer.id }),
-      ctx,
-    );
-    const otherTeam = await insertTeam({ seasonId: team.seasonId });
-
-    await expect(() => updateGoal(created.id, { teamId: otherTeam.id }, ctx)).rejects.toThrow(
-      "Scorer must be in the lineup for this team",
-    );
-  });
-
   it("can get a goal by id", async () => {
     const goal = await createGoal(
       makeGoal({ gameId: game.id, teamId: team.id, scorerId: scorer.id }),

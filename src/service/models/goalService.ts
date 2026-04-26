@@ -36,12 +36,12 @@ export async function createGoal(data: GoalCreateInput, ctx: ServerContext) {
 export async function updateGoal(id: string, data: GoalUpdateInput, ctx: ServerContext) {
   validate(goalUpdateSchema, data);
   const payload: GoalUpdateInput = cleanInput(data);
-  assertNonNullableFields(payload, ["period", "time", "strength", "teamId", "scorerId"] as const);
+  assertNonNullableFields(payload, ["period", "time", "strength", "scorerId"] as const);
 
   const goal = await getGoalById(id, ctx);
 
   const gameId = goal.gameId;
-  const teamId = payload.teamId ?? goal.teamId;
+  const teamId = goal.teamId;
   const scorerId = payload.scorerId ?? goal.scorerId;
   const primaryAssistId = payload.primaryAssistId ?? goal.primaryAssistId;
   const secondaryAssistId = payload.secondaryAssistId ?? goal.secondaryAssistId;

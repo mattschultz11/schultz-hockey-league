@@ -142,7 +142,9 @@ export default async function GameDetailPage({ params }: Props) {
 
   const isAdmin = session?.user?.role === "ADMIN";
   const userId = session?.user?.id;
-  const lineupEditBase = `/manager/leagues/${league.slug}/seasons/${season.slug}/games/${game.id}/lineup/edit`;
+  const managerBase = `/manager/leagues/${league.slug}/seasons/${season.slug}/games/${game.id}`;
+  const lineupEditBase = `${managerBase}/lineup/edit`;
+  const goalsManagerBase = `${managerBase}/goals`;
 
   const canEditHome =
     isAdmin || (!!userId && !!game.homeTeam && game.homeTeam.manager?.userId === userId);
@@ -153,6 +155,16 @@ export default async function GameDetailPage({ params }: Props) {
     canEditHome && game.homeTeam ? `${lineupEditBase}?teamId=${game.homeTeam.id}` : undefined;
   const awayLineupEditHref =
     canEditAway && game.awayTeam ? `${lineupEditBase}?teamId=${game.awayTeam.id}` : undefined;
+
+  const homeAddGoalHref =
+    canEditHome && game.homeTeam ? `${goalsManagerBase}/new?teamId=${game.homeTeam.id}` : undefined;
+  const awayAddGoalHref =
+    canEditAway && game.awayTeam ? `${goalsManagerBase}/new?teamId=${game.awayTeam.id}` : undefined;
+  const editableGoalTeamIds = [
+    canEditHome && game.homeTeam ? game.homeTeam.id : null,
+    canEditAway && game.awayTeam ? game.awayTeam.id : null,
+  ].filter((id): id is string => id != null);
+  const goalEditHrefBase = editableGoalTeamIds.length > 0 ? goalsManagerBase : undefined;
 
   return (
     <PageLayout>
@@ -174,6 +186,10 @@ export default async function GameDetailPage({ params }: Props) {
         season={season}
         homeLineupEditHref={homeLineupEditHref}
         awayLineupEditHref={awayLineupEditHref}
+        homeAddGoalHref={homeAddGoalHref}
+        awayAddGoalHref={awayAddGoalHref}
+        goalEditHrefBase={goalEditHrefBase}
+        editableGoalTeamIds={editableGoalTeamIds}
       />
     </PageLayout>
   );

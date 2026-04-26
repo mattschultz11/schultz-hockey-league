@@ -22,6 +22,7 @@ export const PolicyName = {
   ADMIN: "admin",
   MANAGER: "manager",
   MANAGER_OF_TEAM: "managerOfTeam",
+  MANAGER_OF_GOAL: "managerOfGoal",
   LEAGUE_ACCESS: "leagueAccess",
   SEASON_ACCESS: "seasonAccess",
   READ_ONLY: "readOnly",
@@ -31,11 +32,35 @@ export type PolicyNameType = (typeof PolicyName)[keyof typeof PolicyName];
 
 /**
  * Configuration for a policy including required roles and optional scope type.
+ * `resolveScopeId` overrides the default field-based scope lookup for cases
+ * where the scope must be derived from a related record (e.g. updateGoal(id)
+ * needs to load the goal to learn its teamId).
  */
 export type PolicyConfig = {
   roles: Role[];
   requiresScope?: "team" | "league" | "season";
+  resolveScopeId?: (args: object, ctx: GraphQLContext) => Promise<string | undefined>;
 };
+
+async function resolveGoalTeamId(args: object, ctx: GraphQLContext): Promise<string | undefined> {
+  const argsRecord = args as Record<string, unknown>;
+  // updateGoal/deleteGoal: scope is the goal's *existing* team — never trust
+  // args.data.teamId for auth, since that's the destination, not the owner.
+  if (typeof argsRecord.id === "string") {
+    const goal = await ctx.prisma.goal.findUnique({
+      where: { id: argsRecord.id },
+      select: { teamId: true },
+    });
+    if (!goal) throw new NotFoundError("Goal", argsRecord.id);
+    return goal.teamId;
+  }
+  // createGoal: pull teamId from the create input
+  const data = argsRecord.data;
+  if (data != null && typeof data === "object" && "teamId" in data) {
+    return (data as Record<string, string>).teamId;
+  }
+  return undefined;
+}
 
 /**
  * Central registry mapping policy names to their configurations.
@@ -47,6 +72,11 @@ const policyRegistry: Record<PolicyNameType, PolicyConfig> = {
   [PolicyName.MANAGER_OF_TEAM]: {
     roles: [Role.ADMIN, Role.MANAGER],
     requiresScope: "team",
+  },
+  [PolicyName.MANAGER_OF_GOAL]: {
+    roles: [Role.ADMIN, Role.MANAGER],
+    requiresScope: "team",
+    resolveScopeId: resolveGoalTeamId,
   },
   [PolicyName.LEAGUE_ACCESS]: {
     roles: [Role.ADMIN, Role.MANAGER, Role.PLAYER],
@@ -114,9 +144,11 @@ export function withPolicy<TResult, TParent, TArgs extends object>(
         if (config.requiresScope) {
           const requiredField = scopeFieldMap[config.requiresScope];
 
-          // Look up scope ID: top-level args first, then args.data (mutation pattern)
+          // Look up scope ID: custom resolver first, then top-level args, then args.data
           let scopeValue: string | undefined;
-          if (requiredField in args) {
+          if (config.resolveScopeId) {
+            scopeValue = await config.resolveScopeId(args, ctx);
+          } else if (requiredField in args) {
             scopeValue = (args as Record<string, string>)[requiredField];
           } else {
             const data = (args as Record<string, unknown>).data;

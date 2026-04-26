@@ -1,5 +1,6 @@
-import { Card, CardBody, CardHeader, Chip } from "@heroui/react";
+import { Button, Card, CardBody, CardHeader, Chip } from "@heroui/react";
 import clsx from "clsx";
+import Link from "next/link";
 
 import type { Strength } from "@/graphql/generated";
 import { playerName } from "@/utils/stringUtils";
@@ -32,6 +33,10 @@ type Props = {
   goals: Goal[];
   homeTeam: GameTeam | null;
   awayTeam: GameTeam | null;
+  homeAddGoalHref?: string;
+  awayAddGoalHref?: string;
+  goalEditHrefBase?: string;
+  editableTeamIds?: string[];
 };
 
 function formatTime(seconds: number) {
@@ -60,7 +65,53 @@ function abbreviateStrength(strength: Strength) {
   }
 }
 
-export default function GameGoalsList({ goals, homeTeam, awayTeam }: Props) {
+function AddGoalButton({ href }: { href: string }) {
+  return (
+    <Button
+      as={Link}
+      href={href}
+      size="sm"
+      variant="solid"
+      color="warning"
+      className="h-6 min-w-0 px-2"
+    >
+      + Goal
+    </Button>
+  );
+}
+
+function HeaderRow({
+  homeAddGoalHref,
+  awayAddGoalHref,
+}: {
+  homeAddGoalHref?: string;
+  awayAddGoalHref?: string;
+}) {
+  return (
+    <div className="flex w-full items-center justify-between gap-2">
+      <div className="flex flex-1 justify-start">
+        {homeAddGoalHref && <AddGoalButton href={homeAddGoalHref} />}
+      </div>
+      <h2 className="text-lg font-semibold">Goals</h2>
+      <div className="flex flex-1 justify-end">
+        {awayAddGoalHref && <AddGoalButton href={awayAddGoalHref} />}
+      </div>
+    </div>
+  );
+}
+
+export default function GameGoalsList({
+  goals,
+  homeTeam,
+  awayTeam,
+  homeAddGoalHref,
+  awayAddGoalHref,
+  goalEditHrefBase,
+  editableTeamIds,
+}: Props) {
+  const editableSet = new Set(editableTeamIds);
+  const editHrefFor = (goal: Goal) =>
+    goalEditHrefBase && editableSet.has(goal.teamId) ? `${goalEditHrefBase}/${goal.id}/edit` : null;
   const periods = [...new Set(goals.map((g) => g.period))].sort((a, b) => a - b);
   const homeTeamGoals = goals.filter((goal) => goal.teamId === homeTeam?.id);
   const awayTeamGoals = goals.filter((goal) => goal.teamId === awayTeam?.id);
@@ -69,7 +120,7 @@ export default function GameGoalsList({ goals, homeTeam, awayTeam }: Props) {
     return (
       <Card>
         <CardHeader>
-          <h2 className="w-full text-center text-lg font-semibold">Goals</h2>
+          <HeaderRow homeAddGoalHref={homeAddGoalHref} awayAddGoalHref={awayAddGoalHref} />
         </CardHeader>
         <CardBody>
           <p className="text-default-500 text-center text-sm">No goals</p>
@@ -81,7 +132,7 @@ export default function GameGoalsList({ goals, homeTeam, awayTeam }: Props) {
   return (
     <Card>
       <CardHeader>
-        <h2 className="w-full text-center text-lg font-semibold">Goals</h2>
+        <HeaderRow homeAddGoalHref={homeAddGoalHref} awayAddGoalHref={awayAddGoalHref} />
       </CardHeader>
       <CardBody className="flex flex-col gap-4">
         {periods.map((period) => {
@@ -101,16 +152,16 @@ export default function GameGoalsList({ goals, homeTeam, awayTeam }: Props) {
               </div>
               <ul className="flex flex-col gap-2">
                 {periodGoals.map((goal) => {
+                  const editHref = editHrefFor(goal);
                   const assists = [goal.primaryAssist, goal.secondaryAssist].filter(
                     (a): a is GoalPlayer => a != null,
                   );
-                  return (
-                    <li
-                      key={goal.id}
-                      className={clsx("bg-default-100 flex items-center gap-4 rounded-lg p-3", {
-                        "flex-row-reverse": goal.teamId === awayTeam?.id,
-                      })}
-                    >
+                  const rowClass = clsx("bg-default-100 flex items-center gap-4 rounded-lg p-3", {
+                    "flex-row-reverse": goal.teamId === awayTeam?.id,
+                    "hover:bg-default-200 cursor-pointer transition-colors": !!editHref,
+                  });
+                  const content = (
+                    <>
                       <span className="text-default-600 w-10 shrink-0 font-mono text-sm whitespace-nowrap">
                         {formatTime(goal.time)}
                       </span>
@@ -136,6 +187,17 @@ export default function GameGoalsList({ goals, homeTeam, awayTeam }: Props) {
                         <Chip size="sm" variant="flat" color="warning">
                           {abbreviateStrength(goal.strength)}
                         </Chip>
+                      )}
+                    </>
+                  );
+                  return (
+                    <li key={goal.id}>
+                      {editHref ? (
+                        <Link href={editHref} className={rowClass}>
+                          {content}
+                        </Link>
+                      ) : (
+                        <div className={rowClass}>{content}</div>
                       )}
                     </li>
                   );

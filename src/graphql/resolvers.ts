@@ -191,13 +191,13 @@ export const resolvers: Resolvers = {
       gameService.deleteGame(args.id, ctx),
     ),
 
-    createGoal: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+    createGoal: withPolicy(PolicyName.MANAGER_OF_GOAL, (_p, args, ctx) =>
       goalService.createGoal(args.data, ctx),
     ),
-    updateGoal: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+    updateGoal: withPolicy(PolicyName.MANAGER_OF_GOAL, (_p, args, ctx) =>
       goalService.updateGoal(args.id, args.data, ctx),
     ),
-    deleteGoal: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+    deleteGoal: withPolicy(PolicyName.MANAGER_OF_GOAL, (_p, args, ctx) =>
       goalService.deleteGoal(args.id, ctx),
     ),
 

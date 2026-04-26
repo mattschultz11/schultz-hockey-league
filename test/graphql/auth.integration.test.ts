@@ -16,7 +16,10 @@ import type { League, Player, Season, Team, User } from "@/service/prisma";
 import { Role } from "@/service/prisma";
 
 import {
+  insertGame,
+  insertGoal,
   insertLeague,
+  insertLineup,
   insertPlayer,
   insertSeason,
   insertTeam,
@@ -695,6 +698,112 @@ describe("GraphQL Auth Integration", () => {
           message: "Access denied: not in this season",
           extensions: { code: 403 },
         });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("MANAGER_OF_GOAL policy", () => {
+      async function setupManagerWithTeam(otherTeamToo = false) {
+        const managerUser = await insertUser({ role: Role.MANAGER });
+        const season = await insertSeason();
+        const managerPlayer = await insertPlayer({
+          userId: managerUser.id,
+          seasonId: season.id,
+        });
+        const ownTeam = await insertTeam({ seasonId: season.id, managerId: managerPlayer.id });
+        const otherTeam = otherTeamToo ? await insertTeam({ seasonId: season.id }) : null;
+        const ctx = createCtx(managerUser) as GraphQLContext;
+        return { managerUser, season, ownTeam, otherTeam, ctx };
+      }
+
+      it("allows createGoal when data.teamId matches a managed team", async () => {
+        const { season, ownTeam, ctx } = await setupManagerWithTeam();
+        const game = await insertGame({ seasonId: season.id, homeTeamId: ownTeam.id });
+        const mockResolver = jest.fn().mockResolvedValue({ id: "g1" });
+        const wrapped = withPolicy(PolicyName.MANAGER_OF_GOAL, mockResolver);
+
+        await wrapped({}, { data: { gameId: game.id, teamId: ownTeam.id } }, ctx, mockInfo);
+        expect(mockResolver).toHaveBeenCalled();
+      });
+
+      it("denies createGoal when data.teamId is another team (403)", async () => {
+        const { season, ownTeam, otherTeam, ctx } = await setupManagerWithTeam(true);
+        const game = await insertGame({
+          seasonId: season.id,
+          homeTeamId: ownTeam.id,
+          awayTeamId: otherTeam!.id,
+        });
+        const mockResolver = jest.fn();
+        const wrapped = withPolicy(PolicyName.MANAGER_OF_GOAL, mockResolver);
+
+        await expect(
+          wrapped({}, { data: { gameId: game.id, teamId: otherTeam!.id } }, ctx, mockInfo),
+        ).rejects.toMatchObject({ extensions: { code: 403 } });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
+
+      it("allows updateGoal when the goal belongs to a managed team", async () => {
+        const { season, ownTeam, ctx } = await setupManagerWithTeam();
+        const game = await insertGame({ seasonId: season.id, homeTeamId: ownTeam.id });
+        const scorer = await insertPlayer({ seasonId: season.id, teamId: ownTeam.id });
+        await insertLineup({ gameId: game.id, teamId: ownTeam.id, playerId: scorer.id });
+        const goal = await insertGoal({
+          gameId: game.id,
+          teamId: ownTeam.id,
+          scorerId: scorer.id,
+        });
+        const mockResolver = jest.fn().mockResolvedValue({ id: goal.id });
+        const wrapped = withPolicy(PolicyName.MANAGER_OF_GOAL, mockResolver);
+
+        await wrapped({}, { id: goal.id, data: { time: 100 } }, ctx, mockInfo);
+        expect(mockResolver).toHaveBeenCalled();
+      });
+
+      it("denies updateGoal when the goal belongs to another team (403)", async () => {
+        const { season, ownTeam, otherTeam, ctx } = await setupManagerWithTeam(true);
+        const game = await insertGame({
+          seasonId: season.id,
+          homeTeamId: ownTeam.id,
+          awayTeamId: otherTeam!.id,
+        });
+        const scorer = await insertPlayer({ seasonId: season.id, teamId: otherTeam!.id });
+        await insertLineup({ gameId: game.id, teamId: otherTeam!.id, playerId: scorer.id });
+        const goal = await insertGoal({
+          gameId: game.id,
+          teamId: otherTeam!.id,
+          scorerId: scorer.id,
+        });
+        const mockResolver = jest.fn();
+        const wrapped = withPolicy(PolicyName.MANAGER_OF_GOAL, mockResolver);
+
+        await expect(
+          wrapped({}, { id: goal.id, data: { time: 100 } }, ctx, mockInfo),
+        ).rejects.toMatchObject({ extensions: { code: 403 } });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
+
+      it("denies updateGoal even when args.data.teamId points at a managed team (403)", async () => {
+        // Regression guard: the auth scope must come from the goal's existing
+        // team, never from the (untrusted) destination teamId in args.data.
+        const { season, ownTeam, otherTeam, ctx } = await setupManagerWithTeam(true);
+        const game = await insertGame({
+          seasonId: season.id,
+          homeTeamId: ownTeam.id,
+          awayTeamId: otherTeam!.id,
+        });
+        const scorer = await insertPlayer({ seasonId: season.id, teamId: otherTeam!.id });
+        await insertLineup({ gameId: game.id, teamId: otherTeam!.id, playerId: scorer.id });
+        const goal = await insertGoal({
+          gameId: game.id,
+          teamId: otherTeam!.id,
+          scorerId: scorer.id,
+        });
+        const mockResolver = jest.fn();
+        const wrapped = withPolicy(PolicyName.MANAGER_OF_GOAL, mockResolver);
+
+        await expect(
+          wrapped({}, { id: goal.id, data: { teamId: ownTeam.id, time: 100 } }, ctx, mockInfo),
+        ).rejects.toMatchObject({ extensions: { code: 403 } });
         expect(mockResolver).not.toHaveBeenCalled();
       });
     });

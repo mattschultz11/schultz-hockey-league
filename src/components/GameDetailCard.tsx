@@ -77,6 +77,10 @@ type Props = {
   isAdmin?: boolean;
   homeLineupEditHref?: string;
   awayLineupEditHref?: string;
+  homeAddGoalHref?: string;
+  awayAddGoalHref?: string;
+  goalEditHrefBase?: string;
+  editableGoalTeamIds?: string[];
 };
 
 export default function GameDetailCard({
@@ -86,6 +90,10 @@ export default function GameDetailCard({
   isAdmin,
   homeLineupEditHref,
   awayLineupEditHref,
+  homeAddGoalHref,
+  awayAddGoalHref,
+  goalEditHrefBase,
+  editableGoalTeamIds,
 }: Props) {
   const {
     round,
@@ -140,7 +148,15 @@ export default function GameDetailCard({
         </CardBody>
       </Card>
 
-      <GameGoalsList goals={goals} homeTeam={homeTeam} awayTeam={awayTeam} />
+      <GameGoalsList
+        goals={goals}
+        homeTeam={homeTeam}
+        awayTeam={awayTeam}
+        homeAddGoalHref={homeAddGoalHref}
+        awayAddGoalHref={awayAddGoalHref}
+        goalEditHrefBase={goalEditHrefBase}
+        editableTeamIds={editableGoalTeamIds}
+      />
       <GamePenaltiesList penalties={penalties} homeTeam={homeTeam} awayTeam={awayTeam} />
 
       <div className="flex items-center justify-between gap-2">
