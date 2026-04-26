@@ -78,21 +78,6 @@ describe("penaltyService", () => {
     ).rejects.toThrow(NotFoundError);
   });
 
-  it("throws when updating a penalty to another team without changing the player", async () => {
-    const created = await insertPenalty({ gameId: game.id, teamId: team.id, playerId: player.id });
-    const otherTeam = await insertTeam({ seasonId: team.seasonId });
-
-    await expect(() =>
-      updatePenalty(
-        created.id,
-        {
-          teamId: otherTeam.id,
-        },
-        ctx,
-      ),
-    ).rejects.toThrow("Player must be in the lineup for this team");
-  });
-
   it("can get a penalty by id", async () => {
     const penalty = await createPenalty(
       makePenalty({ gameId: game.id, teamId: team.id, playerId: player.id }),

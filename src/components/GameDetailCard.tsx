@@ -81,6 +81,10 @@ type Props = {
   awayAddGoalHref?: string;
   goalEditHrefBase?: string;
   editableGoalTeamIds?: string[];
+  homeAddPenaltyHref?: string;
+  awayAddPenaltyHref?: string;
+  penaltyEditHrefBase?: string;
+  editablePenaltyTeamIds?: string[];
 };
 
 export default function GameDetailCard({
@@ -94,6 +98,10 @@ export default function GameDetailCard({
   awayAddGoalHref,
   goalEditHrefBase,
   editableGoalTeamIds,
+  homeAddPenaltyHref,
+  awayAddPenaltyHref,
+  penaltyEditHrefBase,
+  editablePenaltyTeamIds,
 }: Props) {
   const {
     round,
@@ -157,7 +165,15 @@ export default function GameDetailCard({
         goalEditHrefBase={goalEditHrefBase}
         editableTeamIds={editableGoalTeamIds}
       />
-      <GamePenaltiesList penalties={penalties} homeTeam={homeTeam} awayTeam={awayTeam} />
+      <GamePenaltiesList
+        penalties={penalties}
+        homeTeam={homeTeam}
+        awayTeam={awayTeam}
+        homeAddPenaltyHref={homeAddPenaltyHref}
+        awayAddPenaltyHref={awayAddPenaltyHref}
+        penaltyEditHrefBase={penaltyEditHrefBase}
+        editableTeamIds={editablePenaltyTeamIds}
+      />
 
       <div className="flex items-center justify-between gap-2">
         <Button onPress={() => router.back()} variant="flat" size="sm">

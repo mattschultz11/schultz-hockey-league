@@ -33,14 +33,18 @@ const PositionEnum = Schema.Literal("G", "D", "D_F", "F", "F_D");
 const ClassificationEnum = Schema.Literal("ROSTER", "SUBSTITUTE");
 const StatusEnum = Schema.Literal("ACTIVE", "INJURED", "SUSPENDED");
 const StrengthEnum = Schema.Literal("EVEN", "POWERPLAY", "SHORTHANDED");
-const PenaltyCategoryEnum = Schema.Literal(
+// Single source of truth for the PenaltyCategory + PenaltyType enums on the
+// client (form pickers) AND the server (validation). Keep in sync with
+// prisma/schema.prisma and src/graphql/type-defs.mjs.
+export const PENALTY_CATEGORY_VALUES = [
   "MINOR",
   "MAJOR",
   "MATCH",
   "MISCONDUCT",
   "GAME_MISCONDUCT",
-);
-const PenaltyTypeEnum = Schema.Literal(
+] as const;
+
+export const PENALTY_TYPE_VALUES = [
   "ABUSE_OF_OFFICIALS",
   "BOARDING",
   "BUTT_ENDING",
@@ -73,7 +77,10 @@ const PenaltyTypeEnum = Schema.Literal(
   "TOO_MANY_MEN",
   "TRIPPING",
   "UNSPORTSMANLIKE_CONDUCT",
-);
+] as const;
+
+const PenaltyCategoryEnum = Schema.Literal(...PENALTY_CATEGORY_VALUES);
+const PenaltyTypeEnum = Schema.Literal(...PENALTY_TYPE_VALUES);
 
 // DateTime values come through GraphQL as Date objects or ISO strings — pass through
 const DateTimeField = Schema.Unknown;
@@ -239,7 +246,6 @@ export const penaltyCreateSchema = Schema.Struct({
 export const penaltyUpdateSchema = Schema.Struct({
   period: Schema.NullishOr(Period),
   time: Schema.NullishOr(GameTime),
-  teamId: OptionalId,
   playerId: OptionalId,
   category: Schema.NullishOr(PenaltyCategoryEnum),
   type: Schema.NullishOr(PenaltyTypeEnum),

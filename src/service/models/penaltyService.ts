@@ -34,7 +34,6 @@ export async function updatePenalty(id: string, data: PenaltyUpdateInput, ctx: S
   assertNonNullableFields(payload, [
     "period",
     "time",
-    "teamId",
     "playerId",
     "category",
     "type",
@@ -44,7 +43,7 @@ export async function updatePenalty(id: string, data: PenaltyUpdateInput, ctx: S
   const penalty = await getPenaltyById(id, ctx);
 
   const gameId = penalty.gameId;
-  const teamId = payload.teamId ?? penalty.teamId;
+  const teamId = penalty.teamId;
   const playerId = payload.playerId ?? penalty.playerId;
 
   const playerLineup = await getLineupEntry(gameId, playerId, ctx);

@@ -23,6 +23,7 @@ export const PolicyName = {
   MANAGER: "manager",
   MANAGER_OF_TEAM: "managerOfTeam",
   MANAGER_OF_GOAL: "managerOfGoal",
+  MANAGER_OF_PENALTY: "managerOfPenalty",
   LEAGUE_ACCESS: "leagueAccess",
   SEASON_ACCESS: "seasonAccess",
   READ_ONLY: "readOnly",
@@ -42,25 +43,41 @@ export type PolicyConfig = {
   resolveScopeId?: (args: object, ctx: GraphQLContext) => Promise<string | undefined>;
 };
 
-async function resolveGoalTeamId(args: object, ctx: GraphQLContext): Promise<string | undefined> {
-  const argsRecord = args as Record<string, unknown>;
-  // updateGoal/deleteGoal: scope is the goal's *existing* team — never trust
-  // args.data.teamId for auth, since that's the destination, not the owner.
-  if (typeof argsRecord.id === "string") {
-    const goal = await ctx.prisma.goal.findUnique({
-      where: { id: argsRecord.id },
-      select: { teamId: true },
-    });
-    if (!goal) throw new NotFoundError("Goal", argsRecord.id);
-    return goal.teamId;
-  }
-  // createGoal: pull teamId from the create input
-  const data = argsRecord.data;
-  if (data != null && typeof data === "object" && "teamId" in data) {
-    return (data as Record<string, string>).teamId;
-  }
-  return undefined;
+/**
+ * Builds a resolveScopeId function for record types where the scope must be
+ * derived from a related row. For update/delete (args.id present) the scope
+ * always comes from the existing row — never from args.data — so a manager
+ * can't authorize themselves against a "destination" team they own and
+ * overwrite a record that belonged to another team.
+ */
+function makeRecordTeamScopeResolver(
+  loader: (id: string, ctx: GraphQLContext) => Promise<{ teamId: string } | null>,
+  entityName: string,
+) {
+  return async (args: object, ctx: GraphQLContext): Promise<string | undefined> => {
+    const argsRecord = args as Record<string, unknown>;
+    if (typeof argsRecord.id === "string") {
+      const record = await loader(argsRecord.id, ctx);
+      if (!record) throw new NotFoundError(entityName, argsRecord.id);
+      return record.teamId;
+    }
+    const data = argsRecord.data;
+    if (data != null && typeof data === "object" && "teamId" in data) {
+      return (data as Record<string, string>).teamId;
+    }
+    return undefined;
+  };
 }
+
+const resolveGoalTeamId = makeRecordTeamScopeResolver(
+  (id, ctx) => ctx.prisma.goal.findUnique({ where: { id }, select: { teamId: true } }),
+  "Goal",
+);
+
+const resolvePenaltyTeamId = makeRecordTeamScopeResolver(
+  (id, ctx) => ctx.prisma.penalty.findUnique({ where: { id }, select: { teamId: true } }),
+  "Penalty",
+);
 
 /**
  * Central registry mapping policy names to their configurations.
@@ -77,6 +94,11 @@ const policyRegistry: Record<PolicyNameType, PolicyConfig> = {
     roles: [Role.ADMIN, Role.MANAGER],
     requiresScope: "team",
     resolveScopeId: resolveGoalTeamId,
+  },
+  [PolicyName.MANAGER_OF_PENALTY]: {
+    roles: [Role.ADMIN, Role.MANAGER],
+    requiresScope: "team",
+    resolveScopeId: resolvePenaltyTeamId,
   },
   [PolicyName.LEAGUE_ACCESS]: {
     roles: [Role.ADMIN, Role.MANAGER, Role.PLAYER],

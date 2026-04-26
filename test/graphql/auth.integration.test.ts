@@ -20,6 +20,7 @@ import {
   insertGoal,
   insertLeague,
   insertLineup,
+  insertPenalty,
   insertPlayer,
   insertSeason,
   insertTeam,
@@ -803,6 +804,110 @@ describe("GraphQL Auth Integration", () => {
 
         await expect(
           wrapped({}, { id: goal.id, data: { teamId: ownTeam.id, time: 100 } }, ctx, mockInfo),
+        ).rejects.toMatchObject({ extensions: { code: 403 } });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
+    });
+
+    describe("MANAGER_OF_PENALTY policy", () => {
+      async function setupManagerWithTeam(otherTeamToo = false) {
+        const managerUser = await insertUser({ role: Role.MANAGER });
+        const season = await insertSeason();
+        const managerPlayer = await insertPlayer({
+          userId: managerUser.id,
+          seasonId: season.id,
+        });
+        const ownTeam = await insertTeam({ seasonId: season.id, managerId: managerPlayer.id });
+        const otherTeam = otherTeamToo ? await insertTeam({ seasonId: season.id }) : null;
+        const ctx = createCtx(managerUser) as GraphQLContext;
+        return { managerUser, season, ownTeam, otherTeam, ctx };
+      }
+
+      it("allows createPenalty when data.teamId matches a managed team", async () => {
+        const { season, ownTeam, ctx } = await setupManagerWithTeam();
+        const game = await insertGame({ seasonId: season.id, homeTeamId: ownTeam.id });
+        const mockResolver = jest.fn().mockResolvedValue({ id: "p1" });
+        const wrapped = withPolicy(PolicyName.MANAGER_OF_PENALTY, mockResolver);
+
+        await wrapped({}, { data: { gameId: game.id, teamId: ownTeam.id } }, ctx, mockInfo);
+        expect(mockResolver).toHaveBeenCalled();
+      });
+
+      it("denies createPenalty when data.teamId is another team (403)", async () => {
+        const { season, ownTeam, otherTeam, ctx } = await setupManagerWithTeam(true);
+        const game = await insertGame({
+          seasonId: season.id,
+          homeTeamId: ownTeam.id,
+          awayTeamId: otherTeam!.id,
+        });
+        const mockResolver = jest.fn();
+        const wrapped = withPolicy(PolicyName.MANAGER_OF_PENALTY, mockResolver);
+
+        await expect(
+          wrapped({}, { data: { gameId: game.id, teamId: otherTeam!.id } }, ctx, mockInfo),
+        ).rejects.toMatchObject({ extensions: { code: 403 } });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
+
+      it("allows updatePenalty when the penalty belongs to a managed team", async () => {
+        const { season, ownTeam, ctx } = await setupManagerWithTeam();
+        const game = await insertGame({ seasonId: season.id, homeTeamId: ownTeam.id });
+        const offender = await insertPlayer({ seasonId: season.id, teamId: ownTeam.id });
+        await insertLineup({ gameId: game.id, teamId: ownTeam.id, playerId: offender.id });
+        const penalty = await insertPenalty({
+          gameId: game.id,
+          teamId: ownTeam.id,
+          playerId: offender.id,
+        });
+        const mockResolver = jest.fn().mockResolvedValue({ id: penalty.id });
+        const wrapped = withPolicy(PolicyName.MANAGER_OF_PENALTY, mockResolver);
+
+        await wrapped({}, { id: penalty.id, data: { time: 100 } }, ctx, mockInfo);
+        expect(mockResolver).toHaveBeenCalled();
+      });
+
+      it("denies updatePenalty when the penalty belongs to another team (403)", async () => {
+        const { season, ownTeam, otherTeam, ctx } = await setupManagerWithTeam(true);
+        const game = await insertGame({
+          seasonId: season.id,
+          homeTeamId: ownTeam.id,
+          awayTeamId: otherTeam!.id,
+        });
+        const offender = await insertPlayer({ seasonId: season.id, teamId: otherTeam!.id });
+        await insertLineup({ gameId: game.id, teamId: otherTeam!.id, playerId: offender.id });
+        const penalty = await insertPenalty({
+          gameId: game.id,
+          teamId: otherTeam!.id,
+          playerId: offender.id,
+        });
+        const mockResolver = jest.fn();
+        const wrapped = withPolicy(PolicyName.MANAGER_OF_PENALTY, mockResolver);
+
+        await expect(
+          wrapped({}, { id: penalty.id, data: { time: 100 } }, ctx, mockInfo),
+        ).rejects.toMatchObject({ extensions: { code: 403 } });
+        expect(mockResolver).not.toHaveBeenCalled();
+      });
+
+      it("denies updatePenalty even when args.data.teamId points at a managed team (403)", async () => {
+        const { season, ownTeam, otherTeam, ctx } = await setupManagerWithTeam(true);
+        const game = await insertGame({
+          seasonId: season.id,
+          homeTeamId: ownTeam.id,
+          awayTeamId: otherTeam!.id,
+        });
+        const offender = await insertPlayer({ seasonId: season.id, teamId: otherTeam!.id });
+        await insertLineup({ gameId: game.id, teamId: otherTeam!.id, playerId: offender.id });
+        const penalty = await insertPenalty({
+          gameId: game.id,
+          teamId: otherTeam!.id,
+          playerId: offender.id,
+        });
+        const mockResolver = jest.fn();
+        const wrapped = withPolicy(PolicyName.MANAGER_OF_PENALTY, mockResolver);
+
+        await expect(
+          wrapped({}, { id: penalty.id, data: { teamId: ownTeam.id, time: 100 } }, ctx, mockInfo),
         ).rejects.toMatchObject({ extensions: { code: 403 } });
         expect(mockResolver).not.toHaveBeenCalled();
       });

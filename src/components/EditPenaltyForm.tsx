@@ -10,28 +10,29 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 
 import { FormInput, FormSelect } from "@/components/Form";
-import type { Position, Strength } from "@/graphql/generated";
-import { playerName } from "@/utils/stringUtils";
+import type { PenaltyCategory, PenaltyType, Position } from "@/graphql/generated";
+import { PENALTY_CATEGORY_VALUES, PENALTY_TYPE_VALUES } from "@/service/validation/schemas";
+import { formatEnum, playerName } from "@/utils/stringUtils";
 
-const CREATE_GOAL_MUTATION = gql`
-  mutation CreateGoal($data: GoalCreateInput!) {
-    createGoal(data: $data) {
+const CREATE_PENALTY_MUTATION = gql`
+  mutation CreatePenalty($data: PenaltyCreateInput!) {
+    createPenalty(data: $data) {
       id
     }
   }
 `;
 
-const UPDATE_GOAL_MUTATION = gql`
-  mutation UpdateGoal($id: ID!, $data: GoalUpdateInput!) {
-    updateGoal(id: $id, data: $data) {
+const UPDATE_PENALTY_MUTATION = gql`
+  mutation UpdatePenalty($id: ID!, $data: PenaltyUpdateInput!) {
+    updatePenalty(id: $id, data: $data) {
       id
     }
   }
 `;
 
-const DELETE_GOAL_MUTATION = gql`
-  mutation DeleteGoal($id: ID!) {
-    deleteGoal(id: $id) {
+const DELETE_PENALTY_MUTATION = gql`
+  mutation DeletePenalty($id: ID!) {
+    deletePenalty(id: $id) {
       id
     }
   }
@@ -55,21 +56,25 @@ const Seconds = Schema.String.pipe(
   }),
 );
 
-const goalFormSchema = Schema.Struct({
+const PenaltyMinutes = Schema.String.pipe(
+  Schema.filter((s) => /^\d{1,2}$/.test(s) && Number(s) >= 1 && Number(s) <= 30, {
+    message: () => "Length (1–30 min)",
+  }),
+);
+
+const penaltyFormSchema = Schema.Struct({
   period: Required,
   minutes: Minutes,
   seconds: Seconds,
-  strength: Required,
-  scorerId: Required,
-  primaryAssistId: Schema.String,
-  secondaryAssistId: Schema.String,
+  playerId: Required,
+  category: Required,
+  type: Required,
+  penaltyMinutes: PenaltyMinutes,
 });
 
-type FormValues = Schema.Schema.Type<typeof goalFormSchema>;
+type FormValues = Schema.Schema.Type<typeof penaltyFormSchema>;
 
 // --- Constants ---
-
-const NO_ASSIST_KEY = "__no_assist__";
 
 const PERIOD_OPTIONS = [
   { value: "1", label: "1st" },
@@ -79,12 +84,15 @@ const PERIOD_OPTIONS = [
   { value: "5", label: "SO" },
 ];
 
-const STRENGTH_OPTIONS: { value: Strength; label: string }[] = [
-  { value: "EVEN", label: "Even" },
-  { value: "POWERPLAY", label: "Power Play" },
-  { value: "SHORTHANDED", label: "Shorthanded" },
-  { value: "EMPTY_NET", label: "Empty Net" },
-];
+const CATEGORY_OPTIONS = PENALTY_CATEGORY_VALUES.map((value) => ({
+  value,
+  label: formatEnum(value),
+}));
+
+const TYPE_OPTIONS = PENALTY_TYPE_VALUES.map((value) => ({
+  value,
+  label: formatEnum(value),
+}));
 
 // --- Types ---
 
@@ -95,22 +103,22 @@ type LineupPlayer = {
   user: { firstName: string | null; lastName: string | null };
 };
 
-type ExistingGoal = {
+type ExistingPenalty = {
   id: string;
   period: number;
   time: number;
-  strength: Strength;
   teamId: string;
-  scorerId: string;
-  primaryAssistId: string | null;
-  secondaryAssistId: string | null;
+  playerId: string;
+  category: PenaltyCategory;
+  type: PenaltyType;
+  minutes: number;
 };
 
 type Props = {
   gameId: string;
   teamId: string;
   lineupPlayers: LineupPlayer[];
-  goal?: ExistingGoal;
+  penalty?: ExistingPenalty;
   returnHref: string;
 };
 
@@ -130,82 +138,77 @@ function lineupOption(player: LineupPlayer) {
 
 // --- Component ---
 
-export default function EditGoalForm({ gameId, teamId, lineupPlayers, goal, returnHref }: Props) {
+export default function EditPenaltyForm({
+  gameId,
+  teamId,
+  lineupPlayers,
+  penalty,
+  returnHref,
+}: Props) {
   const router = useRouter();
-  const isEdit = goal != null;
+  const isEdit = penalty != null;
   const [submitError, setSubmitError] = useState("");
-  const [createGoal] = useMutation(CREATE_GOAL_MUTATION);
-  const [updateGoal] = useMutation(UPDATE_GOAL_MUTATION);
-  const [deleteGoal, { loading: deleting }] = useMutation(DELETE_GOAL_MUTATION);
+  const [createPenalty] = useMutation(CREATE_PENALTY_MUTATION);
+  const [updatePenalty] = useMutation(UPDATE_PENALTY_MUTATION);
+  const [deletePenalty, { loading: deleting }] = useMutation(DELETE_PENALTY_MUTATION);
 
   const playerOptions = lineupPlayers.map(lineupOption);
-  const assistOptions = [{ value: NO_ASSIST_KEY, label: "(none)" }, ...playerOptions];
 
-  const initialTime = goal ? timeParts(goal.time) : { minutes: "", seconds: "" };
+  const initialTime = penalty ? timeParts(penalty.time) : { minutes: "", seconds: "" };
   const { control, handleSubmit, formState } = useForm<FormValues>({
     defaultValues: {
-      period: goal ? String(goal.period) : "1",
+      period: penalty ? String(penalty.period) : "1",
       minutes: initialTime.minutes,
       seconds: initialTime.seconds,
-      strength: goal?.strength ?? "EVEN",
-      scorerId: goal?.scorerId ?? "",
-      primaryAssistId: goal?.primaryAssistId ?? NO_ASSIST_KEY,
-      secondaryAssistId: goal?.secondaryAssistId ?? NO_ASSIST_KEY,
+      playerId: penalty?.playerId ?? "",
+      category: penalty?.category ?? "MINOR",
+      type: penalty?.type ?? "",
+      penaltyMinutes: penalty ? String(penalty.minutes) : "2",
     },
-    resolver: effectTsResolver(goalFormSchema),
+    resolver: effectTsResolver(penaltyFormSchema),
   });
 
   async function onSubmit(values: FormValues) {
     setSubmitError("");
 
-    const primaryAssistId =
-      values.primaryAssistId === NO_ASSIST_KEY ? null : values.primaryAssistId;
-    const secondaryAssistId =
-      values.secondaryAssistId === NO_ASSIST_KEY ? null : values.secondaryAssistId;
-
-    if (secondaryAssistId && !primaryAssistId) {
-      setSubmitError("Cannot have a secondary assistant without a primary assistant");
-      return;
-    }
-
     const fields = {
       period: Number.parseInt(values.period, 10),
       time: Number(values.minutes) * 60 + Number(values.seconds),
-      strength: values.strength as Strength,
-      scorerId: values.scorerId,
-      primaryAssistId,
-      secondaryAssistId,
+      playerId: values.playerId,
+      category: values.category as PenaltyCategory,
+      type: values.type as PenaltyType,
+      minutes: Number.parseInt(values.penaltyMinutes, 10),
     };
 
     try {
       if (isEdit) {
-        await updateGoal({ variables: { id: goal.id, data: fields } });
-        addToast({ title: "Goal updated", color: "success" });
+        await updatePenalty({ variables: { id: penalty.id, data: fields } });
+        addToast({ title: "Penalty updated", color: "success" });
       } else {
-        await createGoal({ variables: { data: { gameId, teamId, ...fields } } });
-        addToast({ title: "Goal added", color: "success" });
+        await createPenalty({ variables: { data: { gameId, teamId, ...fields } } });
+        addToast({ title: "Penalty added", color: "success" });
       }
       router.push(returnHref);
       router.refresh();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message.replace(/^[^:]+:\s*/, "") : "Failed to save goal";
+        err instanceof Error ? err.message.replace(/^[^:]+:\s*/, "") : "Failed to save penalty";
       setSubmitError(message);
     }
   }
 
   async function onDelete() {
-    if (!goal) return;
-    if (!confirm("Delete this goal?")) return;
+    if (!penalty) return;
+    if (!confirm("Delete this penalty?")) return;
     setSubmitError("");
     try {
-      await deleteGoal({ variables: { id: goal.id } });
-      addToast({ title: "Goal deleted", color: "success" });
+      await deletePenalty({ variables: { id: penalty.id } });
+      addToast({ title: "Penalty deleted", color: "success" });
       router.push(returnHref);
       router.refresh();
     } catch (err) {
       const message =
-        err instanceof Error ? err.message.replace(/^[^:]+:\s*/, "") : "Failed to delete goal";
+        err instanceof Error ? err.message.replace(/^[^:]+:\s*/, "") : "Failed to delete penalty";
       setSubmitError(message);
     }
   }
@@ -220,7 +223,7 @@ export default function EditGoalForm({ gameId, teamId, lineupPlayers, goal, retu
 
       {lineupPlayers.length === 0 && (
         <div className="border-warning-200/30 bg-warning-50/10 text-warning-700 rounded-lg border p-4 text-sm">
-          No lineup is set for this team. Set the lineup before adding goals.
+          No lineup is set for this team. Set the lineup before adding penalties.
         </div>
       )}
 
@@ -257,33 +260,30 @@ export default function EditGoalForm({ gameId, teamId, lineupPlayers, goal, retu
           />
         </div>
         <FormSelect
-          name="strength"
+          name="playerId"
           control={control}
-          label="Strength"
-          options={STRENGTH_OPTIONS.map((o) => ({ value: o.value, label: o.label }))}
-          isRequired
-        />
-        <FormSelect
-          name="scorerId"
-          control={control}
-          label="Scorer"
+          label="Player"
           options={playerOptions}
           isRequired
           isDisabled={lineupPlayers.length === 0}
         />
         <FormSelect
-          name="primaryAssistId"
+          name="category"
           control={control}
-          label="Primary Assist"
-          options={assistOptions}
-          isDisabled={lineupPlayers.length === 0}
+          label="Category"
+          options={CATEGORY_OPTIONS}
+          isRequired
         />
-        <FormSelect
-          name="secondaryAssistId"
+        <FormSelect name="type" control={control} label="Type" options={TYPE_OPTIONS} isRequired />
+        <FormInput
+          name="penaltyMinutes"
           control={control}
-          label="Secondary Assist"
-          options={assistOptions}
-          isDisabled={lineupPlayers.length === 0}
+          label="Penalty Length (min)"
+          type="number"
+          min={1}
+          max={30}
+          placeholder="2"
+          isRequired
         />
       </div>
 
@@ -317,7 +317,7 @@ export default function EditGoalForm({ gameId, teamId, lineupPlayers, goal, retu
             isLoading={formState.isSubmitting}
             isDisabled={lineupPlayers.length === 0 || deleting}
           >
-            {isEdit ? "Save Changes" : "Add Goal"}
+            {isEdit ? "Save Changes" : "Add Penalty"}
           </Button>
         </div>
       </div>

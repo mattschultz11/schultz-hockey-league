@@ -145,6 +145,7 @@ export default async function GameDetailPage({ params }: Props) {
   const managerBase = `/manager/leagues/${league.slug}/seasons/${season.slug}/games/${game.id}`;
   const lineupEditBase = `${managerBase}/lineup/edit`;
   const goalsManagerBase = `${managerBase}/goals`;
+  const penaltiesManagerBase = `${managerBase}/penalties`;
 
   const canEditHome =
     isAdmin || (!!userId && !!game.homeTeam && game.homeTeam.manager?.userId === userId);
@@ -165,6 +166,18 @@ export default async function GameDetailPage({ params }: Props) {
     canEditAway && game.awayTeam ? game.awayTeam.id : null,
   ].filter((id): id is string => id != null);
   const goalEditHrefBase = editableGoalTeamIds.length > 0 ? goalsManagerBase : undefined;
+
+  const homeAddPenaltyHref =
+    canEditHome && game.homeTeam
+      ? `${penaltiesManagerBase}/new?teamId=${game.homeTeam.id}`
+      : undefined;
+  const awayAddPenaltyHref =
+    canEditAway && game.awayTeam
+      ? `${penaltiesManagerBase}/new?teamId=${game.awayTeam.id}`
+      : undefined;
+  // Same eligibility rule as goals (admin OR team manager) — split if they ever diverge.
+  const editablePenaltyTeamIds = editableGoalTeamIds;
+  const penaltyEditHrefBase = editablePenaltyTeamIds.length > 0 ? penaltiesManagerBase : undefined;
 
   return (
     <PageLayout>
@@ -190,6 +203,10 @@ export default async function GameDetailPage({ params }: Props) {
         awayAddGoalHref={awayAddGoalHref}
         goalEditHrefBase={goalEditHrefBase}
         editableGoalTeamIds={editableGoalTeamIds}
+        homeAddPenaltyHref={homeAddPenaltyHref}
+        awayAddPenaltyHref={awayAddPenaltyHref}
+        penaltyEditHrefBase={penaltyEditHrefBase}
+        editablePenaltyTeamIds={editablePenaltyTeamIds}
       />
     </PageLayout>
   );

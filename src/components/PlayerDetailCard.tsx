@@ -63,7 +63,7 @@ export default function PlayerDetailCard({ player, games, league, season, isAdmi
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
       <Card>
         <CardHeader>
-          <h1 className="flex flex-grow items-center gap-3 text-2xl font-semibold">
+          <h1 className="flex grow items-center gap-3 text-2xl font-semibold">
             {Predicate.isNotNullable(player.number) && (
               <span className="text-default-600">#{playerNumber(player)}</span>
             )}

@@ -49,7 +49,8 @@ function periodLabel(period: number) {
   if (period === 1) return "1st";
   if (period === 2) return "2nd";
   if (period === 3) return "3rd";
-  return "OT";
+  if (period === 4) return "OT";
+  return "SO";
 }
 
 function abbreviateStrength(strength: Strength) {

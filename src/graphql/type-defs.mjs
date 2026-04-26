@@ -539,7 +539,6 @@ export const typeDefs = /* GraphQL */ `
   input PenaltyUpdateInput {
     period: Int
     time: Int
-    teamId: ID
     playerId: ID
     category: PenaltyCategory
     type: PenaltyType

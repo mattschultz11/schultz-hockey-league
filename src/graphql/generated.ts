@@ -642,7 +642,6 @@ export type PenaltyCreateInput = {
 export type PenaltyUpdateInput = {
   period?: InputMaybe<Scalars["Int"]["input"]>;
   time?: InputMaybe<Scalars["Int"]["input"]>;
-  teamId?: InputMaybe<Scalars["ID"]["input"]>;
   playerId?: InputMaybe<Scalars["ID"]["input"]>;
   category?: InputMaybe<PenaltyCategory>;
   type?: InputMaybe<PenaltyType>;

@@ -201,13 +201,13 @@ export const resolvers: Resolvers = {
       goalService.deleteGoal(args.id, ctx),
     ),
 
-    createPenalty: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+    createPenalty: withPolicy(PolicyName.MANAGER_OF_PENALTY, (_p, args, ctx) =>
       penaltyService.createPenalty(args.data, ctx),
     ),
-    updatePenalty: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+    updatePenalty: withPolicy(PolicyName.MANAGER_OF_PENALTY, (_p, args, ctx) =>
       penaltyService.updatePenalty(args.id, args.data, ctx),
     ),
-    deletePenalty: withPolicy(PolicyName.ADMIN, (_p, args, ctx) =>
+    deletePenalty: withPolicy(PolicyName.MANAGER_OF_PENALTY, (_p, args, ctx) =>
       penaltyService.deletePenalty(args.id, ctx),
     ),
 
