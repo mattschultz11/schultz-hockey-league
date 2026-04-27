@@ -606,6 +606,10 @@ export type GameUpdateInput = {
   location?: InputMaybe<Scalars["String"]["input"]>;
   homeTeamId?: InputMaybe<Scalars["ID"]["input"]>;
   awayTeamId?: InputMaybe<Scalars["ID"]["input"]>;
+  homeTeamResult?: InputMaybe<Result>;
+  awayTeamResult?: InputMaybe<Result>;
+  homeTeamPoints?: InputMaybe<Scalars["Int"]["input"]>;
+  awayTeamPoints?: InputMaybe<Scalars["Int"]["input"]>;
 };
 
 export type GoalCreateInput = {

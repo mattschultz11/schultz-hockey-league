@@ -44,6 +44,10 @@ export default async function EditGamePage({ params }: Props) {
         location: true,
         homeTeamId: true,
         awayTeamId: true,
+        homeTeamResult: true,
+        awayTeamResult: true,
+        homeTeamPoints: true,
+        awayTeamPoints: true,
       },
     }),
     prisma.team.findMany({

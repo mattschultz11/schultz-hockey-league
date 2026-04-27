@@ -56,12 +56,18 @@ export async function updateGame(id: string, data: GameUpdateInput, ctx: ServerC
   assertNonNullableFields(payload, ["round", "datetime", "location", "awayTeamId"] as const);
 
   const game = await getGameById(id, ctx);
-  const { homeTeamId = game.homeTeamId, awayTeamId = game.awayTeamId } = payload;
+  const {
+    homeTeamId = game.homeTeamId,
+    awayTeamId = game.awayTeamId,
+    homeTeamResult = game.homeTeamResult,
+    awayTeamResult = game.awayTeamResult,
+  } = payload;
 
   const homeTeam = await maybeGetTeamById(homeTeamId, ctx);
   const awayTeam = await maybeGetTeamById(awayTeamId, ctx);
 
   validateGame(game.seasonId, homeTeam, awayTeam);
+  validateResults(homeTeamResult, awayTeamResult);
   await validateNoScheduleConflict(
     {
       seasonId: game.seasonId,
@@ -77,6 +83,24 @@ export async function updateGame(id: string, data: GameUpdateInput, ctx: ServerC
     where: { id },
     data: payload as Prisma.GameUncheckedUpdateInput,
   });
+}
+
+function validateResults(
+  homeTeamResult: string | null | undefined,
+  awayTeamResult: string | null | undefined,
+) {
+  if (homeTeamResult == null && awayTeamResult == null) return;
+  invariant(
+    homeTeamResult != null && awayTeamResult != null,
+    "Home and away team results must both be set or both be cleared",
+  );
+  if (homeTeamResult === "TIE") {
+    invariant(awayTeamResult === "TIE", "If one team ties, the other must also tie");
+  } else if (homeTeamResult === "WIN") {
+    invariant(awayTeamResult === "LOSS", "If home team wins, away team must lose");
+  } else if (homeTeamResult === "LOSS") {
+    invariant(awayTeamResult === "WIN", "If home team loses, away team must win");
+  }
 }
 
 function validateGame(

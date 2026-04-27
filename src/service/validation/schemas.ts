@@ -33,6 +33,8 @@ const PositionEnum = Schema.Literal("G", "D", "D_F", "F", "F_D");
 const ClassificationEnum = Schema.Literal("ROSTER", "SUBSTITUTE");
 const StatusEnum = Schema.Literal("ACTIVE", "INJURED", "SUSPENDED");
 const StrengthEnum = Schema.Literal("EVEN", "POWERPLAY", "SHORTHANDED");
+const ResultEnum = Schema.Literal("WIN", "LOSS", "TIE");
+const TeamPoints = Schema.NullishOr(Schema.Int.pipe(Schema.between(0, 3)));
 // Single source of truth for the PenaltyCategory + PenaltyType enums on the
 // client (form pickers) AND the server (validation). Keep in sync with
 // prisma/schema.prisma and src/graphql/type-defs.mjs.
@@ -210,6 +212,10 @@ export const gameUpdateSchema = Schema.Struct({
   location: OptionalName,
   homeTeamId: OptionalId,
   awayTeamId: OptionalId,
+  homeTeamResult: Schema.NullishOr(ResultEnum),
+  awayTeamResult: Schema.NullishOr(ResultEnum),
+  homeTeamPoints: TeamPoints,
+  awayTeamPoints: TeamPoints,
 });
 
 export const goalCreateSchema = Schema.Struct({

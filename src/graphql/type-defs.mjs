@@ -503,6 +503,10 @@ export const typeDefs = /* GraphQL */ `
     location: String
     homeTeamId: ID
     awayTeamId: ID
+    homeTeamResult: Result
+    awayTeamResult: Result
+    homeTeamPoints: Int
+    awayTeamPoints: Int
   }
 
   input GoalCreateInput {

@@ -155,6 +155,161 @@ describe("gameService", () => {
     await expect(getGameById(game.id, ctx)).rejects.toThrow(NotFoundError);
   });
 
+  describe("team results and points", () => {
+    let teamCounter = 0;
+    async function createPlayedGame() {
+      teamCounter += 1;
+      const homeTeam = await insertTeam({
+        seasonId: season.id,
+        name: `Results Home ${teamCounter}`,
+      });
+      const awayTeam = await insertTeam({
+        seasonId: season.id,
+        name: `Results Away ${teamCounter}`,
+      });
+      const game = await createGame(
+        makeGame({ seasonId: season.id, homeTeamId: homeTeam.id, awayTeamId: awayTeam.id }),
+        ctx,
+      );
+      return game;
+    }
+
+    it("persists a WIN/LOSS result with points", async () => {
+      const game = await createPlayedGame();
+
+      const updated = await updateGame(
+        game.id,
+        {
+          homeTeamResult: "WIN",
+          awayTeamResult: "LOSS",
+          homeTeamPoints: 2,
+          awayTeamPoints: 0,
+        },
+        ctx,
+      );
+
+      expect(updated).toMatchObject({
+        homeTeamResult: "WIN",
+        awayTeamResult: "LOSS",
+        homeTeamPoints: 2,
+        awayTeamPoints: 0,
+      });
+    });
+
+    it("persists a TIE/TIE result", async () => {
+      const game = await createPlayedGame();
+
+      const updated = await updateGame(
+        game.id,
+        {
+          homeTeamResult: "TIE",
+          awayTeamResult: "TIE",
+          homeTeamPoints: 1,
+          awayTeamPoints: 1,
+        },
+        ctx,
+      );
+
+      expect(updated).toMatchObject({
+        homeTeamResult: "TIE",
+        awayTeamResult: "TIE",
+        homeTeamPoints: 1,
+        awayTeamPoints: 1,
+      });
+    });
+
+    it("clears existing results when both are set to null", async () => {
+      const game = await createPlayedGame();
+      await updateGame(
+        game.id,
+        { homeTeamResult: "WIN", awayTeamResult: "LOSS", homeTeamPoints: 2, awayTeamPoints: 0 },
+        ctx,
+      );
+
+      const cleared = await updateGame(
+        game.id,
+        { homeTeamResult: null, awayTeamResult: null, homeTeamPoints: null, awayTeamPoints: null },
+        ctx,
+      );
+
+      expect(cleared).toMatchObject({
+        homeTeamResult: null,
+        awayTeamResult: null,
+        homeTeamPoints: null,
+        awayTeamPoints: null,
+      });
+    });
+
+    it("rejects WIN paired with WIN", async () => {
+      const game = await createPlayedGame();
+
+      await expect(() =>
+        updateGame(game.id, { homeTeamResult: "WIN", awayTeamResult: "WIN" }, ctx),
+      ).rejects.toThrow("If home team wins, away team must lose");
+    });
+
+    it("rejects LOSS paired with LOSS", async () => {
+      const game = await createPlayedGame();
+
+      await expect(() =>
+        updateGame(game.id, { homeTeamResult: "LOSS", awayTeamResult: "LOSS" }, ctx),
+      ).rejects.toThrow("If home team loses, away team must win");
+    });
+
+    it("rejects TIE paired with WIN", async () => {
+      const game = await createPlayedGame();
+
+      await expect(() =>
+        updateGame(game.id, { homeTeamResult: "TIE", awayTeamResult: "WIN" }, ctx),
+      ).rejects.toThrow("If one team ties, the other must also tie");
+    });
+
+    it("rejects setting only one team's result", async () => {
+      const game = await createPlayedGame();
+
+      await expect(() => updateGame(game.id, { homeTeamResult: "WIN" }, ctx)).rejects.toThrow(
+        "Home and away team results must both be set or both be cleared",
+      );
+    });
+
+    it("rejects clearing only one team's result", async () => {
+      const game = await createPlayedGame();
+      await updateGame(
+        game.id,
+        { homeTeamResult: "WIN", awayTeamResult: "LOSS", homeTeamPoints: 2, awayTeamPoints: 0 },
+        ctx,
+      );
+
+      await expect(() => updateGame(game.id, { homeTeamResult: null }, ctx)).rejects.toThrow(
+        "Home and away team results must both be set or both be cleared",
+      );
+    });
+
+    it("rejects points outside the 0–3 range", async () => {
+      const game = await createPlayedGame();
+
+      await expect(() =>
+        updateGame(
+          game.id,
+          { homeTeamResult: "WIN", awayTeamResult: "LOSS", homeTeamPoints: 4, awayTeamPoints: 0 },
+          ctx,
+        ),
+      ).rejects.toThrow(ValidationError);
+    });
+
+    it("rejects negative points", async () => {
+      const game = await createPlayedGame();
+
+      await expect(() =>
+        updateGame(
+          game.id,
+          { homeTeamResult: "WIN", awayTeamResult: "LOSS", homeTeamPoints: 2, awayTeamPoints: -1 },
+          ctx,
+        ),
+      ).rejects.toThrow(ValidationError);
+    });
+  });
+
   describe("schedule overlap detection", () => {
     const SLOT_DATETIME = new Date("2026-05-12T19:00:00.000Z");
 

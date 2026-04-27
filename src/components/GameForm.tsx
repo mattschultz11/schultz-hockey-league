@@ -21,6 +21,7 @@ import { useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 
 import { FormDatePicker, FormInput, FormSelect } from "@/components/Form";
+import type { Result } from "@/service/prisma/generated/enums";
 
 // --- Schema ---
 
@@ -42,6 +43,14 @@ const TimeSchema = Schema.String.pipe(
   Schema.filter((s) => /^\d{2}:\d{2}$/.test(s), { message: () => "Time required (HH:MM)" }),
 );
 
+const ResultFieldSchema = Schema.Literal("NONE", "WIN", "LOSS", "TIE");
+
+const PointsFieldSchema = Schema.String.pipe(
+  Schema.filter((s) => s === "" || (/^\d+$/.test(s) && Number(s) >= 0 && Number(s) <= 3), {
+    message: () => "Points must be 0–3",
+  }),
+);
+
 const gameFormSchema = Schema.Struct({
   round: RoundSchema,
   date: Schema.Any.pipe(Schema.filter((v) => v != null, { message: () => "Date required" })),
@@ -49,6 +58,10 @@ const gameFormSchema = Schema.Struct({
   location: Required,
   homeTeamId: Required,
   awayTeamId: Required,
+  homeTeamResult: ResultFieldSchema,
+  awayTeamResult: ResultFieldSchema,
+  homeTeamPoints: PointsFieldSchema,
+  awayTeamPoints: PointsFieldSchema,
 });
 
 // --- Mutations ---
@@ -91,6 +104,10 @@ export type GameFormInput = {
   location: string;
   homeTeamId: string | null;
   awayTeamId: string | null;
+  homeTeamResult: Result | null;
+  awayTeamResult: Result | null;
+  homeTeamPoints: number | null;
+  awayTeamPoints: number | null;
 };
 
 type Props = {
@@ -100,6 +117,8 @@ type Props = {
   game?: GameFormInput;
 };
 
+type ResultFieldValue = "NONE" | "WIN" | "LOSS" | "TIE";
+
 type FormValues = {
   round: string;
   date: CalendarDate | null;
@@ -107,7 +126,18 @@ type FormValues = {
   location: string;
   homeTeamId: string;
   awayTeamId: string;
+  homeTeamResult: ResultFieldValue;
+  awayTeamResult: ResultFieldValue;
+  homeTeamPoints: string;
+  awayTeamPoints: string;
 };
+
+const RESULT_OPTIONS: { value: ResultFieldValue; label: string }[] = [
+  { value: "NONE", label: "Not Played" },
+  { value: "WIN", label: "Win" },
+  { value: "LOSS", label: "Loss" },
+  { value: "TIE", label: "Tie" },
+];
 
 // --- Helpers ---
 
@@ -133,6 +163,48 @@ function combineToISO(cd: CalendarDate, hhmm: string): string {
   return new Date(`${cd.toString()}T${hhStr}:${mmStr}:00.000`).toISOString();
 }
 
+function resultToField(value: Result | null): ResultFieldValue {
+  return value ?? "NONE";
+}
+
+function fieldToResult(value: ResultFieldValue): Result | null {
+  return value === "NONE" ? null : value;
+}
+
+function pointsToField(value: number | null): string {
+  return value == null ? "" : String(value);
+}
+
+function fieldToPoints(value: string): number | null {
+  return value === "" ? null : Number(value);
+}
+
+function oppositeResult(value: ResultFieldValue): ResultFieldValue {
+  switch (value) {
+    case "WIN":
+      return "LOSS";
+    case "LOSS":
+      return "WIN";
+    case "TIE":
+      return "TIE";
+    case "NONE":
+      return "NONE";
+  }
+}
+
+function defaultPointsFor(value: ResultFieldValue): string {
+  switch (value) {
+    case "WIN":
+      return "2";
+    case "TIE":
+      return "1";
+    case "LOSS":
+      return "0";
+    case "NONE":
+      return "";
+  }
+}
+
 function cleanErrorMessage(err: unknown, fallback: string): string {
   return err instanceof Error ? err.message.replace(/^[^:]+:\s*/, "") : fallback;
 }
@@ -150,7 +222,7 @@ export default function GameForm({ mode, seasonId, teams, game }: Props) {
 
   const teamOptions = teams.map((t) => ({ value: t.id, label: t.name }));
 
-  const { control, handleSubmit, formState, setError } = useForm<FormValues>({
+  const { control, handleSubmit, formState, setError, setValue } = useForm<FormValues>({
     defaultValues: game
       ? {
           round: String(game.round),
@@ -159,6 +231,10 @@ export default function GameForm({ mode, seasonId, teams, game }: Props) {
           location: game.location,
           homeTeamId: game.homeTeamId ?? "",
           awayTeamId: game.awayTeamId ?? "",
+          homeTeamResult: resultToField(game.homeTeamResult),
+          awayTeamResult: resultToField(game.awayTeamResult),
+          homeTeamPoints: pointsToField(game.homeTeamPoints),
+          awayTeamPoints: pointsToField(game.awayTeamPoints),
         }
       : {
           round: "1",
@@ -167,6 +243,10 @@ export default function GameForm({ mode, seasonId, teams, game }: Props) {
           location: "",
           homeTeamId: "",
           awayTeamId: "",
+          homeTeamResult: "NONE",
+          awayTeamResult: "NONE",
+          homeTeamPoints: "",
+          awayTeamPoints: "",
         },
     resolver: effectTsResolver(gameFormSchema),
   });
@@ -181,19 +261,37 @@ export default function GameForm({ mode, seasonId, teams, game }: Props) {
       return;
     }
 
-    const payload = {
-      round: Number(values.round),
-      datetime: combineToISO(values.date!, values.time),
-      location: values.location,
-      homeTeamId: values.homeTeamId,
-      awayTeamId: values.awayTeamId,
-    };
-
     try {
       if (mode === "create") {
-        await createGame({ variables: { data: { ...payload, seasonId } } });
+        await createGame({
+          variables: {
+            data: {
+              seasonId,
+              round: Number(values.round),
+              datetime: combineToISO(values.date!, values.time),
+              location: values.location,
+              homeTeamId: values.homeTeamId,
+              awayTeamId: values.awayTeamId,
+            },
+          },
+        });
       } else if (game) {
-        await updateGame({ variables: { id: game.id, data: payload } });
+        await updateGame({
+          variables: {
+            id: game.id,
+            data: {
+              round: Number(values.round),
+              datetime: combineToISO(values.date!, values.time),
+              location: values.location,
+              homeTeamId: values.homeTeamId,
+              awayTeamId: values.awayTeamId,
+              homeTeamResult: fieldToResult(values.homeTeamResult),
+              awayTeamResult: fieldToResult(values.awayTeamResult),
+              homeTeamPoints: fieldToPoints(values.homeTeamPoints),
+              awayTeamPoints: fieldToPoints(values.awayTeamPoints),
+            },
+          },
+        });
       }
       addToast({ title: mode === "create" ? "Game created" : "Game updated", color: "success" });
       router.back();
@@ -216,6 +314,24 @@ export default function GameForm({ mode, seasonId, teams, game }: Props) {
   }
 
   const homeTeamId = useWatch({ control, name: "homeTeamId" });
+
+  function handleResultChange(side: "home" | "away") {
+    return (rawValue: string) => {
+      const value = rawValue as ResultFieldValue;
+      const opposite = oppositeResult(value);
+      const sidePoints = defaultPointsFor(value);
+      const oppositePoints = defaultPointsFor(opposite);
+      if (side === "home") {
+        setValue("awayTeamResult", opposite, { shouldDirty: true, shouldValidate: true });
+        setValue("homeTeamPoints", sidePoints, { shouldDirty: true, shouldValidate: true });
+        setValue("awayTeamPoints", oppositePoints, { shouldDirty: true, shouldValidate: true });
+      } else {
+        setValue("homeTeamResult", opposite, { shouldDirty: true, shouldValidate: true });
+        setValue("awayTeamPoints", sidePoints, { shouldDirty: true, shouldValidate: true });
+        setValue("homeTeamPoints", oppositePoints, { shouldDirty: true, shouldValidate: true });
+      }
+    };
+  }
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-6">
@@ -245,6 +361,44 @@ export default function GameForm({ mode, seasonId, teams, game }: Props) {
           isRequired
         />
       </div>
+
+      {mode === "edit" && (
+        <fieldset className="border-default-200 flex flex-col gap-4 rounded-lg border p-4">
+          <legend className="text-foreground/80 px-2 text-sm font-semibold">Results</legend>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <FormSelect
+              name="homeTeamResult"
+              control={control}
+              label="Home Team Result"
+              options={RESULT_OPTIONS}
+              onValueChange={handleResultChange("home")}
+            />
+            <FormSelect
+              name="awayTeamResult"
+              control={control}
+              label="Away Team Result"
+              options={RESULT_OPTIONS}
+              onValueChange={handleResultChange("away")}
+            />
+            <FormInput
+              name="homeTeamPoints"
+              control={control}
+              label="Home Team Points"
+              type="number"
+              min={0}
+              max={3}
+            />
+            <FormInput
+              name="awayTeamPoints"
+              control={control}
+              label="Away Team Points"
+              type="number"
+              min={0}
+              max={3}
+            />
+          </div>
+        </fieldset>
+      )}
 
       <div className="flex items-center justify-between gap-3">
         <div>
