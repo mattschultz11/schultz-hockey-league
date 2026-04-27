@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 
+import { FINALIZED_GAME_WHERE } from "@/components/gameStatus";
 import PageBreadcrumbs from "@/components/PageBreadcrumbs";
 import PageHeader from "@/components/PageHeader";
 import PageLayout from "@/components/PageLayout";
@@ -44,16 +45,17 @@ export default async function PlayerDetailPage({ params }: Props) {
       goalieRating: true,
       user: { select: { firstName: true, lastName: true } },
       team: { select: { id: true, slug: true, name: true } },
-      penalties: { select: { id: true, minutes: true } },
+      penalties: { where: FINALIZED_GAME_WHERE, select: { id: true, minutes: true } },
       _count: {
         select: {
-          goals: true,
-          primaryAssists: true,
-          secondaryAssists: true,
-          lineups: true,
+          goals: { where: FINALIZED_GAME_WHERE },
+          primaryAssists: { where: FINALIZED_GAME_WHERE },
+          secondaryAssists: { where: FINALIZED_GAME_WHERE },
+          lineups: { where: FINALIZED_GAME_WHERE },
         },
       },
       lineups: {
+        where: FINALIZED_GAME_WHERE,
         orderBy: { game: { datetime: "asc" } },
         select: {
           game: {

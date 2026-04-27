@@ -39,8 +39,8 @@ export type GamesTableGame = {
 
 type GamesTableProps = {
   games: GamesTableGame[];
-  /** Game id to highlight with a "Next Up" chip in the status cell. */
-  nextUpIds: string[];
+  /** Game ids to highlight with a "Next Up" chip in the status cell. */
+  nextUpIds?: string[];
   league: {
     slug: string;
   };
@@ -49,7 +49,7 @@ type GamesTableProps = {
   };
 };
 
-export default function GamesTable({ games, nextUpIds, league, season }: GamesTableProps) {
+export default function GamesTable({ games, nextUpIds = [], league, season }: GamesTableProps) {
   const router = useRouter();
 
   const rows = games

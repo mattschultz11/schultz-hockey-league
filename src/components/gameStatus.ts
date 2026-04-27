@@ -1,5 +1,12 @@
 import type { Result } from "@/service/prisma/generated/enums";
 
+/**
+ * Prisma where-fragment for "this stat row belongs to a finalized game".
+ * Used in player stat queries (lineups, goals, assists, penalties) so the
+ * same definition of "finalized" is shared across pages.
+ */
+export const FINALIZED_GAME_WHERE = { game: { homeTeamResult: { not: null } } };
+
 export type GameStatus = "Upcoming" | "Final" | "Awaiting";
 
 export const STATUS_COLOR: Record<GameStatus, "default" | "success" | "warning"> = {

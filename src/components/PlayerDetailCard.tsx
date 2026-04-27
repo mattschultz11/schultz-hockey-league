@@ -17,7 +17,6 @@ import {
 
 import type { GamesTableGame } from "./GamesTable";
 import GamesTable from "./GamesTable";
-import { findNextUpcomingId } from "./gameStatus";
 
 type Props = {
   player: {
@@ -56,8 +55,6 @@ export default function PlayerDetailCard({ player, games, league, season, isAdmi
   const teamHref = player.team
     ? `/leagues/${league.slug}/seasons/${season.slug}/teams/${player.team.slug}`
     : null;
-
-  const nextUpId = findNextUpcomingId(games);
 
   return (
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-4">
@@ -101,12 +98,7 @@ export default function PlayerDetailCard({ player, games, league, season, isAdmi
           <h2 className="text-lg font-semibold">Games Played</h2>
         </CardHeader>
         <CardBody>
-          <GamesTable
-            league={league}
-            season={season}
-            games={games}
-            nextUpIds={nextUpId ? [nextUpId] : []}
-          />
+          <GamesTable league={league} season={season} games={games} />
         </CardBody>
       </Card>
 

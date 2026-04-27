@@ -14,6 +14,7 @@ import {
 } from "@/utils/stringUtils";
 
 import DataTable from "./DataTable";
+import { playerStats } from "./playerStats";
 import TeamName from "./TeamName";
 
 export type PlayersTablePlayer = {
@@ -102,14 +103,15 @@ type Row = {
   href: string;
 };
 
-function playerStats(player: PlayersTablePlayer) {
-  const goals = player._count.goals;
-  const assists = player._count.primaryAssists + player._count.secondaryAssists;
-  const points = goals + assists;
-  const games = player._count.lineups;
-  const ppg = points / (points > 0 ? games : 1);
-  const pim = player.penalties.reduce((acc, penalty) => acc + penalty.minutes, 0);
-  return { goals, assists, points, games, ppg, pim };
+function renderCell(key: ColumnKey, row: Row) {
+  switch (key) {
+    case "team":
+      return row.team ? <TeamName team={row.team} /> : "-";
+    case "ppg":
+      return row.ppg.toFixed(2);
+    default:
+      return row[key];
+  }
 }
 
 function comparePlayers(a: Row, b: Row, column: ColumnKey): number {
@@ -221,7 +223,7 @@ export default function PlayersTable({
           <TableRow key={row.key}>
             {filteredColumns.map((col) => (
               <TableCell key={col.key} className="whitespace-nowrap">
-                {col.key === "team" ? row.team ? <TeamName team={row.team} /> : "-" : row[col.key]}
+                {renderCell(col.key, row)}
               </TableCell>
             ))}
           </TableRow>
